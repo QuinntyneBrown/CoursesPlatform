@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "emitDecoratorMetadata": true
+  },
+  "include": [
+    "../projects/courses-platform-components/src/**/*",
+    "./**/*"
+  ],
+  "exclude": [
+    "../projects/courses-platform-components/src/**/*.spec.ts"
+  ]
+}

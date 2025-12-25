@@ -1,0 +1,71 @@
+<div class="thumbnail-upload">
+  <input
+    #fileInput
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    (change)="onFileSelected($event)"
+    class="thumbnail-upload__input"
+  />
+
+  <div
+    class="thumbnail-upload__container"
+    [class.thumbnail-upload__container--drag-over]="isDragOver"
+    [class.thumbnail-upload__container--has-image]="displayUrl"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+    (click)="triggerFileInput(fileInput)"
+    role="button"
+    tabindex="0"
+    [attr.aria-label]="displayUrl ? 'Change thumbnail' : 'Upload thumbnail'"
+    (keydown.enter)="triggerFileInput(fileInput)"
+    (keydown.space)="triggerFileInput(fileInput)"
+  >
+    @if (isLoading) {
+      <mat-spinner diameter="48"></mat-spinner>
+    } @else if (displayUrl) {
+      <img [src]="displayUrl" alt="Course thumbnail" class="thumbnail-upload__image" />
+      <div class="thumbnail-upload__overlay">
+        <mat-icon>edit</mat-icon>
+        <span>Change Thumbnail</span>
+      </div>
+    } @else {
+      <div class="thumbnail-upload__placeholder">
+        <mat-icon>add_photo_alternate</mat-icon>
+        <span class="thumbnail-upload__placeholder-title">Upload Course Thumbnail</span>
+        <span class="thumbnail-upload__placeholder-text">
+          Drag and drop or click to browse
+        </span>
+      </div>
+    }
+  </div>
+
+  @if (displayUrl && !isLoading) {
+    <button
+      mat-stroked-button
+      color="warn"
+      class="thumbnail-upload__remove"
+      (click)="onRemove(); $event.stopPropagation()"
+    >
+      <mat-icon>delete</mat-icon>
+      Remove Thumbnail
+    </button>
+  }
+
+  @if (errorMessage) {
+    <div class="thumbnail-upload__error" role="alert">
+      <mat-icon>error</mat-icon>
+      {{ errorMessage }}
+    </div>
+  }
+
+  <div class="thumbnail-upload__requirements">
+    <h4>Requirements:</h4>
+    <ul>
+      <li>Image format: JPEG, PNG, or WebP</li>
+      <li>Minimum resolution: 1280x720 pixels</li>
+      <li>Aspect ratio: 16:9</li>
+      <li>Maximum file size: 10MB</li>
+    </ul>
+  </div>
+</div>

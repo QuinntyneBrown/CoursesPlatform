@@ -1,0 +1,47 @@
+<form [formGroup]="form" class="course-basic-info-form">
+  <mat-form-field appearance="outline" class="course-basic-info-form__field">
+    <mat-label>Course Title</mat-label>
+    <input
+      matInput
+      formControlName="title"
+      placeholder="Enter a descriptive title for your course"
+      [maxlength]="titleMaxLength"
+    />
+    <mat-hint align="start">A clear, compelling title that describes your course</mat-hint>
+    <mat-hint align="end">{{ titleCharCount }}/{{ titleMaxLength }}</mat-hint>
+    @if (form.get('title')?.touched && getFieldError('title')) {
+      <mat-error>{{ getFieldError('title') }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="course-basic-info-form__field">
+    <mat-label>Course Subtitle</mat-label>
+    <input
+      matInput
+      formControlName="subtitle"
+      placeholder="Use 1-2 related keywords and mention key areas"
+      [maxlength]="subtitleMaxLength"
+    />
+    <mat-hint align="start">Optional: Additional context or benefits</mat-hint>
+    <mat-hint align="end">{{ subtitleCharCount }}/{{ subtitleMaxLength }}</mat-hint>
+    @if (form.get('subtitle')?.touched && getFieldError('subtitle')) {
+      <mat-error>{{ getFieldError('subtitle') }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="course-basic-info-form__field course-basic-info-form__field--textarea">
+    <mat-label>Course Description</mat-label>
+    <textarea
+      matInput
+      formControlName="description"
+      placeholder="Describe what students will learn and what the course covers"
+      rows="8"
+      [maxlength]="descriptionMaxLength"
+    ></textarea>
+    <mat-hint align="start">Explain the value and structure of your course</mat-hint>
+    <mat-hint align="end">{{ descriptionCharCount }}/{{ descriptionMaxLength }}</mat-hint>
+    @if (form.get('description')?.touched && getFieldError('description')) {
+      <mat-error>{{ getFieldError('description') }}</mat-error>
+    }
+  </mat-form-field>
+</form>

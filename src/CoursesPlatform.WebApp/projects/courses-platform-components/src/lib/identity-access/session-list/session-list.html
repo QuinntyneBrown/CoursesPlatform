@@ -1,0 +1,68 @@
+<div class="session-list">
+  <div class="session-list__header">
+    <h3 class="session-list__title">Active Sessions</h3>
+    @if (hasOtherSessions) {
+      <button
+        mat-stroked-button
+        color="warn"
+        (click)="onTerminateAllOther()"
+        [disabled]="isLoading"
+      >
+        Sign out all other sessions
+      </button>
+    }
+  </div>
+
+  @if (isLoading && sessions.length === 0) {
+    <div class="session-list__loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (sessions.length === 0) {
+    <div class="session-list__empty">
+      <mat-icon>devices</mat-icon>
+      <p>No active sessions found</p>
+    </div>
+  } @else {
+    <mat-list class="session-list__list">
+      @for (session of sessions; track session.sessionId) {
+        <mat-list-item class="session-list__item" [class.session-list__item--current]="session.isCurrent">
+          <mat-icon matListItemIcon>{{ getDeviceIcon(session.deviceType) }}</mat-icon>
+          <div matListItemTitle class="session-list__device">
+            {{ session.browser }} on {{ session.operatingSystem }}
+            @if (session.isCurrent) {
+              <mat-chip class="session-list__current-badge" color="primary" selected>
+                Current
+              </mat-chip>
+            }
+          </div>
+          <div matListItemLine class="session-list__details">
+            <span class="session-list__location">
+              <mat-icon class="session-list__icon--small">location_on</mat-icon>
+              {{ session.location }}
+            </span>
+            <span class="session-list__time">
+              <mat-icon class="session-list__icon--small">schedule</mat-icon>
+              {{ formatLastActivity(session.lastActivity) }}
+            </span>
+          </div>
+          @if (!session.isCurrent) {
+            <button
+              mat-icon-button
+              matListItemMeta
+              color="warn"
+              (click)="onTerminateSession(session.sessionId)"
+              [disabled]="terminatingSessionId === session.sessionId"
+              aria-label="Sign out this session"
+            >
+              @if (terminatingSessionId === session.sessionId) {
+                <mat-spinner diameter="20"></mat-spinner>
+              } @else {
+                <mat-icon>logout</mat-icon>
+              }
+            </button>
+          }
+        </mat-list-item>
+      }
+    </mat-list>
+  }
+</div>

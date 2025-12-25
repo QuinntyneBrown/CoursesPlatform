@@ -1,0 +1,17 @@
+<div class="level-selector">
+  <label class="level-selector__label">{{ label }}</label>
+  <mat-radio-group
+    [formControl]="levelControl"
+    (change)="onSelectionChange($event.value)"
+    class="level-selector__group"
+  >
+    @for (level of levels; track level.value) {
+      <mat-radio-button [value]="level.value" class="level-selector__option" color="primary">
+        <div class="level-selector__option-content">
+          <span class="level-selector__option-label">{{ level.label }}</span>
+          <span class="level-selector__option-description">{{ level.description }}</span>
+        </div>
+      </mat-radio-button>
+    }
+  </mat-radio-group>
+</div>

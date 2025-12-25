@@ -1,0 +1,60 @@
+<div class="avatar-upload" [style.--avatar-size.px]="size">
+  <input
+    #fileInput
+    type="file"
+    accept="image/jpeg,image/png,image/gif"
+    (change)="onFileSelected($event)"
+    class="avatar-upload__input"
+  />
+
+  <div
+    class="avatar-upload__container"
+    [class.avatar-upload__container--drag-over]="isDragOver"
+    [class.avatar-upload__container--has-image]="displayUrl"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+    (click)="triggerFileInput(fileInput)"
+    role="button"
+    tabindex="0"
+    [attr.aria-label]="displayUrl ? 'Change avatar' : 'Upload avatar'"
+    (keydown.enter)="triggerFileInput(fileInput)"
+    (keydown.space)="triggerFileInput(fileInput)"
+  >
+    @if (isLoading) {
+      <mat-spinner [diameter]="size / 3"></mat-spinner>
+    } @else if (displayUrl) {
+      <img [src]="displayUrl" alt="Avatar" class="avatar-upload__image" />
+      <div class="avatar-upload__overlay">
+        <mat-icon>edit</mat-icon>
+      </div>
+    } @else {
+      <div class="avatar-upload__placeholder">
+        <mat-icon>add_a_photo</mat-icon>
+        <span class="avatar-upload__placeholder-text">Upload Photo</span>
+      </div>
+    }
+  </div>
+
+  @if (displayUrl && !isLoading) {
+    <button
+      mat-icon-button
+      color="warn"
+      class="avatar-upload__remove"
+      (click)="onRemove(); $event.stopPropagation()"
+      aria-label="Remove avatar"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+
+  @if (errorMessage) {
+    <div class="avatar-upload__error" role="alert">
+      {{ errorMessage }}
+    </div>
+  }
+
+  <p class="avatar-upload__hint">
+    Drag and drop or click to upload. Max 5MB (JPEG, PNG, GIF)
+  </p>
+</div>

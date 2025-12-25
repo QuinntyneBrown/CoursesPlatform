@@ -1,0 +1,73 @@
+<form class="login-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+  <h2 class="login-form__title">Sign In</h2>
+
+  @if (errorMessage) {
+    <div class="login-form__error" role="alert">
+      {{ errorMessage }}
+    </div>
+  }
+
+  @if (lockoutMessage) {
+    <div class="login-form__lockout" role="alert">
+      {{ lockoutMessage }}
+    </div>
+  }
+
+  <mat-form-field appearance="outline" class="login-form__field">
+    <mat-label>Email</mat-label>
+    <input
+      matInput
+      type="email"
+      formControlName="email"
+      placeholder="Enter your email"
+      autocomplete="email"
+    />
+    @if (loginForm.get('email')?.touched && emailError) {
+      <mat-error>{{ emailError }}</mat-error>
+    }
+  </mat-form-field>
+
+  <lib-password-input
+    formControlName="password"
+    label="Password"
+    placeholder="Enter your password"
+    [showStrengthIndicator]="false"
+    [errorMessage]="loginForm.get('password')?.touched ? passwordError : ''"
+  ></lib-password-input>
+
+  <div class="login-form__options">
+    <mat-checkbox formControlName="rememberMe" color="primary">
+      Remember me
+    </mat-checkbox>
+    <button
+      type="button"
+      mat-button
+      color="primary"
+      class="login-form__forgot-link"
+      (click)="onForgotPassword()"
+    >
+      Forgot password?
+    </button>
+  </div>
+
+  <button
+    mat-raised-button
+    color="primary"
+    type="submit"
+    class="login-form__submit"
+    [disabled]="isLoading"
+  >
+    @if (isLoading) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      Sign In
+    }
+  </button>
+
+  <div class="login-form__register">
+    <span>Don't have an account?</span>
+    <button type="button" mat-button color="primary" (click)="onRegister()">
+      Sign Up
+    </button>
+  </div>
+</form>

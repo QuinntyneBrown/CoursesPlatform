@@ -1,0 +1,104 @@
+.category-selector {
+  position: relative;
+  width: 100%;
+
+  &__label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  &__trigger {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.23);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+
+    &:hover {
+      border-color: rgba(0, 0, 0, 0.87);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--mat-primary-color, #3f51b5);
+      border-width: 2px;
+      padding: 11px 15px;
+    }
+
+    &--expanded {
+      border-color: var(--mat-primary-color, #3f51b5);
+      border-width: 2px;
+      padding: 11px 15px;
+    }
+  }
+
+  &__value {
+    flex: 1;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  &__placeholder {
+    flex: 1;
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  &__clear {
+    margin-right: 8px;
+  }
+
+  &__arrow {
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  &__dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+  }
+
+  &__tree {
+    padding: 8px 0;
+  }
+
+  &__node {
+    width: 100%;
+    text-align: left;
+    padding: 8px 16px;
+    border-radius: 0;
+
+    &--parent {
+      font-weight: 500;
+    }
+
+    &--selected {
+      background-color: rgba(63, 81, 181, 0.1);
+      color: var(--mat-primary-color, #3f51b5);
+    }
+  }
+
+  &__toggle {
+    margin-right: 8px;
+  }
+
+  &__children--hidden {
+    display: none;
+  }
+
+  &__parent {
+    display: flex;
+    flex-direction: column;
+  }
+}
