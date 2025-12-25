@@ -1,0 +1,253 @@
+@startuml Q&A Discussions Class Diagram
+
+title Q&A & Discussions - Class Diagram
+
+package "Question Aggregate" {
+    class Question {
+        +QuestionId: Guid
+        +CourseId: Guid
+        +LectureId: Guid?
+        +AuthorId: Guid
+        +Title: string
+        +Body: string
+        +VoteScore: int
+        +AnswerCount: int
+        +ViewCount: int
+        +Status: QuestionStatus
+        +IsPinned: bool
+        +IsLocked: bool
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        +DeletedAt: DateTime?
+        --
+        +Create(courseId, authorId, title, body): Question
+        +Update(title, body): void
+        +Delete(): void
+        +Pin(): void
+        +Unpin(): void
+        +Lock(reason): void
+        +Unlock(): void
+        +IncrementViews(): void
+        +UpdateAnswerCount(delta): void
+        +UpdateVoteScore(delta): void
+    }
+
+    enum QuestionStatus {
+        Unanswered
+        Answered
+        Accepted
+    }
+
+    class QuestionTag {
+        +QuestionTagId: Guid
+        +QuestionId: Guid
+        +TagName: string
+        +CreatedAt: DateTime
+        --
+        +Create(questionId, tagName): QuestionTag
+    }
+
+    class QuestionFollower {
+        +QuestionFollowerId: Guid
+        +QuestionId: Guid
+        +UserId: Guid
+        +FollowedAt: DateTime
+        +NotificationEnabled: bool
+        --
+        +Create(questionId, userId): QuestionFollower
+        +EnableNotifications(): void
+        +DisableNotifications(): void
+    }
+
+    class QuestionEditHistory {
+        +QuestionEditHistoryId: Guid
+        +QuestionId: Guid
+        +EditedByUserId: Guid
+        +PreviousTitle: string
+        +PreviousBody: string
+        +EditedAt: DateTime
+        --
+        +Record(questionId, userId, title, body): QuestionEditHistory
+    }
+}
+
+package "Answer Aggregate" {
+    class Answer {
+        +AnswerId: Guid
+        +QuestionId: Guid
+        +AuthorId: Guid
+        +Body: string
+        +VoteScore: int
+        +IsAccepted: bool
+        +AcceptedAt: DateTime?
+        +AcceptedByUserId: Guid?
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        +DeletedAt: DateTime?
+        --
+        +Create(questionId, authorId, body): Answer
+        +Update(body): void
+        +Delete(): void
+        +Accept(acceptedByUserId): void
+        +Unaccept(): void
+        +UpdateVoteScore(delta): void
+    }
+
+    class AnswerEditHistory {
+        +AnswerEditHistoryId: Guid
+        +AnswerId: Guid
+        +EditedByUserId: Guid
+        +PreviousBody: string
+        +EditedAt: DateTime
+        --
+        +Record(answerId, userId, body): AnswerEditHistory
+    }
+}
+
+package "Comment Aggregate" {
+    class Comment {
+        +CommentId: Guid
+        +ParentType: CommentParentType
+        +ParentId: Guid
+        +AuthorId: Guid
+        +Body: string
+        +IsEdited: bool
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        +DeletedAt: DateTime?
+        --
+        +Create(parentType, parentId, authorId, body): Comment
+        +Update(body): void
+        +Delete(): void
+        +CanEdit(): bool
+    }
+
+    enum CommentParentType {
+        Question
+        Answer
+    }
+}
+
+package "Vote Aggregate" {
+    class Vote {
+        +VoteId: Guid
+        +TargetType: VoteTargetType
+        +TargetId: Guid
+        +UserId: Guid
+        +VoteType: VoteType
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(targetType, targetId, userId, voteType): Vote
+        +Change(voteType): void
+        +Remove(): void
+    }
+
+    enum VoteTargetType {
+        Question
+        Answer
+    }
+
+    enum VoteType {
+        Upvote
+        Downvote
+    }
+}
+
+package "Flag Aggregate" {
+    class Flag {
+        +FlagId: Guid
+        +ContentType: FlagContentType
+        +ContentId: Guid
+        +ReporterId: Guid
+        +Reason: FlagReason
+        +Details: string
+        +Status: FlagStatus
+        +ReviewedByUserId: Guid?
+        +ReviewedAt: DateTime?
+        +Resolution: string
+        +CreatedAt: DateTime
+        --
+        +Create(contentType, contentId, reporterId, reason): Flag
+        +Review(reviewerId, resolution): void
+        +Approve(): void
+        +Escalate(): void
+    }
+
+    enum FlagContentType {
+        Question
+        Answer
+        Comment
+    }
+
+    enum FlagReason {
+        Spam
+        Offensive
+        Duplicate
+        OffTopic
+        Other
+    }
+
+    enum FlagStatus {
+        Pending
+        Reviewed
+        Approved
+        Rejected
+        Escalated
+    }
+}
+
+package "Reputation Aggregate" {
+    class UserReputation {
+        +UserReputationId: Guid
+        +UserId: Guid
+        +CourseId: Guid
+        +ReputationScore: int
+        +QuestionUpvotes: int
+        +QuestionDownvotes: int
+        +AnswerUpvotes: int
+        +AnswerDownvotes: int
+        +AcceptedAnswers: int
+        +UpdatedAt: DateTime
+        --
+        +Create(userId, courseId): UserReputation
+        +AddQuestionUpvote(): void
+        +AddQuestionDownvote(): void
+        +AddAnswerUpvote(): void
+        +AddAnswerDownvote(): void
+        +AddAcceptedAnswer(): void
+        +CalculateScore(): int
+    }
+
+    class ReputationBadge {
+        +ReputationBadgeId: Guid
+        +UserId: Guid
+        +CourseId: Guid
+        +BadgeType: BadgeType
+        +AwardedAt: DateTime
+        --
+        +Award(userId, courseId, badgeType): ReputationBadge
+    }
+
+    enum BadgeType {
+        Bronze
+        Silver
+        Gold
+        Platinum
+    }
+}
+
+Question "1" --> "*" QuestionTag
+Question "1" --> "*" QuestionFollower
+Question "1" --> "*" QuestionEditHistory
+Question "1" --> "*" Answer
+Question "1" --> "*" Comment : comments on question
+Answer "1" --> "*" AnswerEditHistory
+Answer "1" --> "*" Comment : comments on answer
+Question "1" --> "*" Vote : votes on question
+Answer "1" --> "*" Vote : votes on answer
+Question "1" --> "*" Flag : flags on question
+Answer "1" --> "*" Flag : flags on answer
+Comment "1" --> "*" Flag : flags on comment
+
+@enduml

@@ -1,0 +1,328 @@
+@startuml Mobile Cross-Platform Class Diagram
+
+' Mobile Cross-Platform Domain Model
+' Conservative PlantUML syntax for broad compatibility
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F5F5F5
+skinparam classBorderColor #333333
+skinparam arrowColor #666666
+skinparam packageBackgroundColor #E8E8E8
+
+package "DeviceRegistrationAggregate" {
+    class DeviceRegistration <<Aggregate Root>> {
+        + DeviceId : Guid
+        + UserId : Guid
+        + Platform : Platform
+        + Model : string
+        + OSVersion : string
+        + AppVersion : string
+        + DeviceToken : string
+        + PushToken : string
+        + IsActive : bool
+        + RegisteredAt : DateTime
+        + LastActiveAt : DateTime
+        + CreatedAt : DateTime
+        + ModifiedAt : DateTime
+        + NotificationPreferences : NotificationPreferences
+        --
+        + Register() : void
+        + UpdateInfo(model, osVersion, appVersion) : void
+        + UpdatePushToken(token) : void
+        + Deactivate() : void
+        + UpdateLastActive() : void
+    }
+
+    enum Platform {
+        iOS
+        Android
+        Web
+    }
+
+    class NotificationPreferences <<Entity>> {
+        + NotificationPreferencesId : Guid
+        + DeviceId : Guid
+        + IsEnabled : bool
+        + CourseUpdates : bool
+        + NewContent : bool
+        + Messages : bool
+        + Achievements : bool
+        + Reminders : bool
+        + QuietHoursStart : TimeSpan
+        + QuietHoursEnd : TimeSpan
+        + MaxNotificationsPerDay : int
+        + MaxNotificationsPerWeek : int
+        --
+        + UpdatePreferences() : void
+        + IsInQuietHours() : bool
+        + CanSendNotification() : bool
+    }
+
+    DeviceRegistration "1" *-- "1" NotificationPreferences : contains
+    DeviceRegistration --> Platform : has
+}
+
+package "OfflineContentAggregate" {
+    class OfflineContent <<Entity>> {
+        + OfflineContentId : Guid
+        + DeviceId : Guid
+        + ContentType : ContentType
+        + ContentId : Guid
+        + Title : string
+        + DownloadedAt : DateTime
+        + ExpiresAt : DateTime?
+        + FileSize : long
+        + Version : int
+        + Hash : string
+        + Status : DownloadStatus
+        --
+        + MarkAsDownloaded() : void
+        + MarkAsExpired() : void
+        + UpdateVersion(version) : void
+        + Delete() : void
+        + IsExpired() : bool
+    }
+
+    enum ContentType {
+        Video
+        Document
+        Quiz
+        Resource
+        Lesson
+        Course
+    }
+
+    enum DownloadStatus {
+        Pending
+        Downloading
+        Downloaded
+        Expired
+        Deleted
+        Failed
+    }
+
+    class DownloadQueue <<Entity>> {
+        + DownloadQueueId : Guid
+        + DeviceId : Guid
+        + ContentType : ContentType
+        + ContentId : Guid
+        + Title : string
+        + Priority : int
+        + Status : QueueStatus
+        + Progress : int
+        + EstimatedSize : long
+        + AddedAt : DateTime
+        + StartedAt : DateTime?
+        + CompletedAt : DateTime?
+        + ErrorMessage : string
+        --
+        + Start() : void
+        + UpdateProgress(progress) : void
+        + Complete() : void
+        + Fail(errorMessage) : void
+        + Cancel() : void
+        + IncreasePriority() : void
+        + DecreasePriority() : void
+    }
+
+    enum QueueStatus {
+        Queued
+        InProgress
+        Completed
+        Failed
+        Cancelled
+    }
+
+    OfflineContent --> ContentType : classifies
+    OfflineContent --> DownloadStatus : tracks
+    DownloadQueue --> ContentType : classifies
+    DownloadQueue --> QueueStatus : tracks
+    DeviceRegistration "1" -- "*" OfflineContent : downloads
+    DeviceRegistration "1" -- "*" DownloadQueue : manages
+}
+
+package "ProgressSyncAggregate" {
+    class ProgressSync <<Entity>> {
+        + ProgressSyncId : Guid
+        + DeviceId : Guid
+        + UserId : Guid
+        + LessonId : Guid
+        + ProgressPercentage : int
+        + LastPosition : int
+        + CompletedAt : DateTime?
+        + SyncState : SyncState
+        + ClientTimestamp : DateTime
+        + ServerTimestamp : DateTime
+        + SyncToken : Guid
+        --
+        + Update(percentage, position) : void
+        + MarkAsCompleted() : void
+        + UpdateSyncState(state) : void
+        + DetectConflict(otherSync) : bool
+    }
+
+    class SyncState <<Value Object>> {
+        + LastSyncTimestamp : DateTime
+        + SyncToken : Guid
+        + ConflictStatus : ConflictStatus
+        + PendingChanges : int
+        --
+        + UpdateTimestamp() : SyncState
+        + MarkConflict() : SyncState
+        + ResolveConflict() : SyncState
+        + IncrementPending() : SyncState
+        + DecrementPending() : SyncState
+        + Equals(other) : bool
+    }
+
+    enum ConflictStatus {
+        None
+        Detected
+        Resolved
+    }
+
+    class ConflictLog <<Entity>> {
+        + ConflictLogId : Guid
+        + UserId : Guid
+        + DeviceId : Guid
+        + LessonId : Guid
+        + ConflictType : string
+        + LocalValue : string
+        + ServerValue : string
+        + ResolvedValue : string
+        + ResolutionStrategy : string
+        + DetectedAt : DateTime
+        + ResolvedAt : DateTime?
+        + IsResolved : bool
+        --
+        + Resolve(strategy, value) : void
+    }
+
+    ProgressSync "1" *-- "1" SyncState : contains
+    SyncState --> ConflictStatus : indicates
+    DeviceRegistration "1" -- "*" ProgressSync : syncs
+    ProgressSync "1" -- "0..1" ConflictLog : may have
+}
+
+package "NotificationAggregate" {
+    class PushNotificationLog <<Entity>> {
+        + PushNotificationLogId : Guid
+        + DeviceId : Guid
+        + UserId : Guid
+        + NotificationType : NotificationType
+        + Title : string
+        + Body : string
+        + Data : string
+        + Badge : int
+        + SentAt : DateTime
+        + DeliveredAt : DateTime?
+        + OpenedAt : DateTime?
+        + Status : NotificationStatus
+        + RetryCount : int
+        + ErrorMessage : string
+        --
+        + MarkAsDelivered() : void
+        + MarkAsOpened() : void
+        + MarkAsFailed(error) : void
+        + IncrementRetry() : void
+    }
+
+    enum NotificationType {
+        CourseUpdate
+        NewContent
+        Message
+        Achievement
+        Reminder
+        System
+    }
+
+    enum NotificationStatus {
+        Sent
+        Delivered
+        Opened
+        Failed
+        Cancelled
+    }
+
+    DeviceRegistration "1" -- "*" PushNotificationLog : receives
+    PushNotificationLog --> NotificationType : categorizes
+    PushNotificationLog --> NotificationStatus : tracks
+}
+
+package "ContentDeliveryAggregate" {
+    class ContentDeliveryToken <<Value Object>> {
+        + Token : string
+        + ContentId : Guid
+        + DeviceId : Guid
+        + ExpiresAt : DateTime
+        + IpAddress : string
+        --
+        + IsExpired() : bool
+        + IsValidForDevice(deviceId) : bool
+        + Equals(other) : bool
+    }
+
+    class DownloadUrl <<Value Object>> {
+        + Url : string
+        + ExpiresAt : DateTime
+        + ContentType : string
+        + FileSize : long
+        --
+        + IsExpired() : bool
+        + Equals(other) : bool
+    }
+}
+
+' Cross-package relationships
+OfflineContent --> ContentDeliveryToken : secured by
+DownloadQueue --> DownloadUrl : references
+
+' User and Course references (external aggregates)
+class User <<External>> {
+    + UserId : Guid
+}
+
+class Lesson <<External>> {
+    + LessonId : Guid
+}
+
+class Course <<External>> {
+    + CourseId : Guid
+}
+
+DeviceRegistration "*" -- "1" User : owned by
+ProgressSync "*" -- "1" Lesson : tracks
+OfflineContent "*" -- "1" Course : belongs to
+
+' Notes
+note right of DeviceRegistration
+    Aggregate Root for device management
+    Manages device lifecycle and preferences
+    Enforces max 10 devices per user
+end note
+
+note right of OfflineContent
+    Tracks downloaded content per device
+    Enforces storage quotas
+    Handles content expiration
+end note
+
+note right of DownloadQueue
+    Manages download prioritization
+    Supports pause/resume/cancel
+    Max 100 items per device
+end note
+
+note right of SyncState
+    Immutable value object
+    Tracks synchronization state
+    Equality based on all properties
+end note
+
+note right of ProgressSync
+    Handles offline progress tracking
+    Supports conflict resolution
+    Idempotent sync operations
+end note
+
+@enduml

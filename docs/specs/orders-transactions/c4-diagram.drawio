@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-orders-transactions" name="C4 Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="C4 Context Diagram - Orders &amp; Transactions" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="450" height="30" as="geometry"/>
+        </mxCell>
+        <!-- User -->
+        <mxCell id="user" value="User&#xa;[Person]&#xa;&#xa;A user purchasing courses&#xa;on the platform" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="350" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Web App -->
+        <mxCell id="webapp" value="Web Application&#xa;[Container: Angular]&#xa;&#xa;Provides order management&#xa;and invoice viewing UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- API -->
+        <mxCell id="api" value="API Application&#xa;[Container: ASP.NET Core]&#xa;&#xa;Processes orders, generates&#xa;invoices and credit notes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Database -->
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Stores orders, invoices,&#xa;and transactions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="480" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- File Storage -->
+        <mxCell id="storage" value="File Storage&#xa;[Container: Azure Blob]&#xa;&#xa;Stores invoice and&#xa;credit note PDFs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="680" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Payment Gateway -->
+        <mxCell id="payment" value="Payment Gateway&#xa;[External System]&#xa;&#xa;Stripe/PayPal for processing&#xa;payments and refunds" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Email Service -->
+        <mxCell id="email" value="Email Service&#xa;[External System]&#xa;&#xa;Sends order confirmations&#xa;and invoice emails" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- PDF Service -->
+        <mxCell id="pdf" value="PDF Generator&#xa;[External System]&#xa;&#xa;Generates invoice and&#xa;credit note PDFs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="480" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Enrollment Service -->
+        <mxCell id="enrollment" value="Enrollment Service&#xa;[Internal System]&#xa;&#xa;Grants and revokes&#xa;course access" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="680" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Arrows -->
+        <mxCell id="arrow1" value="Views orders" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="user" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow2" value="Uses" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="user" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow3" value="API Calls" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="webapp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow4" value="Reads/Writes" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow5" value="Stores PDFs" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="database" target="storage">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow6" value="Processes payments" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="webapp" target="payment">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow7" value="Sends emails" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="email">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow8" value="Generates PDFs" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="database" target="pdf">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow9" value="Manages access" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="storage" target="enrollment">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow10" value="Payment callback" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;dashed=1;" edge="1" parent="1" source="payment" target="email">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

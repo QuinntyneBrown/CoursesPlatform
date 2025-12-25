@@ -1,0 +1,171 @@
+@startuml Certificates Class Diagram
+
+title Certificates - Class Diagram
+
+package "Certificate Template Aggregate" {
+    class CertificateTemplate {
+        +CertificateTemplateId: Guid
+        +Name: string
+        +Description: string
+        +BackgroundImageUrl: string
+        +LogoUrl: string
+        +SignatureImageUrl: string
+        +DesignContent: string
+        +IsActive: bool
+        +Version: int
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(name, description): CertificateTemplate
+        +UpdateDesign(content): void
+        +SetBackgroundImage(url): void
+        +SetLogo(url): void
+        +SetSignature(url): void
+        +Deactivate(): void
+        +IncrementVersion(): void
+    }
+
+    class TemplatePlaceholder {
+        +PlaceholderId: Guid
+        +CertificateTemplateId: Guid
+        +PlaceholderType: PlaceholderType
+        +XPosition: int
+        +YPosition: int
+        +FontSize: int
+        +FontFamily: string
+        +Color: string
+        --
+        +Create(type, x, y): TemplatePlaceholder
+        +UpdatePosition(x, y): void
+        +UpdateStyle(fontSize, font, color): void
+    }
+
+    enum PlaceholderType {
+        StudentName
+        CourseName
+        CompletionDate
+        InstructorName
+        CertificateId
+        QrCode
+    }
+}
+
+package "Certificate Aggregate" {
+    class Certificate {
+        +CertificateId: Guid
+        +UserId: Guid
+        +CourseId: Guid
+        +CertificateTemplateId: Guid
+        +StudentName: string
+        +CourseName: string
+        +CompletionDate: DateTime
+        +InstructorName: string
+        +VerificationCode: string
+        +PublicUrl: string
+        +PdfUrl: string
+        +Status: CertificateStatus
+        +IssuedBy: Guid
+        +IssuanceType: IssuanceType
+        +IssuedAt: DateTime
+        +RevokedAt: DateTime
+        +RevokedBy: Guid
+        +RevocationReason: string
+        --
+        +Issue(user, course, template): Certificate
+        +GenerateVerificationCode(): string
+        +GeneratePublicUrl(): string
+        +Revoke(reason, adminId): void
+        +Reinstate(): void
+        +MarkAsDownloaded(): void
+        +MarkAsEmailed(): void
+    }
+
+    enum CertificateStatus {
+        Active
+        Revoked
+        Superseded
+    }
+
+    enum IssuanceType {
+        Automatic
+        Manual
+        Regenerated
+    }
+
+    class CertificateShare {
+        +CertificateShareId: Guid
+        +CertificateId: Guid
+        +Platform: SocialPlatform
+        +SharedAt: DateTime
+        +SharedUrl: string
+        --
+        +Create(certificate, platform): CertificateShare
+    }
+
+    enum SocialPlatform {
+        LinkedIn
+        Twitter
+        Facebook
+        Email
+    }
+}
+
+package "Verification Aggregate" {
+    class CertificateVerification {
+        +VerificationId: Guid
+        +CertificateId: Guid
+        +VerifiedAt: DateTime
+        +IpAddress: string
+        +UserAgent: string
+        +VerificationMethod: VerificationMethod
+        +IsSuccessful: bool
+        +FailureReason: string
+        --
+        +Create(certificateId, method): CertificateVerification
+        +MarkAsSuccessful(): void
+        +MarkAsFailed(reason): void
+    }
+
+    enum VerificationMethod {
+        Web
+        QrCode
+        Api
+    }
+}
+
+package "Revocation Aggregate" {
+    class CertificateRevocation {
+        +RevocationId: Guid
+        +CertificateId: Guid
+        +RevokedBy: Guid
+        +RevokedAt: DateTime
+        +Reason: string
+        +ReinstatedAt: DateTime
+        +ReinstatedBy: Guid
+        --
+        +Create(certificate, admin, reason): CertificateRevocation
+        +Reinstate(admin): void
+    }
+}
+
+package "Download Aggregate" {
+    class CertificateDownload {
+        +DownloadId: Guid
+        +CertificateId: Guid
+        +UserId: Guid
+        +DownloadedAt: DateTime
+        +IpAddress: string
+        +UserAgent: string
+        --
+        +Create(certificate, user): CertificateDownload
+    }
+}
+
+CertificateTemplate "1" --> "*" TemplatePlaceholder
+CertificateTemplate "1" --> "*" Certificate
+Certificate "1" --> "*" CertificateShare
+Certificate "1" --> "*" CertificateVerification
+Certificate "1" --> "0..1" CertificateRevocation
+Certificate "1" --> "*" CertificateDownload
+
+@enduml

@@ -1,0 +1,308 @@
+@startuml Create Organization Sequence
+
+title Create Organization Flow
+
+actor "Org Admin" as Admin
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Email Service" as Email
+
+Admin -> App: Fill organization form
+App -> App: Validate input
+App -> API: POST /api/organizations
+API -> API: Validate request
+API -> DB: Check domain uniqueness
+DB --> API: Domain available
+API -> API: Create Organization entity
+API -> DB: Save organization
+DB --> API: Organization created
+API -> DB: Assign admin as member
+API -> DB: Initialize billing profile
+API -> API: Publish OrganizationCreated event
+API -> Email: Send welcome email
+Email --> API: Email queued
+API --> App: 201 Created with organization
+App -> App: Navigate to dashboard
+App --> Admin: Show organization dashboard
+
+@enduml
+
+@startuml Add Team Members Sequence
+
+title Add Team Members Flow
+
+actor "Team Manager" as Manager
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Email Service" as Email
+
+Manager -> App: Click add members
+App --> Manager: Show member selection dialog
+Manager -> App: Select members/Enter emails
+Manager -> App: Click assign
+App -> API: POST /api/organizations/{orgId}/teams/{teamId}/members
+API -> API: Validate request
+API -> DB: Check member exists in org
+alt Member exists in organization
+    API -> DB: Create TeamMember record
+    DB --> API: TeamMember created
+    API -> API: Publish TeamMemberAdded event
+    API --> App: 201 Created
+    App --> Manager: Show success message
+else Member not in organization
+    API -> API: Create invitation
+    API -> DB: Save invitation
+    API -> Email: Send invitation email
+    Email --> API: Email queued
+    API -> API: Publish OrganizationMemberInvited event
+    API --> App: 201 Created with pending status
+    App --> Manager: Show invitation sent message
+end
+App -> App: Refresh team member list
+
+@enduml
+
+@startuml SSO Authentication Sequence
+
+title SSO Authentication Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Identity Provider" as IdP
+
+User -> App: Navigate to login
+App -> API: GET /api/auth/check-sso?email={email}
+API -> DB: Find organization by email domain
+DB --> API: Organization with SSO enabled
+API --> App: 200 SSO Required with IdP URL
+App --> User: Redirect to IdP login
+
+User -> IdP: Enter credentials
+IdP -> IdP: Authenticate user
+IdP -> IdP: Generate SAML assertion
+IdP --> App: POST SAML response
+
+App -> API: POST /api/sso/login with SAML assertion
+API -> API: Validate SAML signature
+API -> API: Extract user attributes
+API -> DB: Find/Create user from assertion
+alt User exists
+    API -> DB: Get user details
+    DB --> API: User found
+else User not exists (JIT provisioning)
+    API -> API: Map attributes to user fields
+    API -> DB: Create user
+    API -> DB: Create organization member
+    API -> API: Publish UserProvisionedViaSSO event
+    DB --> API: User created
+end
+API -> API: Generate JWT tokens
+API -> DB: Create session
+API -> DB: Log SSO authentication
+API -> API: Publish SSOAuthenticationSucceeded event
+API --> App: 200 OK with tokens
+App -> App: Store tokens
+App --> User: Redirect to dashboard
+
+@enduml
+
+@startuml Allocate Licenses Sequence
+
+title Allocate Licenses Flow
+
+actor "Org Admin" as Admin
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Email Service" as Email
+
+Admin -> App: Navigate to license allocation
+App -> API: GET /api/organizations/{orgId}/licenses/pool
+API -> DB: Get license pools
+DB --> API: Available licenses
+API --> App: 200 OK with license pools
+App --> Admin: Show available licenses
+
+Admin -> App: Select course and members
+Admin -> App: Click allocate
+App -> API: POST /api/organizations/{orgId}/licenses/{licenseId}/allocate
+API -> API: Validate request
+API -> DB: Lock license record
+API -> DB: Check license availability
+alt License available
+    API -> DB: Decrement available count
+    API -> DB: Create LicenseAllocation
+    API -> DB: Auto-enroll member in course
+    DB --> API: Allocation created
+    API -> DB: Update license pool
+    API -> API: Publish LicenseAllocated event
+    API -> Email: Send license allocated email
+    Email --> API: Email queued
+    API -> DB: Commit transaction
+    API --> App: 201 Created
+    App --> Admin: Show success message
+else License not available
+    API -> DB: Rollback transaction
+    API --> App: 409 Conflict
+    App --> Admin: Show error (no licenses available)
+end
+App -> App: Refresh license pool display
+
+@enduml
+
+@startuml Configure SSO Sequence
+
+title Configure SSO Flow
+
+actor "Org Admin" as Admin
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Identity Provider" as IdP
+
+Admin -> App: Navigate to SSO settings
+App --> Admin: Show SSO configuration form
+
+Admin -> App: Upload IdP metadata XML
+App -> App: Parse metadata locally
+App --> Admin: Show extracted settings
+
+Admin -> App: Configure attribute mappings
+Admin -> App: Configure JIT provisioning
+Admin -> App: Click test connection
+
+App -> API: POST /api/organizations/{orgId}/sso/test
+API -> API: Validate SSO configuration
+API -> IdP: Test SAML metadata URL
+IdP --> API: Metadata XML response
+API -> API: Validate certificates
+alt Configuration valid
+    API --> App: 200 OK
+    App --> Admin: Show success (test passed)
+
+    Admin -> App: Click save configuration
+    App -> API: POST /api/organizations/{orgId}/sso/configure
+    API -> API: Validate request
+    API -> DB: Save SSOConfiguration
+    API -> DB: Save SAMLSettings
+    API -> DB: Save AttributeMappings
+    DB --> API: Configuration saved
+    API -> API: Publish SSOConfigured event
+    API --> App: 201 Created
+    App --> Admin: Show success message
+    App --> Admin: Display SP metadata for IdP
+else Configuration invalid
+    API --> App: 400 Bad Request with errors
+    App --> Admin: Show validation errors
+end
+
+@enduml
+
+@startuml Purchase Licenses Sequence
+
+title Purchase Licenses Flow
+
+actor "Billing Admin" as Admin
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Payment Gateway" as Gateway
+participant "Email Service" as Email
+
+Admin -> App: Navigate to license purchase
+App -> API: GET /api/organizations/{orgId}/courses
+API --> App: Available courses
+App --> Admin: Show course catalog
+
+Admin -> App: Select course and quantity
+App -> App: Calculate price
+App --> Admin: Show total amount
+
+Admin -> App: Select payment method
+Admin -> App: Confirm purchase
+
+App -> API: POST /api/organizations/{orgId}/licenses
+API -> API: Validate request
+API -> DB: Create License record
+API -> DB: Calculate invoice amount
+API -> DB: Create invoice
+
+alt Payment Method is Card
+    API -> Gateway: Process payment
+    Gateway --> API: Payment authorized
+    API -> DB: Create payment record
+    API -> DB: Mark invoice as paid
+    API -> DB: Activate licenses
+    API -> API: Publish LicensesPurchased event
+    API -> API: Publish PaymentProcessed event
+    API -> Email: Send purchase confirmation
+    Email --> API: Email queued
+    API --> App: 201 Created with licenses
+    App --> Admin: Show success with license details
+else Payment Method is PO
+    API -> DB: Mark invoice as pending
+    API -> DB: Set licenses as active
+    API -> API: Publish LicensesPurchased event
+    API -> Email: Send invoice to billing contact
+    Email --> API: Email queued
+    API --> App: 201 Created
+    App --> Admin: Show PO instructions
+else Payment failed
+    API -> DB: Mark payment as failed
+    API -> API: Publish PaymentFailed event
+    API --> App: 402 Payment Required
+    App --> Admin: Show payment error
+end
+
+@enduml
+
+@startuml Generate Compliance Report Sequence
+
+title Generate Compliance Report Flow
+
+actor "Org Admin" as Admin
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Report Generator" as Generator
+
+Admin -> App: Navigate to compliance reports
+App --> Admin: Show report filters
+
+Admin -> App: Select date range and teams
+Admin -> App: Click generate report
+
+App -> API: POST /api/organizations/{orgId}/reports/compliance
+API -> API: Validate request
+API -> DB: Create ActivityReport record
+DB --> API: Report created (status: Pending)
+API --> App: 202 Accepted with report ID
+App --> Admin: Show processing message
+
+API -> Generator: Queue report generation job
+Generator -> DB: Query compliance data
+Generator -> DB: Query certification expirations
+Generator -> DB: Query member progress
+DB --> Generator: Compliance data
+Generator -> Generator: Generate report
+Generator -> Generator: Create PDF/Excel
+Generator -> Generator: Upload to storage
+Generator -> DB: Update report status (Completed)
+Generator -> DB: Save report file URL
+Generator -> API: Notify completion
+
+API -> App: WebSocket notification
+App --> Admin: Show report ready notification
+
+Admin -> App: Click download report
+App -> API: GET /api/organizations/{orgId}/reports/{reportId}/export
+API -> DB: Get report file URL
+DB --> API: File URL
+API --> App: 302 Redirect to file
+App --> Admin: Download report file
+
+@enduml

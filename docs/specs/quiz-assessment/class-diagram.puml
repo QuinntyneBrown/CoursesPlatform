@@ -1,0 +1,274 @@
+@startuml Quiz Assessment Class Diagram
+
+title Quiz & Assessment - Class Diagram
+
+package "Quiz Aggregate" {
+    class Quiz {
+        +QuizId: Guid
+        +CourseId: Guid
+        +CurriculumItemId: Guid
+        +Title: string
+        +Description: string
+        +Instructions: string
+        +Status: QuizStatus
+        +TimeLimit: int?
+        +PassingScore: decimal
+        +MaxAttempts: int?
+        +RandomizeQuestions: bool
+        +ShuffleAnswers: bool
+        +ShowCorrectAnswers: bool
+        +CreatedAt: DateTime
+        +PublishedAt: DateTime?
+        --
+        +Create(courseId, title, description): Quiz
+        +Update(title, description, instructions): void
+        +UpdateSettings(settings): void
+        +Publish(): void
+        +Unpublish(): void
+        +CanModify(): bool
+    }
+
+    enum QuizStatus {
+        Draft
+        Published
+    }
+
+    class QuizStatistics {
+        +QuizStatisticsId: Guid
+        +QuizId: Guid
+        +TotalAttempts: int
+        +AverageScore: decimal
+        +PassRate: decimal
+        +AverageCompletionTime: int
+        +UpdatedAt: DateTime
+        --
+        +UpdateStatistics(): void
+    }
+}
+
+package "Question Aggregate" {
+    class Question {
+        +QuestionId: Guid
+        +QuizId: Guid
+        +QuestionType: QuestionType
+        +QuestionText: string
+        +Explanation: string
+        +Points: decimal
+        +OrderIndex: int
+        +ImageUrl: string?
+        +CodeSnippet: string?
+        --
+        +Create(quizId, type, text, points): Question
+        +Update(text, explanation, points): void
+        +Reorder(newIndex): void
+    }
+
+    enum QuestionType {
+        MultipleChoice
+        TrueFalse
+        MultipleAnswer
+        ShortAnswer
+    }
+
+    class QuestionOption {
+        +QuestionOptionId: Guid
+        +QuestionId: Guid
+        +OptionText: string
+        +IsCorrect: bool
+        +OrderIndex: int
+        --
+        +Create(questionId, text, isCorrect): QuestionOption
+        +MarkCorrect(): void
+        +MarkIncorrect(): void
+    }
+
+    class ShortAnswerConfig {
+        +ShortAnswerConfigId: Guid
+        +QuestionId: Guid
+        +CaseSensitive: bool
+        +CharacterLimit: int?
+        +RequiresManualGrading: bool
+        --
+        +AddAcceptableAnswer(answer): void
+    }
+
+    class AcceptableAnswer {
+        +AcceptableAnswerId: Guid
+        +ShortAnswerConfigId: Guid
+        +AnswerText: string
+    }
+}
+
+package "Quiz Attempt Aggregate" {
+    class QuizAttempt {
+        +QuizAttemptId: Guid
+        +QuizId: Guid
+        +StudentId: Guid
+        +AttemptNumber: int
+        +Status: AttemptStatus
+        +StartedAt: DateTime
+        +SubmittedAt: DateTime?
+        +CompletedAt: DateTime?
+        +Score: decimal?
+        +Percentage: decimal?
+        +Passed: bool?
+        +TimeSpent: int?
+        --
+        +Start(quiz, student): QuizAttempt
+        +AnswerQuestion(questionId, answer): void
+        +Submit(): void
+        +Grade(): void
+        +IsExpired(): bool
+    }
+
+    enum AttemptStatus {
+        InProgress
+        Submitted
+        Graded
+        Expired
+    }
+
+    class AttemptAnswer {
+        +AttemptAnswerId: Guid
+        +QuizAttemptId: Guid
+        +QuestionId: Guid
+        +AnswerData: string
+        +IsCorrect: bool?
+        +PointsEarned: decimal?
+        +AnsweredAt: DateTime
+        --
+        +SaveAnswer(data): void
+        +Grade(question): void
+    }
+
+    class SelectedOption {
+        +SelectedOptionId: Guid
+        +AttemptAnswerId: Guid
+        +QuestionOptionId: Guid
+    }
+}
+
+package "Coding Exercise Aggregate" {
+    class CodingExercise {
+        +CodingExerciseId: Guid
+        +QuizId: Guid
+        +Title: string
+        +ProblemDescription: string
+        +Language: ProgrammingLanguage
+        +StarterCode: string
+        +Points: decimal
+        +TimeoutSeconds: int
+        +CreatedAt: DateTime
+        --
+        +Create(quizId, title, description, language): CodingExercise
+        +Update(title, description, starterCode): void
+        +AddTestCase(testCase): void
+    }
+
+    enum ProgrammingLanguage {
+        Python
+        JavaScript
+        Java
+        CSharp
+        Cpp
+        Go
+    }
+
+    class TestCase {
+        +TestCaseId: Guid
+        +CodingExerciseId: Guid
+        +Input: string
+        +ExpectedOutput: string
+        +Points: decimal
+        +IsVisible: bool
+        +OrderIndex: int
+        --
+        +Create(exerciseId, input, output, points): TestCase
+        +Update(input, output, points): void
+    }
+
+    class CodeSubmission {
+        +CodeSubmissionId: Guid
+        +CodingExerciseId: Guid
+        +StudentId: Guid
+        +QuizAttemptId: Guid?
+        +Code: string
+        +Language: ProgrammingLanguage
+        +SubmittedAt: DateTime
+        +Score: decimal?
+        +Percentage: decimal?
+        +Status: SubmissionStatus
+        --
+        +Submit(exercise, student, code): CodeSubmission
+        +Grade(results): void
+    }
+
+    enum SubmissionStatus {
+        Pending
+        Running
+        Completed
+        Failed
+        TimedOut
+    }
+
+    class TestResult {
+        +TestResultId: Guid
+        +CodeSubmissionId: Guid
+        +TestCaseId: Guid
+        +Passed: bool
+        +ActualOutput: string
+        +ExecutionTime: int
+        +MemoryUsed: int
+        +ErrorMessage: string?
+        --
+        +RecordResult(testCase, output, passed): TestResult
+    }
+}
+
+package "Question Bank Aggregate" {
+    class QuestionBank {
+        +QuestionBankId: Guid
+        +InstructorId: Guid
+        +Name: string
+        +CreatedAt: DateTime
+        --
+        +Create(instructorId, name): QuestionBank
+    }
+
+    class BankedQuestion {
+        +BankedQuestionId: Guid
+        +QuestionBankId: Guid
+        +QuestionType: QuestionType
+        +QuestionText: string
+        +Category: string
+        +Difficulty: Difficulty
+        +Tags: string
+        +Points: decimal
+        +CreatedAt: DateTime
+        --
+        +SaveToBank(question): BankedQuestion
+        +ImportToQuiz(quizId): Question
+    }
+
+    enum Difficulty {
+        Easy
+        Medium
+        Hard
+    }
+}
+
+Quiz "1" --> "*" Question
+Quiz "1" --> "*" QuizAttempt
+Quiz "1" --> "*" CodingExercise
+Quiz "1" --> "0..1" QuizStatistics
+Question "1" --> "*" QuestionOption
+Question "1" --> "0..1" ShortAnswerConfig
+ShortAnswerConfig "1" --> "*" AcceptableAnswer
+QuizAttempt "1" --> "*" AttemptAnswer
+AttemptAnswer "1" --> "*" SelectedOption
+CodingExercise "1" --> "*" TestCase
+CodingExercise "1" --> "*" CodeSubmission
+CodeSubmission "1" --> "*" TestResult
+QuestionBank "1" --> "*" BankedQuestion
+
+@enduml

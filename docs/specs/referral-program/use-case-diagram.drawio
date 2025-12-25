@@ -1,0 +1,202 @@
+<mxfile host="app.diagrams.net" modified="2025-12-25T00:00:00.000Z" agent="Claude" version="22.0.0" type="device">
+  <diagram name="Use Case Diagram - Referral Program" id="referral-use-case">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Use Case Diagram - Referral Program" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="350" y="20" width="470" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- System Boundary -->
+        <mxCell id="system-boundary" value="Referral Program System" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontSize=16;fontStyle=1;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="300" y="100" width="700" height="660" as="geometry" />
+        </mxCell>
+
+        <!-- Actors -->
+        <mxCell id="user-actor" value="User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="120" y="300" width="80" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="admin-actor" value="Administrator" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="120" y="550" width="80" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- Use Cases - User Functions -->
+        <mxCell id="uc-generate-code" value="Generate Referral Code" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="370" y="140" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-share-code" value="Share Referral Code" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="370" y="240" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-apply-referral" value="Apply Referral Code" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="370" y="340" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-referrals" value="View My Referrals" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="370" y="440" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-rewards" value="View My Rewards" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="370" y="540" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-track-status" value="Track Referral Status" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="370" y="640" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Use Cases - Admin Functions -->
+        <mxCell id="uc-create-campaign" value="Create Referral Campaign" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="140" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-update-campaign" value="Update Campaign" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="240" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-deactivate-campaign" value="Deactivate Campaign" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="340" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-analytics" value="View Referral Analytics" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="440" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-top-referrers" value="View Top Referrers" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="540" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-distribute-rewards" value="Distribute Rewards" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="640" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Supporting Use Cases -->
+        <mxCell id="uc-validate-code" value="Validate Referral Code" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="550" y="280" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-send-notification" value="Send Notification" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="550" y="180" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- User to Use Cases Relationships -->
+        <mxCell id="edge-user-generate" value="" style="endArrow=none;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="user-actor" target="uc-generate-code">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-user-share" value="" style="endArrow=none;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="user-actor" target="uc-share-code">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-user-apply" value="" style="endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="user-actor" target="uc-apply-referral">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-user-view-referrals" value="" style="endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="user-actor" target="uc-view-referrals">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-user-view-rewards" value="" style="endArrow=none;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="user-actor" target="uc-view-rewards">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-user-track-status" value="" style="endArrow=none;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="user-actor" target="uc-track-status">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Admin to Use Cases Relationships -->
+        <mxCell id="edge-admin-create" value="" style="endArrow=none;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="admin-actor" target="uc-create-campaign">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-admin-update" value="" style="endArrow=none;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="admin-actor" target="uc-update-campaign">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-admin-deactivate" value="" style="endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="admin-actor" target="uc-deactivate-campaign">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-admin-analytics" value="" style="endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="admin-actor" target="uc-view-analytics">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-admin-top-referrers" value="" style="endArrow=none;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="admin-actor" target="uc-view-top-referrers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-admin-distribute" value="" style="endArrow=none;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="admin-actor" target="uc-distribute-rewards">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Include Relationships -->
+        <mxCell id="edge-apply-validate" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="uc-apply-referral" target="uc-validate-code">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="480" y="340" as="sourcePoint" />
+            <mxPoint x="640" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge-share-notification" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="uc-share-code" target="uc-send-notification">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="480" y="240" as="sourcePoint" />
+            <mxPoint x="640" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge-generate-notification" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="uc-generate-code" target="uc-send-notification">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="480" y="175" as="sourcePoint" />
+            <mxPoint x="640" y="175" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;verticalAlign=top;fontSize=12;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="100" width="200" height="280" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-title" value="&lt;b&gt;Legend&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="110" width="100" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-actor" value="Actor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="150" width="30" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-actor-text" value="Person interacting&lt;br&gt;with the system" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="160" width="110" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-user-uc" value="User Use Case" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="220" width="90" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-user-uc-text" value="Functionality&lt;br&gt;for users" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="220" width="80" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-admin-uc" value="Admin Use Case" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="280" width="90" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-admin-uc-text" value="Functionality&lt;br&gt;for admins" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="280" width="80" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-support-uc" value="Supporting UC" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="340" width="90" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-support-uc-text" value="Supporting&lt;br&gt;functionality" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="340" width="80" height="40" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

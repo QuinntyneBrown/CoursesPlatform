@@ -1,0 +1,144 @@
+@startuml Announcements Class Diagram
+
+title Announcements - Class Diagram
+
+package "Announcement Aggregate" {
+    class Announcement {
+        +AnnouncementId: Guid
+        +CourseId: Guid
+        +InstructorId: Guid
+        +Title: string
+        +Content: string
+        +Status: AnnouncementStatus
+        +TargetAudience: TargetAudience
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        +PublishedAt: DateTime
+        +ScheduledFor: DateTime
+        +ArchivedAt: DateTime
+        +IsDeleted: bool
+        --
+        +Create(courseId, instructorId, title, content): Announcement
+        +Update(title, content): void
+        +Publish(): void
+        +Schedule(scheduledFor): void
+        +CancelSchedule(): void
+        +Archive(): void
+        +Delete(): void
+        +SetTargetAudience(audience): void
+    }
+
+    enum AnnouncementStatus {
+        Draft
+        Scheduled
+        Published
+        Archived
+    }
+
+    enum TargetAudience {
+        AllStudents
+        SpecificSections
+        SpecificStudents
+    }
+
+    class AnnouncementTarget {
+        +AnnouncementTargetId: Guid
+        +AnnouncementId: Guid
+        +TargetType: TargetType
+        +TargetId: Guid
+        --
+        +Create(announcementId, targetType, targetId): AnnouncementTarget
+    }
+
+    enum TargetType {
+        Section
+        Student
+    }
+}
+
+package "Delivery Aggregate" {
+    class AnnouncementDelivery {
+        +DeliveryId: Guid
+        +AnnouncementId: Guid
+        +StudentId: Guid
+        +DeliveryChannel: DeliveryChannel
+        +Status: DeliveryStatus
+        +CreatedAt: DateTime
+        +DeliveredAt: DateTime
+        +FailedAt: DateTime
+        +RetryCount: int
+        +ErrorMessage: string
+        --
+        +Create(announcementId, studentId, channel): AnnouncementDelivery
+        +MarkDelivered(): void
+        +MarkFailed(error): void
+        +Retry(): void
+        +CanRetry(): bool
+    }
+
+    enum DeliveryChannel {
+        InApp
+        Email
+        Push
+    }
+
+    enum DeliveryStatus {
+        Pending
+        Delivered
+        Failed
+        Sent
+        Bounced
+    }
+
+    class DeliveryPreference {
+        +PreferenceId: Guid
+        +StudentId: Guid
+        +CourseId: Guid
+        +EmailEnabled: bool
+        +PushEnabled: bool
+        +UpdatedAt: DateTime
+        --
+        +Create(studentId, courseId): DeliveryPreference
+        +EnableEmail(): void
+        +DisableEmail(): void
+        +EnablePush(): void
+        +DisablePush(): void
+    }
+}
+
+package "View Tracking Aggregate" {
+    class AnnouncementView {
+        +ViewId: Guid
+        +AnnouncementId: Guid
+        +StudentId: Guid
+        +FirstViewedAt: DateTime
+        +LastViewedAt: DateTime
+        +ViewCount: int
+        +DeviceInfo: string
+        +IpAddress: string
+        --
+        +Create(announcementId, studentId): AnnouncementView
+        +RecordView(deviceInfo, ip): void
+        +IncrementViewCount(): void
+    }
+
+    class ReadStatus {
+        +ReadStatusId: Guid
+        +AnnouncementId: Guid
+        +StudentId: Guid
+        +IsRead: bool
+        +ReadAt: DateTime
+        --
+        +Create(announcementId, studentId): ReadStatus
+        +MarkAsRead(): void
+    }
+}
+
+Announcement "1" --> "*" AnnouncementTarget
+Announcement "1" --> "*" AnnouncementDelivery
+Announcement "1" --> "*" AnnouncementView
+Announcement "1" --> "*" ReadStatus
+AnnouncementDelivery "*" --> "1" DeliveryPreference : respects
+AnnouncementView "1" --> "1" ReadStatus : updates
+
+@enduml

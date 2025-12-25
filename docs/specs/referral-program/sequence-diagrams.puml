@@ -1,0 +1,365 @@
+@startuml Generate Referral Code Flow
+
+title Generate Referral Code Flow
+
+actor User
+participant "Angular App" as App
+participant "ReferralService" as Service
+participant "API Controller" as Controller
+participant "MediatR" as Mediator
+participant "GenerateReferralCodeHandler" as Handler
+participant "ReferralCodeGeneratorService" as Generator
+participant "ICoursesPlatformContext" as Context
+database "SQL Server" as DB
+
+User -> App: Click "Generate Code"
+activate App
+
+App -> Service: generateReferralCode()
+activate Service
+
+Service -> Controller: POST /api/referrals/generate-code
+activate Controller
+
+Controller -> Mediator: Send(GenerateReferralCodeCommand)
+activate Mediator
+
+Mediator -> Handler: Handle(command)
+activate Handler
+
+Handler -> Context: ReferralCodes.Where(rc => rc.UserId == userId)
+activate Context
+Context -> DB: SELECT * FROM ReferralCodes WHERE UserId = @userId
+activate DB
+DB --> Context: Existing code or null
+deactivate DB
+Context --> Handler: existingCode
+deactivate Context
+
+alt Existing Active Code Found
+  Handler --> Mediator: Return existing code
+else No Active Code
+  Handler -> Generator: GenerateUniqueCode()
+  activate Generator
+
+  loop Until Unique
+    Generator -> Generator: Generate random code
+    Generator -> Context: ReferralCodes.Any(rc => rc.Code == code)
+    activate Context
+    Context -> DB: SELECT COUNT(*) FROM ReferralCodes WHERE Code = @code
+    activate DB
+    DB --> Context: 0 or 1
+    deactivate DB
+    Context --> Generator: exists
+    deactivate Context
+  end
+
+  Generator --> Handler: uniqueCode
+  deactivate Generator
+
+  Handler -> Handler: Create ReferralCode entity
+  Handler -> Context: ReferralCodes.Add(referralCode)
+  activate Context
+  Handler -> Context: SaveChangesAsync()
+  Context -> DB: INSERT INTO ReferralCodes (...)
+  activate DB
+  DB --> Context: Success
+  deactivate DB
+  Context --> Handler: Success
+  deactivate Context
+
+  Handler -> Handler: Raise ReferralCodeGeneratedEvent
+  Handler -> Handler: Log Information
+  Handler --> Mediator: Return ReferralCodeDto
+end
+
+deactivate Handler
+Mediator --> Controller: ReferralCodeDto
+deactivate Mediator
+
+Controller --> Service: 200 OK with ReferralCodeDto
+deactivate Controller
+
+Service -> Service: Update BehaviorSubject
+Service --> App: Observable<ReferralCodeDto>
+deactivate Service
+
+App -> App: Display referral code
+App --> User: Show code and share options
+deactivate App
+
+@enduml
+
+@startuml Apply Referral Code Flow
+
+title Apply Referral Code Flow
+
+actor "New User" as User
+participant "Angular App" as App
+participant "ReferralService" as Service
+participant "API Controller" as Controller
+participant "MediatR" as Mediator
+participant "ApplyReferralCodeHandler" as Handler
+participant "ICoursesPlatformContext" as Context
+database "SQL Server" as DB
+
+User -> App: Enter referral code during registration
+activate App
+
+App -> Service: validateReferralCode(code)
+activate Service
+
+Service -> Controller: GET /api/referrals/validate/{code}
+activate Controller
+
+Controller -> Mediator: Send(ValidateReferralCodeQuery)
+activate Mediator
+
+Mediator -> Handler: Handle(query)
+activate Handler
+
+Handler -> Context: ReferralCodes.Where(rc => rc.Code == code)
+activate Context
+Context -> DB: SELECT * FROM ReferralCodes WHERE Code = @code
+activate DB
+DB --> Context: ReferralCode or null
+deactivate DB
+Context --> Handler: referralCode
+deactivate Context
+
+alt Valid Code Found
+  Handler -> Handler: Validate code is active
+  Handler -> Handler: Validate code not expired
+  Handler -> Handler: Validate usage limit
+  Handler --> Mediator: ValidationResultDto (Valid)
+else Invalid Code
+  Handler -> Handler: Log warning
+  Handler --> Mediator: ValidationResultDto (Invalid)
+end
+
+deactivate Handler
+Mediator --> Controller: ValidationResultDto
+deactivate Mediator
+
+Controller --> Service: 200 OK with ValidationResultDto
+deactivate Controller
+
+Service --> App: Observable<ValidationResultDto>
+deactivate Service
+
+App -> App: Show validation result
+App --> User: Display referrer info or error
+
+User -> App: Complete registration and submit
+App -> Service: applyReferralCode(code)
+activate Service
+
+Service -> Controller: POST /api/referrals/apply-code
+activate Controller
+
+Controller -> Mediator: Send(ApplyReferralCodeCommand)
+activate Mediator
+
+Mediator -> Handler: Handle(command)
+activate Handler
+
+Handler -> Context: ReferralCodes.Where(rc => rc.Code == code)
+activate Context
+Context -> DB: SELECT * FROM ReferralCodes WHERE Code = @code
+activate DB
+DB --> Context: ReferralCode
+deactivate DB
+Context --> Handler: referralCode
+deactivate Context
+
+Handler -> Handler: Validate code
+Handler -> Handler: Validate not self-referral
+Handler -> Context: Referrals.Any(r => r.RefereeUserId == userId)
+activate Context
+Context -> DB: SELECT COUNT(*) FROM Referrals WHERE RefereeUserId = @userId
+activate DB
+DB --> Context: 0
+deactivate DB
+Context --> Handler: false
+deactivate Context
+
+Handler -> Handler: Create Referral entity
+Handler -> Context: Referrals.Add(referral)
+activate Context
+Handler -> Context: referralCode.IncrementUsage()
+Handler -> Context: SaveChangesAsync()
+Context -> DB: INSERT INTO Referrals (...)\nUPDATE ReferralCodes SET UsageCount = UsageCount + 1
+activate DB
+DB --> Context: Success
+deactivate DB
+Context --> Handler: Success
+deactivate Context
+
+Handler -> Handler: Raise ReferralCodeAppliedEvent
+Handler -> Handler: Log Information with CorrelationId
+Handler --> Mediator: Success
+deactivate Handler
+
+Mediator --> Controller: Success
+deactivate Mediator
+
+Controller --> Service: 200 OK
+deactivate Controller
+
+Service -> Service: Update state
+Service --> App: Success
+deactivate Service
+
+App --> User: Show welcome message with reward info
+deactivate App
+
+@enduml
+
+@startuml Distribute Rewards Flow
+
+title Distribute Rewards Flow
+
+participant "Background Service" as Background
+participant "MediatR" as Mediator
+participant "MarkReferralAsConvertedHandler" as ConvertHandler
+participant "DistributeRewardHandler" as RewardHandler
+participant "RewardCalculationService" as Calculator
+participant "ICoursesPlatformContext" as Context
+database "SQL Server" as DB
+
+Background -> Background: Detect conversion event\n(e.g., referee completes first purchase)
+activate Background
+
+Background -> Mediator: Send(MarkReferralAsConvertedCommand)
+activate Mediator
+
+Mediator -> ConvertHandler: Handle(command)
+activate ConvertHandler
+
+ConvertHandler -> Context: Referrals.FindAsync(referralId)
+activate Context
+Context -> DB: SELECT * FROM Referrals WHERE ReferralId = @id
+activate DB
+DB --> Context: Referral
+deactivate DB
+Context --> ConvertHandler: referral
+deactivate Context
+
+ConvertHandler -> ConvertHandler: referral.MarkAsConverted(conversionValue)
+ConvertHandler -> Context: SaveChangesAsync()
+activate Context
+Context -> DB: UPDATE Referrals SET Status = 'Completed', ConversionDate = @date
+activate DB
+DB --> Context: Success
+deactivate DB
+Context --> ConvertHandler: Success
+deactivate Context
+
+ConvertHandler -> ConvertHandler: Raise ReferralConvertedEvent
+ConvertHandler -> ConvertHandler: Log Information
+ConvertHandler --> Mediator: Success
+deactivate ConvertHandler
+
+Mediator --> Background: Success
+deactivate Mediator
+
+' Distribute Referrer Reward
+Background -> Mediator: Send(DistributeReferrerRewardCommand)
+activate Mediator
+
+Mediator -> RewardHandler: Handle(command)
+activate RewardHandler
+
+RewardHandler -> Context: Referrals.Include(r => r.Campaign).FindAsync(referralId)
+activate Context
+Context -> DB: SELECT * FROM Referrals r LEFT JOIN ReferralCampaigns c ON r.CampaignId = c.Id WHERE r.ReferralId = @id
+activate DB
+DB --> Context: Referral with Campaign
+deactivate DB
+Context --> RewardHandler: referral
+deactivate Context
+
+RewardHandler -> Calculator: CalculateReferrerReward(referral)
+activate Calculator
+
+Calculator -> Calculator: Get campaign rules
+Calculator -> Calculator: Calculate reward based on type and tiers
+Calculator --> RewardHandler: rewardAmount
+deactivate Calculator
+
+RewardHandler -> RewardHandler: Validate eligibility
+RewardHandler -> Context: ReferralRewards.Count(rr => rr.UserId == referrerId)
+activate Context
+Context -> DB: SELECT COUNT(*) FROM ReferralRewards WHERE UserId = @referrerId
+activate DB
+DB --> Context: count
+deactivate DB
+Context --> RewardHandler: rewardCount
+deactivate Context
+
+RewardHandler -> RewardHandler: Check max rewards per user limit
+RewardHandler -> RewardHandler: Create ReferralReward entity
+RewardHandler -> Context: ReferralRewards.Add(reward)
+activate Context
+RewardHandler -> Context: SaveChangesAsync()
+Context -> DB: INSERT INTO ReferralRewards (...)
+activate DB
+DB --> Context: Success
+deactivate DB
+Context --> RewardHandler: Success
+deactivate Context
+
+RewardHandler -> RewardHandler: Raise RewardDistributedEvent
+RewardHandler -> RewardHandler: Log Information with referrer context
+RewardHandler --> Mediator: Success
+deactivate RewardHandler
+
+Mediator --> Background: Success
+deactivate Mediator
+
+' Distribute Referee Reward
+Background -> Mediator: Send(DistributeRefereeRewardCommand)
+activate Mediator
+
+Mediator -> RewardHandler: Handle(command)
+activate RewardHandler
+
+RewardHandler -> Context: Referrals.Include(r => r.Campaign).FindAsync(referralId)
+activate Context
+Context -> DB: SELECT * FROM Referrals r LEFT JOIN ReferralCampaigns c ON r.CampaignId = c.Id WHERE r.ReferralId = @id
+activate DB
+DB --> Context: Referral with Campaign
+deactivate DB
+Context --> RewardHandler: referral
+deactivate Context
+
+RewardHandler -> Calculator: CalculateRefereeReward(referral)
+activate Calculator
+Calculator -> Calculator: Get campaign rules for referee
+Calculator -> Calculator: Calculate welcome bonus
+Calculator --> RewardHandler: rewardAmount
+deactivate Calculator
+
+RewardHandler -> RewardHandler: Create ReferralReward entity for referee
+RewardHandler -> Context: ReferralRewards.Add(reward)
+activate Context
+RewardHandler -> Context: SaveChangesAsync()
+Context -> DB: INSERT INTO ReferralRewards (...)
+activate DB
+DB --> Context: Success
+deactivate DB
+Context --> RewardHandler: Success
+deactivate Context
+
+RewardHandler -> RewardHandler: Raise RewardDistributedEvent
+RewardHandler -> RewardHandler: Log Information with referee context
+RewardHandler --> Mediator: Success
+deactivate RewardHandler
+
+Mediator --> Background: Success
+deactivate Mediator
+
+Background -> Background: Log completion
+deactivate Background
+
+@enduml

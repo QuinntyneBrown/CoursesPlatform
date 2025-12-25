@@ -1,0 +1,212 @@
+@startuml Content Moderation Class Diagram
+
+!define AGGREGATE_ROOT_COLOR #FFE5B4
+!define ENTITY_COLOR #E5F2FF
+!define VALUE_OBJECT_COLOR #E5FFE5
+!define ENUM_COLOR #FFF0E5
+
+' Enums
+enum FlagReason <<enumeration>> ENUM_COLOR {
+  Spam
+  Offensive
+  Inappropriate
+  Copyright
+  HateSpeech
+  Violence
+  AdultContent
+  Other
+}
+
+enum ModerationActionType <<enumeration>> ENUM_COLOR {
+  Approve
+  Remove
+  Hide
+  Warn
+  Ban
+}
+
+enum QueueStatus <<enumeration>> ENUM_COLOR {
+  Pending
+  UnderReview
+  Resolved
+}
+
+enum QueuePriority <<enumeration>> ENUM_COLOR {
+  Low
+  Medium
+  High
+  Critical
+}
+
+enum AppealStatus <<enumeration>> ENUM_COLOR {
+  Pending
+  UnderReview
+  Approved
+  Rejected
+}
+
+enum ContentType <<enumeration>> ENUM_COLOR {
+  Course
+  Review
+  QAPost
+  Discussion
+  DirectMessage
+  Comment
+}
+
+' Value Objects
+class TrustScore <<value object>> VALUE_OBJECT_COLOR {
+  + Score: int
+  + LastUpdated: DateTime
+  + ChangeHistory: List<TrustScoreChange>
+  --
+  + CalculateNewScore(adjustment: int): TrustScore
+  + GetRestrictions(): List<string>
+  + IsRestricted(): bool
+}
+
+class TrustScoreChange <<value object>> VALUE_OBJECT_COLOR {
+  + ChangeAmount: int
+  + Reason: string
+  + ChangedAt: DateTime
+}
+
+' Aggregate Root
+class ContentFlag <<aggregate root>> AGGREGATE_ROOT_COLOR {
+  + ContentFlagId: Guid
+  + ContentType: ContentType
+  + ContentId: Guid
+  + FlaggedByUserId: Guid
+  + FlagReason: FlagReason
+  + Description: string
+  + FlaggedAt: DateTime
+  + IsAIFlag: bool
+  + AIConfidenceScore: decimal?
+  + AICategories: string?
+  --
+  + Create(contentType, contentId, userId, reason, description): ContentFlag
+  + CreateAIFlag(contentType, contentId, reason, confidence, categories): ContentFlag
+  + IsValidFlag(): bool
+}
+
+' Entities
+class ModerationQueue <<entity>> ENTITY_COLOR {
+  + ModerationQueueId: Guid
+  + ContentType: ContentType
+  + ContentId: Guid
+  + Status: QueueStatus
+  + Priority: QueuePriority
+  + AssignedModeratorId: Guid?
+  + CreatedAt: DateTime
+  + UpdatedAt: DateTime
+  + ResolvedAt: DateTime?
+  + Flags: List<ContentFlag>
+  --
+  + AddFlag(flag: ContentFlag): void
+  + AssignToModerator(moderatorId: Guid): void
+  + Reassign(moderatorId: Guid): void
+  + UpdatePriority(): void
+  + MarkAsResolved(): void
+  + IsStale(): bool
+}
+
+class ModerationAction <<entity>> ENTITY_COLOR {
+  + ModerationActionId: Guid
+  + ModerationQueueId: Guid
+  + ContentType: ContentType
+  + ContentId: Guid
+  + ActionType: ModerationActionType
+  + ModeratorId: Guid
+  + ModeratorNotes: string
+  + ActionedAt: DateTime
+  --
+  + Create(queueId, contentType, contentId, actionType, moderatorId, notes): ModerationAction
+  + RequiresNotification(): bool
+  + GetTrustScoreImpact(): int
+  + IsReversible(): bool
+}
+
+class Appeal <<entity>> ENTITY_COLOR {
+  + AppealId: Guid
+  + ModerationActionId: Guid
+  + AppealedByUserId: Guid
+  + Reason: string
+  + Status: AppealStatus
+  + ReviewedByUserId: Guid?
+  + ReviewerNotes: string?
+  + AppealedAt: DateTime
+  + ReviewedAt: DateTime?
+  --
+  + Create(actionId, userId, reason): Appeal
+  + Review(reviewerId: Guid, approved: bool, notes: string): void
+  + IsEligibleForAppeal(actionDate: DateTime): bool
+  + CanBeAppealed(): bool
+}
+
+class UserModerationProfile <<entity>> ENTITY_COLOR {
+  + UserId: Guid
+  + TrustScore: TrustScore
+  + TotalFlagsSubmitted: int
+  + AccurateFlagsCount: int
+  + FalseFlagsCount: int
+  + TotalModerationActions: int
+  + LastActionDate: DateTime?
+  + IsBanned: bool
+  + BanExpiresAt: DateTime?
+  --
+  + UpdateTrustScore(adjustment: int, reason: string): void
+  + IncrementFlagCount(accurate: bool): void
+  + RecordModerationAction(actionType: ModerationActionType): void
+  + CanFlagContent(): bool
+  + CanCreateContent(): bool
+  + GetActiveRestrictions(): List<string>
+}
+
+' Relationships
+ContentFlag "1..*" -- "1" ModerationQueue : queued in >
+ModerationQueue "1" -- "0..1" ModerationAction : resulted in >
+ModerationAction "1" -- "0..1" Appeal : appealed via >
+UserModerationProfile "1" -- "1" TrustScore : has >
+TrustScore "1" *-- "0..*" TrustScoreChange : contains >
+
+ContentFlag ..> ContentType : uses
+ContentFlag ..> FlagReason : uses
+ModerationQueue ..> QueueStatus : uses
+ModerationQueue ..> QueuePriority : uses
+ModerationQueue ..> ContentType : uses
+ModerationAction ..> ModerationActionType : uses
+ModerationAction ..> ContentType : uses
+Appeal ..> AppealStatus : uses
+
+' Notes
+note right of ContentFlag
+  Aggregate Root for content moderation domain.
+  Represents a flag raised against content.
+  Can be user-generated or AI-generated.
+end note
+
+note right of ModerationQueue
+  Manages the workflow of reviewing flagged content.
+  Tracks assignment and resolution.
+  Priority auto-calculated based on flags.
+end note
+
+note right of TrustScore
+  Value Object representing user trustworthiness.
+  Immutable - creates new instance on change.
+  Score ranges from 0 to 100.
+end note
+
+note right of ModerationAction
+  Immutable record of moderator decision.
+  Permanent audit trail.
+  Triggers notifications and trust score updates.
+end note
+
+note right of Appeal
+  Allows users to challenge moderation decisions.
+  Time-limited (30 days).
+  One appeal per action allowed.
+end note
+
+@enduml

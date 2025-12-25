@@ -1,0 +1,240 @@
+@startuml Course Enrollment Sequence
+
+title Course Enrollment Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Click enroll button
+App -> API: POST /api/courses/{courseId}/enroll
+API -> DB: Check if already enrolled
+DB --> API: Not enrolled
+API -> DB: Create CourseProgress (NotStarted)
+DB --> API: CourseProgress created
+API -> DB: Create SectionProgress records
+DB --> API: Sections created
+API -> API: Publish CourseEnrolled event
+API --> App: 201 Created
+App --> User: Show success message
+App -> App: Navigate to first lecture
+
+@enduml
+
+@startuml Video Progress Tracking Sequence
+
+title Video Progress Tracking Flow
+
+actor User
+participant "Angular App" as App
+participant "Video Player" as Player
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Navigate to lecture
+App -> API: GET /api/lectures/{id}/video/progress
+API -> DB: Fetch VideoProgress
+DB --> API: VideoProgress data
+API --> App: Return position and settings
+App -> Player: Initialize with last position
+
+loop Every 5 seconds during playback
+    Player -> Player: Track current position
+    Player -> API: PUT /api/lectures/{id}/video/position
+    API -> DB: Update LastPosition, WatchTime
+    DB --> API: Updated
+    API -> API: Check completion criteria (90%)
+    alt 90% watched
+        API -> DB: Mark LectureProgress as Completed
+        API -> DB: Update SectionProgress
+        API -> DB: Update CourseProgress
+        API -> API: Publish LectureCompleted event
+        API -> API: Publish VideoPositionUpdated event
+        API --> App: Progress updated
+        App --> User: Show completion notification
+    else Not yet complete
+        API -> API: Publish VideoPositionUpdated event
+        API --> App: Position saved
+    end
+end
+
+@enduml
+
+@startuml Lecture Completion Sequence
+
+title Lecture Completion Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Watch video to 90% or click "Mark complete"
+App -> API: PUT /api/lectures/{id}/complete
+API -> DB: Find LectureProgress
+DB --> API: LectureProgress found
+API -> API: Mark as Completed
+API -> DB: Update LectureProgress (status, completedAt)
+DB --> API: Updated
+API -> DB: Fetch SectionProgress
+API -> API: Recalculate section progress
+API -> DB: Update SectionProgress
+alt Section completed
+    API -> API: Publish SectionCompleted event
+end
+API -> DB: Fetch CourseProgress
+API -> API: Recalculate course progress
+API -> DB: Update CourseProgress
+alt Course completed (100%)
+    API -> DB: Mark CourseProgress as Completed
+    API -> API: Publish CourseCompleted event
+    API --> App: Course completed
+    App --> User: Show completion celebration
+else Course in progress
+    API -> API: Publish CourseProgressUpdated event
+    API --> App: Progress updated
+    App --> User: Update progress bar
+end
+
+@enduml
+
+@startuml Bookmark Creation Sequence
+
+title Bookmark Creation Flow
+
+actor User
+participant "Angular App" as App
+participant "Video Player" as Player
+participant "API" as API
+participant "Database" as DB
+
+User -> Player: Pause video at timestamp
+User -> App: Click bookmark button
+App --> User: Show bookmark dialog
+User -> App: Enter bookmark title
+User -> App: Click save
+App -> Player: Get current timestamp
+Player --> App: Current position
+App -> API: POST /api/lectures/{id}/bookmarks
+API -> DB: Count existing bookmarks
+DB --> API: Count
+alt Count < 50
+    API -> DB: Create Bookmark
+    DB --> API: Bookmark created
+    API -> API: Publish BookmarkCreated event
+    API --> App: 201 Created
+    App --> User: Show success notification
+    App -> App: Add bookmark to list
+    App -> Player: Show bookmark marker on timeline
+else Count >= 50
+    API --> App: 400 Max bookmarks reached
+    App --> User: Show error message
+end
+
+@enduml
+
+@startuml Note Creation Sequence
+
+title Note Creation Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Click "Add Note" button
+App --> User: Show note editor
+User -> App: Enter title and content (markdown)
+App -> App: Auto-save draft to local storage
+
+loop Every 2 seconds while typing
+    App -> App: Save draft locally
+end
+
+User -> App: Click save button
+App -> API: POST /api/lectures/{id}/notes
+API -> API: Validate content length
+alt Content valid
+    API -> DB: Create Note
+    DB --> API: Note created
+    API -> DB: Create NoteVersion (version 1)
+    DB --> API: Version created
+    API -> API: Publish NoteCreated event
+    API --> App: 201 Created
+    App -> App: Clear local draft
+    App --> User: Show success notification
+    App -> App: Add note to list
+else Content invalid
+    API --> App: 400 Validation error
+    App --> User: Show error message
+end
+
+@enduml
+
+@startuml Note Search Sequence
+
+title Note Search Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Navigate to notes page
+User -> App: Enter search query
+App -> App: Debounce input (500ms)
+App -> API: GET /api/notes/search?q={query}
+API -> DB: Full-text search on notes
+DB --> API: Matching notes with ranking
+API -> API: Enrich with course/lecture context
+API -> API: Publish NoteSearchPerformed event
+API --> App: Search results
+App --> User: Display results with highlights
+User -> App: Click note result
+App -> App: Navigate to lecture
+App -> App: Scroll to note
+App --> User: Show note in context
+
+@enduml
+
+@startuml Course Progress Calculation Sequence
+
+title Course Progress Calculation Flow
+
+participant "API" as API
+participant "Database" as DB
+participant "Event Bus" as Bus
+
+Bus -> API: LectureCompleted event received
+API -> DB: Fetch CourseProgress by courseId
+DB --> API: CourseProgress data
+API -> DB: Count total lectures in course
+DB --> API: Total lectures
+API -> DB: Count completed lectures by user
+DB --> API: Completed lectures
+API -> API: Calculate percentage
+note right: percentage = (completed / total) * 100
+API -> DB: Update CourseProgress percentage
+alt Progress = 100%
+    API -> DB: Set status = Completed
+    API -> DB: Set CompletedAt timestamp
+    API -> Bus: Publish CourseCompleted event
+else Progress < 100%
+    API -> DB: Set status = InProgress (if NotStarted)
+    API -> Bus: Publish CourseProgressUpdated event
+end
+DB --> API: Updated
+API -> API: Recalculate all SectionProgress
+loop For each section
+    API -> DB: Count section lectures
+    API -> DB: Count completed section lectures
+    API -> API: Calculate section percentage
+    API -> DB: Update SectionProgress
+    alt Section progress = 100%
+        API -> Bus: Publish SectionCompleted event
+    end
+end
+
+@enduml
+

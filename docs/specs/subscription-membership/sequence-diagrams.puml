@@ -1,0 +1,312 @@
+@startuml Subscribe to Plan Sequence
+
+title Subscribe to Plan Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Payment Gateway" as Gateway
+participant "Database" as DB
+
+User -> App: Select subscription plan
+App --> User: Show plan details and features
+
+User -> App: Click Subscribe
+App --> User: Show payment method form
+
+User -> App: Enter payment details
+App -> App: Validate payment form
+App -> Gateway: Tokenize payment details
+Gateway --> App: Payment token
+
+User -> App: Confirm subscription
+App -> API: POST /api/subscriptions/subscribe
+API -> API: Validate user and plan
+API -> DB: Create subscription (Pending)
+DB --> API: Subscription created
+
+API -> Gateway: Create recurring payment profile
+Gateway --> API: Profile created
+
+API -> Gateway: Process initial payment
+Gateway --> API: Payment successful
+
+API -> DB: Update subscription to Active
+API -> DB: Create billing transaction
+API -> DB: Generate invoice
+DB --> API: Updated
+
+API -> API: Publish SubscriptionActivated event
+API --> App: 200 OK with subscription details
+App --> User: Show success message
+App --> User: Redirect to subscription dashboard
+
+@enduml
+
+@startuml Cancel Subscription Sequence
+
+title Cancel Subscription Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Payment Gateway" as Gateway
+participant "Database" as DB
+participant "Notification" as Notify
+
+User -> App: Navigate to subscription management
+App -> API: GET /api/subscriptions/my
+API -> DB: Get user subscription
+DB --> API: Subscription data
+API --> App: Subscription details
+App --> User: Display current subscription
+
+User -> App: Click Cancel Subscription
+App --> User: Show cancellation confirmation dialog
+
+User -> App: Enter cancellation reason (optional)
+User -> App: Confirm cancellation
+
+App -> API: POST /api/subscriptions/cancel
+API -> DB: Get subscription
+DB --> API: Subscription data
+
+API -> API: Validate subscription is active
+API -> Gateway: Cancel recurring payment profile
+Gateway --> API: Profile cancelled
+
+API -> DB: Update subscription status to Cancelled
+API -> DB: Set cancellation date and reason
+API -> DB: Keep end date (access until period end)
+DB --> API: Updated
+
+API -> API: Publish SubscriptionCancelled event
+API -> Notify: Send cancellation confirmation email
+API --> App: 200 OK
+
+App --> User: Show cancellation confirmation
+App --> User: Display access retention message
+
+@enduml
+
+@startuml Upgrade Subscription Sequence
+
+title Upgrade Subscription Tier Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Payment Gateway" as Gateway
+participant "Database" as DB
+
+User -> App: Navigate to subscription management
+App -> API: GET /api/subscriptions/my
+API -> DB: Get subscription
+DB --> API: Subscription data
+API --> App: Current subscription
+App --> User: Display subscription with upgrade options
+
+User -> App: Click Upgrade
+App --> User: Show available higher tiers
+
+User -> App: Select new tier
+App -> API: GET /api/subscriptions/calculate-proration?planId={id}
+API -> API: Calculate proration
+API -> DB: Get current subscription details
+DB --> API: Subscription data
+API -> API: Calculate credit and new charges
+API --> App: Proration details
+App --> User: Display proration breakdown
+
+User -> App: Confirm upgrade
+App -> API: POST /api/subscriptions/upgrade
+
+API -> DB: Get subscription and payment method
+DB --> API: Subscription and payment data
+
+API -> API: Calculate final proration
+API -> Gateway: Charge prorated amount
+Gateway --> API: Payment successful
+
+API -> DB: Update subscription to new plan
+API -> DB: Update tier immediately
+API -> DB: Create billing transaction
+API -> DB: Generate invoice
+DB --> API: Updated
+
+API -> API: Publish SubscriptionUpgraded event
+API --> App: 200 OK with updated subscription
+
+App --> User: Show upgrade success
+App --> User: Display new tier features
+
+@enduml
+
+@startuml Downgrade Subscription Sequence
+
+title Downgrade Subscription Tier Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification" as Notify
+
+User -> App: Navigate to subscription management
+App -> API: GET /api/subscriptions/my
+API -> DB: Get subscription
+DB --> API: Subscription data
+API --> App: Current subscription
+App --> User: Display subscription
+
+User -> App: Click Change Plan
+App --> User: Show available tiers
+
+User -> App: Select lower tier
+App --> User: Show downgrade warning dialog
+App --> User: Display features to be lost
+App --> User: Show effective date (next billing)
+
+User -> App: Confirm downgrade
+App -> API: POST /api/subscriptions/downgrade
+
+API -> DB: Get subscription
+DB --> API: Subscription data
+
+API -> API: Validate downgrade is allowed
+API -> DB: Schedule tier change for next billing
+API -> DB: Update pending tier change
+DB --> API: Updated
+
+API -> API: Publish SubscriptionDowngraded event
+API -> Notify: Send downgrade confirmation email
+API --> App: 200 OK
+
+App --> User: Show downgrade confirmation
+App --> User: Display effective date and current access retention
+
+note over User, DB
+User continues to have current tier access
+until the end of billing cycle
+end note
+
+@enduml
+
+@startuml Recurring Billing Sequence
+
+title Recurring Billing Processing Flow
+
+participant "Scheduler" as Scheduler
+participant "Billing Service" as Service
+participant "Payment Gateway" as Gateway
+participant "Database" as DB
+participant "Notification" as Notify
+
+Scheduler -> Service: Trigger daily billing check
+Service -> DB: Get subscriptions due for billing
+DB --> Service: List of subscriptions
+
+loop For each subscription due
+    Service -> DB: Get subscription and payment method
+    DB --> Service: Subscription details
+
+    Service -> Gateway: Charge recurring payment
+
+    alt Payment Successful
+        Gateway --> Service: Payment confirmed
+
+        Service -> DB: Create billing transaction (Completed)
+        Service -> DB: Generate invoice
+        Service -> DB: Update next billing date
+        Service -> DB: Create new billing cycle
+        DB --> Service: Updated
+
+        Service -> Service: Publish RecurringBillingProcessed event
+        Service -> Notify: Send invoice email to user
+
+    else Payment Failed
+        Gateway --> Service: Payment failed
+
+        Service -> DB: Create billing transaction (Failed)
+        Service -> DB: Update subscription to PastDue
+        Service -> DB: Increment retry count
+        DB --> Service: Updated
+
+        Service -> Service: Publish SubscriptionPaymentFailed event
+        Service -> Notify: Send payment failure notification
+
+        alt Retry count < 3
+            Service -> DB: Schedule retry in 3 days
+            DB --> Service: Retry scheduled
+        else Max retries reached
+            Service -> DB: Update subscription to Suspended
+            DB --> Service: Updated
+            Service -> Service: Publish SubscriptionSuspended event
+            Service -> Notify: Send suspension notification
+        end
+    end
+end
+
+Service --> Scheduler: Billing processing complete
+
+@enduml
+
+@startuml Update Payment Method Sequence
+
+title Update Payment Method Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Payment Gateway" as Gateway
+participant "Database" as DB
+
+User -> App: Navigate to payment methods
+App -> API: GET /api/billing/payment-methods
+API -> DB: Get user payment methods
+DB --> API: Payment methods
+API --> App: Payment methods data
+App --> User: Display saved payment methods
+
+User -> App: Click Add/Update Payment Method
+App --> User: Show secure payment form
+
+User -> App: Enter new payment details
+App -> App: Validate card details
+
+App -> Gateway: Tokenize payment information
+Gateway --> App: Secure token
+
+App -> API: PUT /api/subscriptions/payment-method
+API -> Gateway: Validate payment token
+Gateway --> API: Validation successful
+
+API -> DB: Save/update payment method
+API -> DB: Encrypt sensitive data
+API -> DB: Set as default if requested
+DB --> API: Payment method saved
+
+API -> API: Publish PaymentMethodUpdated event
+API --> App: 200 OK
+
+App --> User: Show success message
+App --> User: Update payment methods list
+
+note over User, DB
+If subscription has failed payments,
+retry billing with new payment method
+end note
+
+alt Active subscription with failed payment
+    API -> Gateway: Retry failed payment
+    Gateway --> API: Payment result
+
+    alt Payment successful
+        API -> DB: Update subscription to Active
+        API -> DB: Create successful transaction
+        DB --> API: Updated
+        API -> API: Publish SubscriptionReactivated event
+    end
+end
+
+@enduml

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="usecase-reviews-ratings" name="Use Cases">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="Reviews &amp; Ratings - Use Case Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="250" y="20" width="350" height="30" as="geometry"/>
+        </mxCell>
+        <!-- System Boundary -->
+        <mxCell id="boundary" value="Reviews &amp; Ratings System" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;verticalAlign=top;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="60" width="500" height="700" as="geometry"/>
+        </mxCell>
+        <!-- Actors -->
+        <mxCell id="student" value="Student" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="200" width="30" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="instructor" value="Instructor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="400" width="30" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="admin" value="Administrator" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="600" width="30" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="system" value="System" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="750" y="350" width="30" height="60" as="geometry"/>
+        </mxCell>
+        <!-- Student Use Cases -->
+        <mxCell id="uc1" value="Submit Review" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="250" y="80" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc2" value="Edit Review" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="400" y="80" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc3" value="Delete Review" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="550" y="80" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc4" value="View Reviews" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="250" y="150" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc5" value="Filter Reviews" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="400" y="150" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc6" value="Sort Reviews" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="550" y="150" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc7" value="Mark Review Helpful" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="250" y="220" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc8" value="Mark Not Helpful" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="400" y="220" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc9" value="Report Review" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="550" y="220" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc10" value="View My Reviews" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="250" y="290" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Instructor Use Cases -->
+        <mxCell id="uc11" value="Respond to Review" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="250" y="360" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc12" value="Edit Response" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="400" y="360" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc13" value="Delete Response" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="550" y="360" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc14" value="View Course Reviews" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="250" y="430" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc15" value="View Rating Statistics" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="400" y="430" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Admin Use Cases -->
+        <mxCell id="uc16" value="Flag Review" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="250" y="510" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc17" value="Hide Review" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="400" y="510" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc18" value="Unhide Review" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="550" y="510" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc19" value="View Reported Reviews" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="250" y="580" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc20" value="Resolve Report" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="400" y="580" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc21" value="Dismiss Report" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="550" y="580" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- System Use Cases -->
+        <mxCell id="uc22" value="Calculate Course Rating" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="400" y="660" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc23" value="Update Rating Statistics" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="550" y="660" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc24" value="Send Notification" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="250" y="660" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Student Associations -->
+        <mxCell id="a1" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="student" target="uc1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="student" target="uc2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a3" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="student" target="uc3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a4" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="student" target="uc4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a5" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="student" target="uc7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a6" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="student" target="uc9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a7" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="student" target="uc10">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Instructor Associations -->
+        <mxCell id="a8" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="instructor" target="uc11">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a9" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="instructor" target="uc12">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a10" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="instructor" target="uc13">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a11" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="instructor" target="uc14">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a12" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="instructor" target="uc15">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Admin Associations -->
+        <mxCell id="a13" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="admin" target="uc16">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a14" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="admin" target="uc17">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a15" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="admin" target="uc18">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a16" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="admin" target="uc19">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a17" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="admin" target="uc20">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a18" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="admin" target="uc21">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- System Associations -->
+        <mxCell id="a19" style="endArrow=none;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="system" target="uc22">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a20" style="endArrow=none;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="system" target="uc23">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a21" style="endArrow=none;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="system" target="uc24">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Include/Extend relationships -->
+        <mxCell id="inc1" value="include" style="endArrow=open;html=1;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="uc1" target="uc22">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc2" value="include" style="endArrow=open;html=1;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="uc2" target="uc22">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc3" value="include" style="endArrow=open;html=1;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="uc3" target="uc22">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc4" value="include" style="endArrow=open;html=1;dashed=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="uc4" target="uc5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc5" value="include" style="endArrow=open;html=1;dashed=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="uc5" target="uc6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc6" value="include" style="endArrow=open;html=1;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="uc11" target="uc24">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

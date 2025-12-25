@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-checkout-payments" name="C4 Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="C4 Container Diagram - Checkout &amp; Payments" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="450" height="30" as="geometry"/>
+        </mxCell>
+        <!-- User -->
+        <mxCell id="user" value="User&#xa;[Person]&#xa;&#xa;A customer purchasing&#xa;courses on the platform" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="350" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Web App -->
+        <mxCell id="webapp" value="Web Application&#xa;[Container: Angular]&#xa;&#xa;Shopping cart, checkout&#xa;and payment UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="240" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- API -->
+        <mxCell id="api" value="API Application&#xa;[Container: ASP.NET Core]&#xa;&#xa;Payment processing,&#xa;order management" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="240" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Database -->
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Stores orders, payments,&#xa;refunds, invoices" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="240" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Payment Gateway -->
+        <mxCell id="gateway" value="Payment Gateway&#xa;[External System: Stripe]&#xa;&#xa;Processes card payments,&#xa;refunds, disputes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Email Service -->
+        <mxCell id="email" value="Email Service&#xa;[External System]&#xa;&#xa;Sends order confirmations&#xa;and invoices" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- PayPal -->
+        <mxCell id="paypal" value="PayPal&#xa;[External System]&#xa;&#xa;Alternative payment&#xa;processing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- PDF Generator -->
+        <mxCell id="pdf" value="PDF Generator&#xa;[Component]&#xa;&#xa;Generates invoices&#xa;and receipts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="700" y="240" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Tax Service -->
+        <mxCell id="tax" value="Tax Service&#xa;[External System]&#xa;&#xa;Calculates sales tax&#xa;and VAT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="700" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Arrows -->
+        <mxCell id="arrow1" value="Uses" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="user" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow2" value="API Calls" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="webapp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow3" value="Reads/Writes" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow4" value="Process payments" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="gateway">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow5" value="Send emails" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="database" target="email">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow6" value="PayPal flow" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="webapp" target="paypal">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow7" value="Webhooks" style="endArrow=classic;html=1;dashed=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="gateway" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow8" value="Generate PDFs" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="pdf">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow9" value="Calculate tax" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="pdf" target="tax">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

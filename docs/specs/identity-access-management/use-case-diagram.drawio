@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="usecase-identity" name="Use Cases">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="Identity &amp; Access Management - Use Case Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="220" y="20" width="400" height="30" as="geometry"/>
+        </mxCell>
+        <!-- System Boundary -->
+        <mxCell id="boundary" value="Identity &amp; Access Management System" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;verticalAlign=top;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="60" width="450" height="600" as="geometry"/>
+        </mxCell>
+        <!-- Actors -->
+        <mxCell id="user" value="User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="200" width="30" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="admin" value="Administrator" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="450" width="30" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="emailsys" value="Email System" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="720" y="200" width="30" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="oauth" value="OAuth Provider" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="720" y="350" width="30" height="60" as="geometry"/>
+        </mxCell>
+        <!-- Use Cases -->
+        <mxCell id="uc1" value="Register Account" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="280" y="80" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc2" value="Verify Email" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="80" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc3" value="Login" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="280" y="150" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc4" value="Logout" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="150" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc5" value="Reset Password" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="280" y="220" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc6" value="Change Password" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="220" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc7" value="Manage Profile" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="280" y="290" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc8" value="Upload Avatar" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="290" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc9" value="Enable MFA" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="280" y="360" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc10" value="Manage Sessions" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="360" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc11" value="Link Social Account" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="280" y="430" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc12" value="Social Login" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="430" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc13" value="Manage Preferences" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="280" y="500" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc14" value="Request Data Export" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="500" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc15" value="Suspend User" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="280" y="570" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc16" value="Merge Accounts" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="570" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- User Associations -->
+        <mxCell id="a1" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="user" target="uc1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="user" target="uc3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a3" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="user" target="uc5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a4" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="user" target="uc7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a5" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="user" target="uc9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a6" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="user" target="uc11">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a7" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="user" target="uc13">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Admin Associations -->
+        <mxCell id="a8" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="admin" target="uc15">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a9" style="endArrow=none;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="admin" target="uc16">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- External System Associations -->
+        <mxCell id="a10" style="endArrow=none;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="emailsys" target="uc2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a11" style="endArrow=none;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="oauth" target="uc12">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Include/Extend relationships -->
+        <mxCell id="inc1" value="include" style="endArrow=open;html=1;dashed=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="uc1" target="uc2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc2" value="include" style="endArrow=open;html=1;dashed=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="uc7" target="uc8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

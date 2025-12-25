@@ -1,0 +1,279 @@
+@startuml Add to Cart Sequence
+
+title Add to Cart Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Click "Add to Cart" button
+App -> App: Validate user session
+App -> API: POST /api/cart/items
+API -> DB: Find or create cart
+DB --> API: Cart found/created
+API -> DB: Check course exists and published
+DB --> API: Course valid
+API -> DB: Check user not enrolled
+DB --> API: Not enrolled
+API -> DB: Check item not in cart
+DB --> API: Not in cart
+alt Item not in cart
+    API -> DB: Add CartItem
+    DB --> API: Item added
+    API -> DB: Update cart totals
+    API -> API: Publish ItemAddedToCart event
+    API --> App: 201 Created
+    App -> App: Update cart badge
+    App --> User: Show success notification
+else Item already in cart
+    API --> App: 409 Already in cart
+    App --> User: Show "Already in cart" message
+end
+
+@enduml
+
+@startuml Apply Coupon Sequence
+
+title Apply Coupon Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Enter coupon code
+User -> App: Click "Apply" button
+App -> App: Validate coupon format
+App -> API: POST /api/cart/coupons
+API -> DB: Find coupon by code
+alt Coupon found
+    DB --> API: Coupon found
+    API -> API: Validate coupon active
+    API -> API: Check expiration date
+    API -> API: Check usage limits
+    API -> DB: Check user usage count
+    DB --> API: Usage count
+    alt Coupon valid
+        API -> DB: Get cart items
+        DB --> API: Cart items
+        API -> API: Validate applicable courses
+        API -> API: Check minimum purchase
+        alt Coupon applicable
+            API -> DB: Apply coupon to cart
+            API -> API: Calculate discount
+            API -> DB: Update cart totals
+            API -> API: Publish CouponApplied event
+            API --> App: 200 OK with discount
+            App -> App: Update cart summary
+            App --> User: Show success with savings
+        else Minimum not met
+            API --> App: 422 Minimum purchase not met
+            App --> User: Show minimum requirement
+        end
+    else Coupon invalid
+        API -> API: Publish CouponValidationFailed event
+        API --> App: 400 Coupon invalid/expired
+        App --> User: Show error message
+    end
+else Coupon not found
+    DB --> API: Not found
+    API --> App: 404 Coupon not found
+    App --> User: Show "Invalid code" message
+end
+
+@enduml
+
+@startuml Checkout Flow
+
+title Checkout Initiation Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Click "Checkout" button
+App -> App: Check user authenticated
+alt User authenticated
+    App -> API: GET /api/cart
+    API -> DB: Get cart with items
+    DB --> API: Cart data
+    API -> DB: Validate all courses available
+    DB --> API: Availability status
+    alt All items available
+        API -> DB: Validate prices unchanged
+        DB --> API: Price validation
+        alt Prices unchanged
+            API --> App: 200 OK with cart
+            App --> User: Navigate to payment page
+        else Prices changed
+            API --> App: 422 Prices changed
+            App --> User: Show price change warning
+            User -> App: Confirm or cancel
+            alt User confirms
+                App --> User: Navigate to payment page
+            else User cancels
+                App --> User: Stay on cart page
+            end
+        end
+    else Items unavailable
+        API --> App: 410 Items unavailable
+        App --> User: Show unavailable items
+        User -> App: Remove unavailable items
+        App -> API: DELETE /api/cart/items/{id}
+        API -> DB: Remove items
+        API --> App: 200 OK
+    end
+else User not authenticated
+    App -> App: Store cart in session
+    App --> User: Redirect to login page
+    User -> App: Complete login
+    App -> API: POST /api/cart/merge
+    API -> DB: Merge anonymous cart
+    DB --> API: Cart merged
+    API --> App: 200 OK
+    App --> User: Return to cart page
+end
+
+@enduml
+
+@startuml Wishlist Management Sequence
+
+title Wishlist Management Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Click wishlist heart icon
+App -> API: POST /api/wishlist/items
+API -> DB: Find or create wishlist
+DB --> API: Wishlist found/created
+API -> DB: Check item not in wishlist
+DB --> API: Not in wishlist
+alt Item not in wishlist
+    API -> DB: Add WishlistItem
+    API -> DB: Store current price
+    API -> API: Publish ItemAddedToWishlist event
+    API --> App: 201 Created
+    App -> App: Update heart icon to filled
+    App --> User: Show success notification
+else Item already in wishlist
+    API --> App: 409 Already in wishlist
+    App --> User: Show message
+end
+
+User -> App: Navigate to wishlist page
+App -> API: GET /api/wishlist
+API -> DB: Get wishlist items
+DB --> API: Wishlist items
+API --> App: 200 OK with items
+App --> User: Display wishlist
+
+User -> App: Click "Move to Cart"
+App -> API: POST /api/wishlist/items/{id}/move-to-cart
+API -> DB: Get wishlist item
+DB --> API: Wishlist item
+API -> DB: Validate course available
+DB --> API: Course available
+API -> DB: Add to cart
+API -> DB: Remove from wishlist
+API -> API: Publish ItemMovedToCart event
+API --> App: 200 OK
+App -> App: Update cart badge
+App -> App: Remove from wishlist display
+App --> User: Show success notification
+
+@enduml
+
+@startuml Price Drop Detection Sequence
+
+title Wishlist Price Drop Detection Flow
+
+participant "Scheduler" as Scheduler
+participant "Background Job" as Job
+participant "Database" as DB
+participant "Notification Service" as Notif
+
+Scheduler -> Job: Trigger price check job
+Job -> DB: Get all wishlist items
+DB --> Job: Wishlist items
+loop For each wishlist item
+    Job -> DB: Get current course price
+    DB --> Job: Current price
+    Job -> Job: Compare with stored price
+    alt Price dropped
+        Job -> DB: Update wishlist item price
+        Job -> Job: Publish WishlistPriceDropDetected event
+        Job -> DB: Get user notification preferences
+        DB --> Job: Preferences
+        alt Notifications enabled
+            Job -> Notif: Send price drop notification
+            Notif --> Job: Notification sent
+        end
+    end
+end
+Job --> Scheduler: Job completed
+
+@enduml
+
+@startuml Cart Abandonment Tracking Sequence
+
+title Cart Abandonment Tracking Flow
+
+participant "Scheduler" as Scheduler
+participant "Background Job" as Job
+participant "Database" as DB
+
+Scheduler -> Job: Trigger abandonment check (runs hourly)
+Job -> DB: Get active carts older than 24 hours
+DB --> Job: Abandoned carts
+loop For each abandoned cart
+    Job -> DB: Check if cart has items
+    DB --> Job: Cart items
+    alt Cart has items
+        Job -> DB: Check if not already marked abandoned
+        DB --> Job: Status
+        alt Not marked abandoned
+            Job -> DB: Update cart status to Abandoned
+            Job -> Job: Publish CartAbandoned event
+            Job -> DB: Record abandonment metrics
+            DB --> Job: Metrics saved
+        end
+    end
+end
+Job --> Scheduler: Job completed
+
+@enduml
+
+@startuml Cart Expiration Sequence
+
+title Cart Expiration Flow
+
+participant "Scheduler" as Scheduler
+participant "Background Job" as Job
+participant "Database" as DB
+
+Scheduler -> Job: Trigger expiration check (runs daily)
+Job -> DB: Get active carts inactive for 30+ days
+DB --> Job: Inactive carts
+loop For each inactive cart
+    Job -> DB: Update cart status to Expired
+    Job -> Job: Publish CartExpired event
+    Job -> DB: Set grace period (7 days)
+    DB --> Job: Expiration updated
+end
+Job -> DB: Get expired carts past grace period
+DB --> Job: Expired carts
+loop For each expired cart
+    Job -> DB: Delete cart items
+    Job -> DB: Delete cart
+    DB --> Job: Cart deleted
+end
+Job --> Scheduler: Job completed
+
+@enduml
+
+@enduml

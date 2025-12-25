@@ -1,0 +1,311 @@
+@startuml Gamification Class Diagram
+
+title Gamification - Class Diagram
+
+package "Badge Aggregate" {
+    class Badge {
+        +BadgeId: Guid
+        +Name: string
+        +Description: string
+        +IconUrl: string
+        +Rarity: BadgeRarity
+        +Tier: BadgeTier
+        +Criteria: string
+        +IsActive: bool
+        +CreatedAt: DateTime
+        --
+        +Create(name, description, criteria): Badge
+        +UpdateCriteria(criteria): void
+        +Activate(): void
+        +Deactivate(): void
+    }
+
+    enum BadgeRarity {
+        Common
+        Rare
+        Epic
+        Legendary
+    }
+
+    enum BadgeTier {
+        Bronze
+        Silver
+        Gold
+        Platinum
+    }
+
+    class UserBadge {
+        +UserBadgeId: Guid
+        +UserId: Guid
+        +BadgeId: Guid
+        +EarnedAt: DateTime
+        --
+        +Award(user, badge): UserBadge
+    }
+}
+
+package "Achievement Aggregate" {
+    class Achievement {
+        +AchievementId: Guid
+        +Title: string
+        +Description: string
+        +Category: AchievementCategory
+        +Criteria: string
+        +RewardXp: int
+        +RewardPoints: int
+        +IconUrl: string
+        +IsActive: bool
+        --
+        +Create(title, category, criteria): Achievement
+        +UpdateRewards(xp, points): void
+    }
+
+    enum AchievementCategory {
+        Learning
+        Social
+        Completion
+        Mastery
+        Streak
+    }
+
+    class UserAchievement {
+        +UserAchievementId: Guid
+        +UserId: Guid
+        +AchievementId: Guid
+        +UnlockedAt: DateTime
+        +Progress: int
+        --
+        +Unlock(user, achievement): UserAchievement
+        +UpdateProgress(progress): void
+    }
+}
+
+package "XP Aggregate" {
+    class UserLevel {
+        +UserLevelId: Guid
+        +UserId: Guid
+        +CurrentLevel: int
+        +CurrentXp: int
+        +TotalXp: int
+        +NextLevelXp: int
+        --
+        +Create(user): UserLevel
+        +AddXp(amount): void
+        +CheckLevelUp(): bool
+        +CalculateNextLevelXp(): int
+    }
+
+    class XpTransaction {
+        +XpTransactionId: Guid
+        +UserId: Guid
+        +Amount: int
+        +Source: XpSource
+        +SourceId: Guid
+        +Multiplier: decimal
+        +CreatedAt: DateTime
+        --
+        +Record(user, amount, source): XpTransaction
+    }
+
+    enum XpSource {
+        LessonCompleted
+        QuizCompleted
+        CourseCompleted
+        DailyLogin
+        StreakBonus
+        AchievementUnlocked
+    }
+
+    class XpMultiplier {
+        +XpMultiplierId: Guid
+        +Type: MultiplierType
+        +Factor: decimal
+        +StartsAt: DateTime
+        +EndsAt: DateTime
+        +IsActive: bool
+        --
+        +Activate(): void
+        +Deactivate(): void
+        +IsValid(): bool
+    }
+
+    enum MultiplierType {
+        Streak
+        Weekend
+        SpecialEvent
+    }
+}
+
+package "Points Aggregate" {
+    class PointTransaction {
+        +PointTransactionId: Guid
+        +UserId: Guid
+        +Amount: int
+        +Type: TransactionType
+        +Source: string
+        +Balance: int
+        +CreatedAt: DateTime
+        --
+        +Earn(user, amount, source): PointTransaction
+        +Spend(user, amount, purpose): PointTransaction
+    }
+
+    enum TransactionType {
+        Earned
+        Spent
+        Refunded
+    }
+}
+
+package "Streak Aggregate" {
+    class Streak {
+        +StreakId: Guid
+        +UserId: Guid
+        +CurrentStreak: int
+        +LongestStreak: int
+        +LastActivityDate: DateTime
+        +IsActive: bool
+        +Timezone: string
+        --
+        +Create(user, timezone): Streak
+        +Increment(): void
+        +Break(): void
+        +CheckActivity(date): bool
+    }
+
+    class StreakFreeze {
+        +StreakFreezeId: Guid
+        +UserId: Guid
+        +IsUsed: bool
+        +UsedAt: DateTime
+        +ExpiresAt: DateTime
+        --
+        +Earn(user): StreakFreeze
+        +Use(): void
+        +IsValid(): bool
+    }
+
+    class StreakMilestone {
+        +StreakMilestoneId: Guid
+        +Days: int
+        +RewardBadgeId: Guid
+        +RewardXp: int
+        +Name: string
+        --
+        +Define(days, badge, xp): StreakMilestone
+    }
+}
+
+package "Challenge Aggregate" {
+    class Challenge {
+        +ChallengeId: Guid
+        +Title: string
+        +Description: string
+        +Type: ChallengeType
+        +Criteria: string
+        +StartDate: DateTime
+        +EndDate: DateTime
+        +RewardXp: int
+        +RewardPoints: int
+        +RewardBadgeId: Guid
+        +MaxParticipants: int
+        +IsActive: bool
+        --
+        +Create(title, type, dates): Challenge
+        +Start(): void
+        +End(): void
+        +IsEnrollmentOpen(): bool
+    }
+
+    enum ChallengeType {
+        Individual
+        Team
+        Daily
+        Weekly
+        Monthly
+    }
+
+    class ChallengeEnrollment {
+        +ChallengeEnrollmentId: Guid
+        +ChallengeId: Guid
+        +UserId: Guid
+        +JoinedAt: DateTime
+        +Status: EnrollmentStatus
+        +CompletedAt: DateTime
+        --
+        +Enroll(user, challenge): ChallengeEnrollment
+        +Complete(): void
+        +Withdraw(): void
+    }
+
+    enum EnrollmentStatus {
+        Active
+        Completed
+        Failed
+        Withdrawn
+    }
+
+    class ChallengeProgress {
+        +ChallengeProgressId: Guid
+        +ChallengeEnrollmentId: Guid
+        +Progress: int
+        +MaxProgress: int
+        +LastUpdated: DateTime
+        --
+        +Update(progress): void
+        +GetPercentage(): decimal
+    }
+}
+
+package "Leaderboard Aggregate" {
+    class Leaderboard {
+        +LeaderboardId: Guid
+        +Name: string
+        +Type: LeaderboardType
+        +Scope: LeaderboardScope
+        +PeriodStart: DateTime
+        +PeriodEnd: DateTime
+        +IsActive: bool
+        --
+        +Create(name, type, scope): Leaderboard
+        +Reset(): void
+    }
+
+    enum LeaderboardType {
+        Global
+        Challenge
+        Category
+        Friends
+    }
+
+    enum LeaderboardScope {
+        AllTime
+        Monthly
+        Weekly
+        Daily
+    }
+
+    class LeaderboardEntry {
+        +LeaderboardEntryId: Guid
+        +LeaderboardId: Guid
+        +UserId: Guid
+        +Rank: int
+        +Score: int
+        +PreviousRank: int
+        +UpdatedAt: DateTime
+        --
+        +Update(rank, score): void
+        +GetRankChange(): int
+    }
+}
+
+Badge "1" --> "*" UserBadge
+Achievement "1" --> "*" UserAchievement
+UserLevel "1" --> "*" XpTransaction
+Streak "1" --> "*" StreakFreeze
+Challenge "1" --> "*" ChallengeEnrollment
+ChallengeEnrollment "1" --> "1" ChallengeProgress
+Leaderboard "1" --> "*" LeaderboardEntry
+StreakMilestone "1" --> "0..1" Badge
+
+@enduml

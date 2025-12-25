@@ -1,0 +1,301 @@
+@startuml Post Question Sequence
+
+title Post Question Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+Student -> App: Navigate to course Q&A
+App -> API: GET /api/courses/{id}/questions
+API -> DB: Load questions
+DB --> API: Questions list
+API --> App: 200 OK with questions
+App --> Student: Display questions list
+
+Student -> App: Click "Ask Question"
+App --> Student: Show question form
+Student -> App: Enter title, body, tags
+App -> App: Validate input
+App -> API: POST /api/courses/{id}/questions
+API -> API: Validate request
+API -> DB: Check user enrollment
+DB --> API: User enrolled
+API -> DB: Create Question
+DB --> API: Question created
+API -> DB: Create QuestionFollower (auto-follow)
+API -> API: Publish QuestionPosted event
+API -> Notify: Notify course instructor
+Notify --> API: Notification queued
+API --> App: 201 Created
+App --> Student: Redirect to question detail
+
+@enduml
+
+@startuml Post Answer Sequence
+
+title Post Answer Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+Student -> App: View question detail
+App -> API: GET /api/questions/{id}
+API -> DB: Load question and answers
+DB --> API: Question data
+API --> App: 200 OK
+App --> Student: Display question and answers
+
+Student -> App: Enter answer in editor
+App -> App: Validate input
+Student -> App: Click "Post Answer"
+App -> API: POST /api/questions/{id}/answers
+API -> API: Validate request
+API -> DB: Check user enrollment
+DB --> API: User enrolled
+API -> DB: Create Answer
+DB --> API: Answer created
+API -> DB: Increment question answer count
+API -> API: Publish AnswerPosted event
+API -> DB: Get question followers
+DB --> API: Followers list
+API -> Notify: Notify question author
+API -> Notify: Notify question followers
+Notify --> API: Notifications queued
+API --> App: 201 Created
+App -> App: Add answer to list
+App --> Student: Show new answer
+
+@enduml
+
+@startuml Vote on Question Sequence
+
+title Vote on Question Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: View question
+App --> User: Display question with vote controls
+
+User -> App: Click upvote button
+App -> App: Optimistic UI update
+App --> User: Show vote as selected
+App -> API: POST /api/questions/{id}/vote
+
+API -> API: Validate request
+API -> DB: Check existing vote
+DB --> API: No existing vote
+
+alt First time voting
+    API -> DB: Create Vote record
+    DB --> API: Vote created
+    API -> DB: Update question vote score
+    API -> DB: Update author reputation
+    API -> API: Publish QuestionVoted event
+    API -> API: Publish ReputationChanged event
+    API --> App: 201 Created
+    App --> User: Confirm vote
+
+else User changing vote
+    API -> DB: Update Vote record
+    DB --> API: Vote updated
+    API -> DB: Update question vote score
+    API -> DB: Update author reputation
+    API -> API: Publish QuestionVoted event
+    API -> API: Publish ReputationChanged event
+    API --> App: 200 OK
+    App --> User: Update vote display
+
+else Vote on own content
+    API --> App: 403 Forbidden
+    App -> App: Rollback UI update
+    App --> User: Show error message
+end
+
+@enduml
+
+@startuml Accept Answer Sequence
+
+title Accept Answer Flow
+
+actor QuestionAuthor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+QuestionAuthor -> App: View question with answers
+App --> QuestionAuthor: Display answers with accept button
+
+QuestionAuthor -> App: Click accept on answer
+App -> API: POST /api/answers/{id}/accept
+API -> API: Validate request
+API -> DB: Check question ownership
+DB --> API: User is question author
+
+alt No answer accepted yet
+    API -> DB: Mark answer as accepted
+    API -> DB: Update question status to Accepted
+    API -> DB: Update answer author reputation (+15)
+    DB --> API: Updates complete
+    API -> API: Publish AnswerAccepted event
+    API -> API: Publish ReputationChanged event
+    API -> DB: Get answer author
+    DB --> API: Author details
+    API -> Notify: Notify answer author
+    Notify --> API: Notification queued
+    API --> App: 200 OK
+    App -> App: Update UI
+    App --> QuestionAuthor: Show accepted answer
+
+else Another answer already accepted
+    API -> DB: Unaccept previous answer
+    API -> DB: Update previous author reputation (-15)
+    API -> DB: Accept new answer
+    API -> DB: Update new author reputation (+15)
+    API -> API: Publish AnswerUnaccepted event
+    API -> API: Publish AnswerAccepted event
+    API --> App: 200 OK
+    App --> QuestionAuthor: Update both answers display
+end
+
+@enduml
+
+@startuml Flag Content Sequence
+
+title Flag Content Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+User -> App: View question/answer
+App --> User: Display content with flag button
+
+User -> App: Click flag button
+App --> User: Show flag dialog
+User -> App: Select reason and details
+App -> API: POST /api/questions/{id}/flag
+API -> API: Validate request
+API -> DB: Check duplicate flag
+DB --> API: No duplicate
+
+API -> DB: Create Flag record
+DB --> API: Flag created
+API -> DB: Get flag count for content
+DB --> API: Flag count
+
+alt Multiple flags threshold reached
+    API -> DB: Mark content for review
+    API -> API: Publish ContentFlagged event
+    API -> DB: Get course moderators
+    DB --> API: Moderators list
+    API -> Notify: Notify all moderators (urgent)
+    Notify --> API: Notifications sent
+    API --> App: 201 Created
+    App --> User: Thank you for reporting
+
+else First flag
+    API -> API: Publish ContentFlagged event
+    API -> Notify: Notify moderators (normal)
+    Notify --> API: Notification queued
+    API --> App: 201 Created
+    App --> User: Thank you for reporting
+end
+
+@enduml
+
+@startuml Add Comment Sequence
+
+title Add Comment Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+User -> App: View question or answer
+App --> User: Display comment section
+
+User -> App: Enter comment text
+App -> App: Validate length (max 500 chars)
+User -> App: Submit comment
+App -> API: POST /api/questions/{id}/comments
+API -> API: Validate request
+API -> DB: Check user enrollment
+DB --> API: User enrolled
+
+API -> DB: Create Comment
+DB --> API: Comment created
+API -> API: Publish CommentAdded event
+API -> DB: Get parent author
+DB --> API: Parent author details
+API -> Notify: Notify parent author
+Notify --> API: Notification queued
+API --> App: 201 Created
+App -> App: Add comment to list
+App --> User: Display new comment
+
+@enduml
+
+@startuml Moderate Flagged Content Sequence
+
+title Moderate Flagged Content Flow
+
+actor Moderator
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+Moderator -> App: Navigate to moderation dashboard
+App -> API: GET /api/moderation/flags
+API -> DB: Load pending flags
+DB --> API: Flags list
+API --> App: 200 OK
+App --> Moderator: Display flagged content
+
+Moderator -> App: Review flagged question
+App --> Moderator: Show flag details
+Moderator -> App: Select action (approve/remove)
+
+alt Remove content
+    Moderator -> App: Click remove
+    App -> API: PUT /api/moderation/flags/{id}
+    API -> API: Validate moderator permission
+    API -> DB: Soft delete content
+    API -> DB: Update flag status to Reviewed
+    API -> DB: Record resolution
+    DB --> API: Updates complete
+    API -> API: Publish ContentReviewed event
+    API -> DB: Get content author and reporter
+    DB --> API: User details
+    API -> Notify: Notify content author
+    API -> Notify: Notify flag reporter
+    Notify --> API: Notifications sent
+    API --> App: 200 OK
+    App --> Moderator: Update flag list
+
+else Approve content
+    Moderator -> App: Click approve
+    App -> API: PUT /api/moderation/flags/{id}
+    API -> DB: Update flag status to Approved
+    API -> DB: Record resolution
+    API -> API: Publish ContentReviewed event
+    API -> Notify: Notify flag reporter
+    API --> App: 200 OK
+    App --> Moderator: Update flag list
+end
+
+@enduml

@@ -1,0 +1,409 @@
+@startuml Analytics Insights Class Diagram
+
+title Analytics & Insights - Class Diagram
+
+package "Course Analytics Aggregate" {
+    class CourseAnalytics {
+        +CourseAnalyticsId: Guid
+        +CourseId: Guid
+        +PeriodStart: DateTime
+        +PeriodEnd: DateTime
+        +TotalEnrollments: int
+        +CompletionRate: decimal
+        +AverageCompletionTime: TimeSpan
+        +TotalRevenue: decimal
+        +AverageRating: decimal
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(courseId, period): CourseAnalytics
+        +UpdateEnrollments(count): void
+        +UpdateCompletionRate(rate): void
+        +UpdateRevenue(amount): void
+    }
+
+    class CourseEnrollmentMetrics {
+        +MetricsId: Guid
+        +CourseAnalyticsId: Guid
+        +EnrollmentsBySource: Dictionary
+        +EnrollmentsByRegion: Dictionary
+        +ConversionRate: decimal
+        +TrendData: List<TrendPoint>
+        --
+        +AddEnrollment(source, region): void
+        +CalculateTrend(): void
+    }
+
+    class CourseCompletionMetrics {
+        +MetricsId: Guid
+        +CourseAnalyticsId: Guid
+        +CompletedCount: int
+        +DropoffPoints: List<DropoffPoint>
+        +AverageTimeToComplete: TimeSpan
+        +CompletionByDemographic: Dictionary
+        --
+        +RecordCompletion(userId, time): void
+        +IdentifyDropoffPoints(): void
+    }
+
+    class CourseEngagementMetrics {
+        +MetricsId: Guid
+        +CourseAnalyticsId: Guid
+        +AverageWatchTime: TimeSpan
+        +QuizAttemptRate: decimal
+        +AssignmentSubmissionRate: decimal
+        +DiscussionParticipation: int
+        +MostEngagingContent: List<ContentId>
+        --
+        +UpdateWatchTime(duration): void
+        +RecordQuizAttempt(): void
+    }
+}
+
+package "Student Analytics Aggregate" {
+    class StudentAnalytics {
+        +StudentAnalyticsId: Guid
+        +StudentId: Guid
+        +PeriodStart: DateTime
+        +PeriodEnd: DateTime
+        +CoursesInProgress: int
+        +CoursesCompleted: int
+        +TotalLearningTime: TimeSpan
+        +AverageQuizScore: decimal
+        +TotalSpending: decimal
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(studentId, period): StudentAnalytics
+        +UpdateProgress(courseId, percentage): void
+        +RecordLearningTime(duration): void
+    }
+
+    class StudentProgressMetrics {
+        +MetricsId: Guid
+        +StudentAnalyticsId: Guid
+        +ProgressByCourse: Dictionary
+        +LearningVelocity: decimal
+        +PredictedCompletionDate: DateTime
+        +StruggleIndicators: List<string>
+        --
+        +CalculateVelocity(): decimal
+        +IdentifyStruggles(): void
+        +PredictCompletion(): DateTime
+    }
+
+    class StudentEngagementMetrics {
+        +MetricsId: Guid
+        +StudentAnalyticsId: Guid
+        +DailyActiveTime: TimeSpan
+        +WeeklyActiveTime: TimeSpan
+        +LoginFrequency: int
+        +EngagementScore: decimal
+        +AtRiskFlag: bool
+        --
+        +RecordActivity(duration): void
+        +CalculateEngagementScore(): decimal
+        +CheckAtRisk(): bool
+    }
+
+    class StudentAchievementMetrics {
+        +MetricsId: Guid
+        +StudentAnalyticsId: Guid
+        +QuizScores: List<QuizScore>
+        +AssignmentGrades: List<Grade>
+        +CertificatesEarned: int
+        +BadgesEarned: List<Badge>
+        +PerformanceTrend: TrendDirection
+        --
+        +RecordQuizScore(score): void
+        +RecordGrade(grade): void
+        +AwardCertificate(): void
+    }
+}
+
+package "Instructor Analytics Aggregate" {
+    class InstructorAnalytics {
+        +InstructorAnalyticsId: Guid
+        +InstructorId: Guid
+        +PeriodStart: DateTime
+        +PeriodEnd: DateTime
+        +TotalStudentsTaught: int
+        +AverageCourseRating: decimal
+        +TotalEarnings: decimal
+        +ActiveEnrollments: int
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(instructorId, period): InstructorAnalytics
+        +UpdateEarnings(amount): void
+        +UpdateRating(rating): void
+    }
+
+    class InstructorPerformanceMetrics {
+        +MetricsId: Guid
+        +InstructorAnalyticsId: Guid
+        +AverageResponseTime: TimeSpan
+        +StudentCompletionRate: decimal
+        +StudentSatisfactionScore: decimal
+        +RatingsByourse: Dictionary
+        --
+        +RecordResponse(time): void
+        +UpdateSatisfaction(score): void
+    }
+
+    class InstructorRevenueMetrics {
+        +MetricsId: Guid
+        +InstructorAnalyticsId: Guid
+        +RevenueByCourse: Dictionary
+        +MonthlyRevenueTrend: List<TrendPoint>
+        +RevenuePerStudent: decimal
+        +ProjectedEarnings: decimal
+        +PayoutHistory: List<Payout>
+        --
+        +RecordRevenue(courseId, amount): void
+        +ProjectEarnings(): decimal
+    }
+
+    class InstructorGrowthMetrics {
+        +MetricsId: Guid
+        +InstructorAnalyticsId: Guid
+        +EnrollmentGrowthRate: decimal
+        +CourseGrowthRate: decimal
+        +FollowerCount: int
+        +MarketShare: decimal
+        --
+        +CalculateGrowthRate(): decimal
+        +UpdateMarketShare(): void
+    }
+}
+
+package "Platform Analytics Aggregate" {
+    class PlatformAnalytics {
+        +PlatformAnalyticsId: Guid
+        +PeriodStart: DateTime
+        +PeriodEnd: DateTime
+        +DailyActiveUsers: int
+        +MonthlyActiveUsers: int
+        +TotalRegisteredUsers: int
+        +TotalRevenue: decimal
+        +TotalCourses: int
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(period): PlatformAnalytics
+        +UpdateActiveUsers(dau, mau): void
+        +UpdateRevenue(amount): void
+    }
+
+    class PlatformUsageMetrics {
+        +MetricsId: Guid
+        +PlatformAnalyticsId: Guid
+        +UserRetentionRate: decimal
+        +GeographicDistribution: Dictionary
+        +DeviceBreakdown: Dictionary
+        +BrowserStats: Dictionary
+        +PeakUsageTimes: List<TimeSlot>
+        --
+        +CalculateRetention(): decimal
+        +TrackDevice(device): void
+    }
+
+    class PlatformContentMetrics {
+        +MetricsId: Guid
+        +PlatformAnalyticsId: Guid
+        +CoursesByCategory: Dictionary
+        +ContentCreationTrend: List<TrendPoint>
+        +AverageQualityScore: decimal
+        +TrendingTopics: List<string>
+        --
+        +RecordCoursePublish(category): void
+        +IdentifyTrends(): void
+    }
+}
+
+package "Search Analytics Aggregate" {
+    class SearchAnalytics {
+        +SearchAnalyticsId: Guid
+        +PeriodStart: DateTime
+        +PeriodEnd: DateTime
+        +TotalSearches: int
+        +ZeroResultSearches: int
+        +AverageResponseTime: TimeSpan
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(period): SearchAnalytics
+        +RecordSearch(query, results): void
+    }
+
+    class SearchQueryMetrics {
+        +MetricsId: Guid
+        +SearchAnalyticsId: Guid
+        +PopularTerms: List<SearchTerm>
+        +ZeroResultQueries: List<string>
+        +SearchToClickRate: decimal
+        +SearchIntentPatterns: Dictionary
+        --
+        +RecordQuery(term, clicked): void
+        +AnalyzeIntent(): void
+    }
+
+    class SearchPerformanceMetrics {
+        +MetricsId: Guid
+        +SearchAnalyticsId: Guid
+        +RelevanceScores: List<decimal>
+        +FilterUsageStats: Dictionary
+        +ClickThroughPositions: List<int>
+        +SlowQueries: List<string>
+        --
+        +RecordPerformance(query, time): void
+        +IdentifySlowQueries(): void
+    }
+}
+
+package "Analytics Dashboard Aggregate" {
+    class AnalyticsDashboard {
+        +DashboardId: Guid
+        +UserId: Guid
+        +Name: string
+        +Description: string
+        +IsDefault: bool
+        +IsShared: bool
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(userId, name): AnalyticsDashboard
+        +AddWidget(widget): void
+        +UpdateLayout(layout): void
+        +Share(): void
+    }
+
+    class DashboardWidget {
+        +WidgetId: Guid
+        +DashboardId: Guid
+        +WidgetType: WidgetType
+        +MetricName: string
+        +Configuration: WidgetConfig
+        +Position: GridPosition
+        +Size: GridSize
+        --
+        +UpdateConfig(config): void
+        +UpdatePosition(position): void
+    }
+
+    enum WidgetType {
+        MetricCard
+        LineChart
+        BarChart
+        PieChart
+        Table
+        Funnel
+        HeatMap
+    }
+}
+
+package "Reporting Aggregate" {
+    class ScheduledReport {
+        +ReportId: Guid
+        +UserId: Guid
+        +Name: string
+        +ReportType: ReportType
+        +Frequency: ReportFrequency
+        +DeliveryEmail: string
+        +LastGenerated: DateTime
+        +NextScheduled: DateTime
+        +IsActive: bool
+        --
+        +Create(userId, name, frequency): ScheduledReport
+        +Generate(): ReportData
+        +UpdateSchedule(frequency): void
+        +Activate(): void
+        +Deactivate(): void
+    }
+
+    enum ReportType {
+        CoursePerformance
+        StudentProgress
+        InstructorRevenue
+        PlatformOverview
+        Custom
+    }
+
+    enum ReportFrequency {
+        Daily
+        Weekly
+        Monthly
+        Quarterly
+    }
+
+    class ReportTemplate {
+        +TemplateId: Guid
+        +Name: string
+        +Description: string
+        +Metrics: List<string>
+        +Layout: ReportLayout
+        --
+        +ApplyTo(report): void
+    }
+}
+
+package "Value Objects" {
+    class TimeRange {
+        +Start: DateTime
+        +End: DateTime
+        --
+        +Contains(date): bool
+        +Duration(): TimeSpan
+    }
+
+    class TrendPoint {
+        +Timestamp: DateTime
+        +Value: decimal
+        --
+        +CompareTo(other): int
+    }
+
+    class MetricValue {
+        +Name: string
+        +Value: decimal
+        +Unit: string
+        +Timestamp: DateTime
+        --
+        +Format(): string
+    }
+
+    class GridPosition {
+        +Row: int
+        +Column: int
+        --
+        +IsValid(): bool
+    }
+
+    class GridSize {
+        +Width: int
+        +Height: int
+        --
+        +Area(): int
+    }
+}
+
+CourseAnalytics "1" --> "1" CourseEnrollmentMetrics
+CourseAnalytics "1" --> "1" CourseCompletionMetrics
+CourseAnalytics "1" --> "1" CourseEngagementMetrics
+StudentAnalytics "1" --> "1" StudentProgressMetrics
+StudentAnalytics "1" --> "1" StudentEngagementMetrics
+StudentAnalytics "1" --> "1" StudentAchievementMetrics
+InstructorAnalytics "1" --> "1" InstructorPerformanceMetrics
+InstructorAnalytics "1" --> "1" InstructorRevenueMetrics
+InstructorAnalytics "1" --> "1" InstructorGrowthMetrics
+PlatformAnalytics "1" --> "1" PlatformUsageMetrics
+PlatformAnalytics "1" --> "1" PlatformContentMetrics
+SearchAnalytics "1" --> "1" SearchQueryMetrics
+SearchAnalytics "1" --> "1" SearchPerformanceMetrics
+AnalyticsDashboard "1" --> "*" DashboardWidget
+DashboardWidget --> WidgetType
+ScheduledReport --> ReportType
+ScheduledReport --> ReportFrequency
+ScheduledReport "1" --> "0..1" ReportTemplate
+
+@enduml

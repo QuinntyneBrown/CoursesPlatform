@@ -1,0 +1,293 @@
+<mxfile host="app.diagrams.net" modified="2025-12-25T00:00:00.000Z" agent="CoursesPlatform" version="22.1.0" etag="mobile-usecase-diagram" type="device">
+  <diagram name="Use Case Diagram - Mobile Cross-Platform" id="mobile-usecase-diagram">
+    <mxGraphModel dx="1434" dy="844" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Mobile Cross-Platform - Use Case Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="400" y="20" width="600" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- System Boundary -->
+        <mxCell id="system-boundary" value="CoursesPlatform Mobile System" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;fontStyle=1;startSize=40;swimlaneFillColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="300" y="100" width="800" height="800" as="geometry" />
+        </mxCell>
+
+        <!-- Use Cases -->
+
+        <!-- Core Use Cases -->
+        <mxCell id="uc-download-course" value="Download Course" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12" vertex="1" parent="system-boundary">
+          <mxGeometry x="120" y="80" width="160" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-offline" value="View Offline Content" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12" vertex="1" parent="system-boundary">
+          <mxGeometry x="120" y="200" width="160" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-sync-progress" value="Sync Progress" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12" vertex="1" parent="system-boundary">
+          <mxGeometry x="120" y="320" width="160" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-receive-notifications" value="Receive Notifications" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12" vertex="1" parent="system-boundary">
+          <mxGeometry x="120" y="440" width="160" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-manage-downloads" value="Manage Downloads" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12" vertex="1" parent="system-boundary">
+          <mxGeometry x="120" y="560" width="160" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Extended Use Cases -->
+        <mxCell id="uc-register-device" value="Register Device" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="420" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-add-to-queue" value="Add to Download Queue" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="420" y="180" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-track-download" value="Track Download Progress" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="420" y="280" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-play-video" value="Play Video Offline" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="420" y="380" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-read-document" value="Read Document Offline" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="420" y="480" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-upload-progress" value="Upload Progress" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="420" y="580" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-resolve-conflicts" value="Resolve Sync Conflicts" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="600" y="580" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-configure-notifications" value="Configure Notification Preferences" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="420" y="680" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-history" value="View Notification History" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="600" y="680" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-pause-resume" value="Pause/Resume Download" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="600" y="480" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-cancel-download" value="Cancel Download" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="600" y="380" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-reorder-queue" value="Reorder Download Queue" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="600" y="280" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-manage-storage" value="Manage Storage" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="600" y="180" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-delete-content" value="Delete Downloaded Content" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11" vertex="1" parent="system-boundary">
+          <mxGeometry x="600" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Include Relationships -->
+        <mxCell id="rel-download-register" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-download-course" target="uc-register-device">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-download-queue" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-download-course" target="uc-add-to-queue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-download-track" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-download-course" target="uc-track-download">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-view-video" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-play-video" target="uc-view-offline">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-view-document" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-read-document" target="uc-view-offline">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-sync-upload" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-sync-progress" target="uc-upload-progress">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-sync-resolve" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-sync-progress" target="uc-resolve-conflicts">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="200" y="615" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="rel-notify-config" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-receive-notifications" target="uc-configure-notifications">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-notify-history" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-receive-notifications" target="uc-view-history">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="270" y="715" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="rel-manage-pause" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-manage-downloads" target="uc-pause-resume">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-manage-cancel" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-manage-downloads" target="uc-cancel-download">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="350" y="580" />
+              <mxPoint x="350" y="415" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="rel-manage-reorder" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-manage-downloads" target="uc-reorder-queue">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="560" />
+              <mxPoint x="360" y="315" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="rel-manage-storage" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-manage-downloads" target="uc-manage-storage">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="240" y="540" />
+              <mxPoint x="370" y="540" />
+              <mxPoint x="370" y="215" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="rel-manage-delete" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;fontSize=10" edge="1" parent="system-boundary" source="uc-manage-downloads" target="uc-delete-content">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="200" y="520" />
+              <mxPoint x="380" y="520" />
+              <mxPoint x="380" y="115" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- End of System Boundary -->
+
+        <!-- Actors -->
+        <mxCell id="actor-mobile-user" value="Mobile User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="180" y="400" width="60" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="actor-system" value="System&lt;br&gt;(Background Sync)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="1150" y="400" width="50" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="actor-instructor" value="Instructor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="1150" y="600" width="50" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Actor Relationships -->
+
+        <!-- Mobile User to Use Cases -->
+        <mxCell id="rel-user-download" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor-mobile-user" target="uc-download-course">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-user-view" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.4;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor-mobile-user" target="uc-view-offline">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-user-sync" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor-mobile-user" target="uc-sync-progress">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-user-notify" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.6;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor-mobile-user" target="uc-receive-notifications">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-user-manage" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor-mobile-user" target="uc-manage-downloads">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- System Actor to Sync Progress -->
+        <mxCell id="rel-system-sync" value="triggers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="actor-system" target="uc-sync-progress">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Instructor to Notifications -->
+        <mxCell id="rel-instructor-notify" value="sends" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="actor-instructor" target="uc-receive-notifications">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1130" y="630" />
+              <mxPoint x="1130" y="580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend-box" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="100" width="100" height="260" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="100" width="100" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-actor" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="65" y="140" width="20" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-actor-label" value="Actor" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="45" y="180" width="60" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-usecase" value="Use Case" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="45" y="210" width="80" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-extended" value="Extended Use Case" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="45" y="265" width="80" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-include" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontSize=8" edge="1" parent="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="45" y="325" as="sourcePoint" />
+            <mxPoint x="125" y="325" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="legend-extend" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontSize=8" edge="1" parent="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="45" y="345" as="sourcePoint" />
+            <mxPoint x="125" y="345" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Notes -->
+        <mxCell id="note1" value="Note:&#xa;Download Course includes device registration and queuing for first-time users." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="40" y="720" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note2" value="Note:&#xa;Sync Progress happens automatically in background when device is online." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="40" y="800" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note3" value="Note:&#xa;Notifications can be sent by instructors, system events, or automated triggers." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="1180" y="800" width="200" height="60" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

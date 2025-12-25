@@ -1,0 +1,274 @@
+@startuml System Infrastructure Class Diagram
+
+title System Infrastructure - Class Diagram
+
+package "SystemHealth Aggregate" {
+    class SystemHealth {
+        +SystemHealthId: Guid
+        +Status: HealthStatus
+        +Timestamp: DateTime
+        +Version: string
+        +OverallResponseTime: int
+        --
+        +PerformHealthCheck(): SystemHealth
+        +UpdateStatus(status): void
+        +RecordMetrics(metrics): void
+    }
+
+    enum HealthStatus {
+        Healthy
+        Degraded
+        Unhealthy
+    }
+
+    class HealthCheck {
+        +HealthCheckId: Guid
+        +SystemHealthId: Guid
+        +ComponentName: string
+        +Status: HealthStatus
+        +ResponseTime: int
+        +ErrorMessage: string
+        +Timestamp: DateTime
+        --
+        +Execute(): HealthCheckResult
+        +UpdateStatus(status): void
+    }
+
+    class HealthMetric {
+        +HealthMetricId: Guid
+        +SystemHealthId: Guid
+        +MetricType: MetricType
+        +Value: decimal
+        +Unit: string
+        +Timestamp: DateTime
+        --
+        +Record(value): void
+    }
+
+    enum MetricType {
+        CpuUsage
+        MemoryUsage
+        DiskUsage
+        RequestsPerSecond
+        ErrorRate
+    }
+}
+
+package "AuditLog Aggregate" {
+    class AuditLog {
+        +AuditLogId: Guid
+        +UserId: Guid
+        +UserEmail: string
+        +Action: AuditAction
+        +EntityType: string
+        +EntityId: Guid
+        +BeforeState: string
+        +AfterState: string
+        +IpAddress: string
+        +Timestamp: DateTime
+        +CorrelationId: Guid
+        --
+        +Create(user, action, entity): AuditLog
+        +Archive(): void
+    }
+
+    enum AuditAction {
+        Create
+        Update
+        Delete
+        Publish
+        Unpublish
+        Approve
+        Reject
+        Configure
+        Toggle
+    }
+}
+
+package "Cache Aggregate" {
+    class CacheEntry {
+        +CacheEntryId: Guid
+        +Key: string
+        +Value: string
+        +Tags: List<string>
+        +ExpiresAt: DateTime
+        +CreatedAt: DateTime
+        +LastAccessedAt: DateTime
+        +HitCount: int
+        +SizeInBytes: long
+        --
+        +Set(key, value, ttl): void
+        +Get(): string
+        +Invalidate(): void
+        +UpdateAccess(): void
+    }
+
+    class CacheStatistics {
+        +CacheStatisticsId: Guid
+        +Timestamp: DateTime
+        +TotalEntries: int
+        +HitCount: long
+        +MissCount: long
+        +HitRatio: decimal
+        +MemoryUsageBytes: long
+        +EvictionCount: int
+        --
+        +Calculate(): void
+        +GetTopKeys(): List<string>
+    }
+}
+
+package "BackgroundJob Aggregate" {
+    class BackgroundJob {
+        +BackgroundJobId: Guid
+        +JobType: string
+        +Status: JobStatus
+        +Priority: JobPriority
+        +Parameters: string
+        +Result: string
+        +ErrorMessage: string
+        +ScheduledAt: DateTime
+        +StartedAt: DateTime
+        +CompletedAt: DateTime
+        +RetryCount: int
+        +MaxRetries: int
+        +CreatedBy: Guid
+        --
+        +Schedule(jobType, params): BackgroundJob
+        +Execute(): void
+        +Fail(error): void
+        +Retry(): void
+        +Cancel(): void
+        +SetPriority(priority): void
+    }
+
+    enum JobStatus {
+        Scheduled
+        Running
+        Completed
+        Failed
+        Cancelled
+    }
+
+    enum JobPriority {
+        Low
+        Normal
+        High
+        Critical
+    }
+
+    class JobExecution {
+        +JobExecutionId: Guid
+        +BackgroundJobId: Guid
+        +StartedAt: DateTime
+        +CompletedAt: DateTime
+        +Duration: int
+        +Status: JobStatus
+        +ErrorMessage: string
+        +LogOutput: string
+        --
+        +RecordStart(): void
+        +RecordCompletion(): void
+        +RecordFailure(error): void
+    }
+}
+
+package "FeatureFlag Aggregate" {
+    class FeatureFlag {
+        +FeatureFlagId: Guid
+        +Key: string
+        +Name: string
+        +Description: string
+        +IsEnabled: bool
+        +IsTemporary: bool
+        +TargetingRules: string
+        +RolloutPercentage: int
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        +CreatedBy: Guid
+        --
+        +Create(key, name): FeatureFlag
+        +Toggle(): void
+        +Enable(): void
+        +Disable(): void
+        +SetTargeting(rules): void
+        +SetRollout(percentage): void
+        +Archive(): void
+        +Evaluate(userId): bool
+    }
+
+    class FeatureFlagEvaluation {
+        +FeatureFlagEvaluationId: Guid
+        +FeatureFlagId: Guid
+        +UserId: Guid
+        +Result: bool
+        +Timestamp: DateTime
+        --
+        +Record(flag, user, result): void
+    }
+
+    class FeatureFlagAnalytics {
+        +FeatureFlagAnalyticsId: Guid
+        +FeatureFlagId: Guid
+        +Date: DateTime
+        +EvaluationCount: int
+        +EnabledCount: int
+        +DisabledCount: int
+        +UniqueUsers: int
+        --
+        +Aggregate(): void
+        +CalculateDistribution(): void
+    }
+}
+
+package "Configuration Aggregate" {
+    class ConfigurationSetting {
+        +ConfigurationSettingId: Guid
+        +Key: string
+        +Value: string
+        +Category: string
+        +DataType: ConfigDataType
+        +IsSensitive: bool
+        +IsReadOnly: bool
+        +Environment: string
+        +UpdatedAt: DateTime
+        +UpdatedBy: Guid
+        --
+        +Create(key, value, category): ConfigurationSetting
+        +Update(value): void
+        +Encrypt(): void
+        +Decrypt(): string
+        +Validate(): bool
+    }
+
+    enum ConfigDataType {
+        String
+        Integer
+        Boolean
+        Json
+        Url
+        Email
+    }
+
+    class ConfigurationHistory {
+        +ConfigurationHistoryId: Guid
+        +ConfigurationSettingId: Guid
+        +OldValue: string
+        +NewValue: string
+        +ChangedBy: Guid
+        +ChangedAt: DateTime
+        +Reason: string
+        --
+        +Record(setting, user): void
+        +Rollback(): void
+    }
+}
+
+SystemHealth "1" --> "*" HealthCheck
+SystemHealth "1" --> "*" HealthMetric
+BackgroundJob "1" --> "*" JobExecution
+FeatureFlag "1" --> "*" FeatureFlagEvaluation
+FeatureFlag "1" --> "*" FeatureFlagAnalytics
+ConfigurationSetting "1" --> "*" ConfigurationHistory
+
+@enduml

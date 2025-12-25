@@ -1,0 +1,299 @@
+@startuml Course Enrollment Sequence
+
+title Course Enrollment Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Click "Enroll Now"
+App -> App: Validate user is logged in
+App -> API: POST /api/enrollments
+API -> API: Validate request
+API -> DB: Check existing enrollment
+DB --> API: No enrollment found
+API -> DB: Validate course is available
+DB --> API: Course available
+API -> DB: Create Enrollment (Pending)
+DB --> API: Enrollment created
+API -> DB: Create AccessGrant (Active)
+DB --> API: AccessGrant created
+API -> API: Publish UserEnrolled event
+API -> API: Publish AccessGranted event
+API --> App: 201 Created
+App -> App: Update enrollment state
+App --> User: Show success message
+App -> App: Redirect to course
+
+@enduml
+
+@startuml Free Enrollment Sequence
+
+title Free Course Enrollment Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Click "Enroll in Free Course"
+App -> App: Show confirmation dialog
+User -> App: Confirm enrollment
+App -> API: POST /api/enrollments/free
+API -> DB: Validate course is free
+DB --> API: Course is free
+API -> DB: Check duplicate enrollment
+DB --> API: No duplicate
+API -> DB: Create Enrollment (Active)
+API -> DB: Create AccessGrant (Active)
+API -> API: Publish FreeEnrollmentCreated event
+API -> API: Publish AccessGranted event
+API --> App: 201 Created
+App --> User: Show success
+App -> App: Redirect to course content
+
+@enduml
+
+@startuml Paid Enrollment Sequence
+
+title Paid Course Enrollment Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Payment Gateway" as Payment
+participant "Database" as DB
+
+User -> App: Click "Enroll" on paid course
+App --> User: Show payment page
+User -> App: Enter payment details
+App -> API: POST /api/enrollments/paid
+API -> DB: Create Enrollment (Pending)
+DB --> API: Enrollment created
+API -> Payment: Process payment
+alt Payment successful
+    Payment --> API: Payment confirmed
+    API -> DB: Update Enrollment (Active)
+    API -> DB: Store payment reference
+    API -> DB: Create AccessGrant (Active)
+    API -> API: Publish PaidEnrollmentCreated event
+    API -> API: Publish AccessGranted event
+    API --> App: 200 OK with enrollment
+    App --> User: Show success
+    App -> App: Redirect to course
+else Payment failed
+    Payment --> API: Payment failed
+    API -> DB: Update Enrollment (Failed)
+    API -> API: Publish EnrollmentPaymentFailed event
+    API --> App: 400 Payment failed
+    App --> User: Show error message
+end
+
+@enduml
+
+@startuml Coupon Enrollment Sequence
+
+title Enrollment with Coupon Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Click "Enroll"
+App --> User: Show enrollment page
+User -> App: Enter coupon code
+App -> API: POST /api/enrollments/validate-coupon
+API -> DB: Find coupon by code
+alt Coupon valid
+    DB --> API: Coupon found
+    API -> API: Validate expiration
+    API -> API: Check usage limit
+    API -> API: Validate course applicability
+    API --> App: 200 OK with discount
+    App --> User: Show discounted price
+    User -> App: Confirm enrollment
+    App -> API: POST /api/enrollments/coupon
+    API -> DB: Create Enrollment
+    API -> DB: Create CouponUsage
+    API -> DB: Increment coupon usage count
+    API -> DB: Create AccessGrant
+    API -> API: Publish CouponEnrollmentCreated event
+    API --> App: 201 Created
+    App --> User: Show success
+else Coupon invalid
+    API --> App: 400 Invalid coupon
+    App --> User: Show error message
+end
+
+@enduml
+
+@startuml Gift Enrollment Sequence
+
+title Gift Enrollment Purchase and Redemption Flow
+
+actor Purchaser
+actor Recipient
+participant "Angular App" as App
+participant "API" as API
+participant "Payment Gateway" as Payment
+participant "Database" as DB
+participant "Email Service" as Email
+
+== Gift Purchase ==
+Purchaser -> App: Click "Gift This Course"
+App --> Purchaser: Show gift form
+Purchaser -> App: Enter recipient email and message
+App -> API: POST /api/enrollments/gift
+API -> Payment: Process payment
+Payment --> API: Payment confirmed
+API -> API: Generate unique gift code
+API -> DB: Create GiftEnrollment
+DB --> API: Gift created
+API -> Email: Send gift email to recipient
+Email --> API: Email sent
+API -> API: Publish GiftEnrollmentCreated event
+API --> App: 201 Created with gift code
+App --> Purchaser: Show confirmation
+
+== Gift Redemption ==
+Recipient -> Email: Click gift link
+Email -> App: Open redemption page
+App --> Recipient: Show gift details
+Recipient -> App: Click "Claim Gift"
+App -> API: POST /api/enrollments/gift/{code}/claim
+API -> DB: Validate gift code
+DB --> API: Gift valid
+API -> DB: Create Enrollment for recipient
+API -> DB: Update GiftEnrollment (Claimed)
+API -> DB: Create AccessGrant
+API -> API: Publish GiftEnrollmentClaimed event
+API -> API: Publish AccessGranted event
+API --> App: 200 OK
+App --> Recipient: Show success
+App -> App: Redirect to course
+
+@enduml
+
+@startuml Access Check Sequence
+
+title Course Access Check Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Navigate to course lesson
+App -> API: GET /api/access/lesson/{lessonId}
+API -> DB: Get lesson details
+DB --> API: Lesson found
+API -> DB: Find active enrollment
+alt Enrollment found
+    DB --> API: Enrollment active
+    API -> DB: Check AccessGrant
+    alt Access granted
+        DB --> API: AccessGrant active
+        API -> DB: Validate not expired
+        alt Not expired
+            API -> DB: Log access check (Granted)
+            API -> API: Publish AccessChecked event
+            API --> App: 200 OK (Access granted)
+            App --> User: Display lesson content
+        else Expired
+            API -> DB: Log access check (Expired)
+            API --> App: 403 Access expired
+            App --> User: Show expiration message
+        end
+    else No access grant
+        API -> DB: Log access check (NoGrant)
+        API --> App: 403 No access
+        App --> User: Show access denied
+    end
+else No enrollment
+    DB --> API: No enrollment
+    API -> DB: Log access check (NoEnrollment)
+    API --> App: 403 Not enrolled
+    App --> User: Show "Enroll to Access" message
+end
+
+@enduml
+
+@startuml Unenroll Sequence
+
+title Unenrollment Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Click "Unenroll"
+App --> User: Show confirmation dialog
+App --> User: Request type course name
+User -> App: Confirm unenrollment
+App -> API: DELETE /api/enrollments/{id}
+API -> API: Validate user owns enrollment
+API -> DB: Find enrollment
+DB --> API: Enrollment found
+API -> DB: Update Enrollment (Unenrolled)
+API -> DB: Revoke AccessGrant
+API -> DB: Mark progress as inactive
+API -> API: Publish UserUnenrolled event
+API -> API: Publish AccessRevoked event
+API --> App: 200 OK
+App -> App: Remove from enrollment list
+App --> User: Show success notification
+
+@enduml
+
+@startuml Waitlist Sequence
+
+title Course Waitlist Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Email Service" as Email
+
+== Join Waitlist ==
+User -> App: Click "Join Waitlist"
+App -> API: POST /api/waitlist/join
+API -> DB: Check course is full
+DB --> API: Course full
+API -> DB: Check user not already on waitlist
+DB --> API: Not on waitlist
+API -> DB: Create WaitlistEntry
+API -> DB: Calculate position
+DB --> API: Position assigned
+API -> API: Publish WaitlistJoined event
+API --> App: 201 Created
+App --> User: Show waitlist position
+
+== Spot Available ==
+API -> DB: Enrollment cancelled
+API -> DB: Find next waitlist entry
+DB --> API: Entry found
+API -> DB: Update entry (Offered)
+API -> Email: Send notification
+Email --> User: Email about available spot
+API -> API: Publish WaitlistPromoted event
+
+== Claim Spot ==
+User -> Email: Click "Claim Spot" link
+Email -> App: Open claim page
+App --> User: Show limited time offer
+User -> App: Click "Claim"
+App -> API: POST /api/waitlist/{id}/claim
+API -> DB: Validate offer not expired
+DB --> API: Offer valid
+API -> DB: Create Enrollment
+API -> DB: Create AccessGrant
+API -> DB: Update waitlist (Claimed)
+API -> API: Publish UserEnrolled event
+API --> App: 201 Created
+App --> User: Welcome to course
+
+@enduml

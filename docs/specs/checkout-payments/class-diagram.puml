@@ -1,0 +1,357 @@
+@startuml Checkout Payments Class Diagram
+
+title Checkout & Payments - Class Diagram
+
+package "Shopping Cart Aggregate" {
+    class ShoppingCart {
+        +ShoppingCartId: Guid
+        +UserId: Guid
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        +ExpiresAt: DateTime
+        --
+        +Create(userId): ShoppingCart
+        +AddItem(courseId, price): void
+        +RemoveItem(courseId): void
+        +Clear(): void
+        +CalculateTotal(): decimal
+    }
+
+    class CartItem {
+        +CartItemId: Guid
+        +ShoppingCartId: Guid
+        +CourseId: Guid
+        +Price: decimal
+        +AddedAt: DateTime
+        --
+        +Create(cartId, courseId, price): CartItem
+    }
+}
+
+package "Order Aggregate" {
+    class Order {
+        +OrderId: Guid
+        +OrderNumber: string
+        +UserId: Guid
+        +Status: OrderStatus
+        +Subtotal: decimal
+        +Tax: decimal
+        +Discount: decimal
+        +Total: decimal
+        +CouponCode: string
+        +CreatedAt: DateTime
+        +CompletedAt: DateTime
+        --
+        +Create(userId, items): Order
+        +Complete(): void
+        +Fail(): void
+        +Cancel(): void
+        +CalculateTotals(): void
+    }
+
+    enum OrderStatus {
+        Pending
+        Processing
+        Completed
+        Failed
+        Cancelled
+        Refunded
+        Disputed
+    }
+
+    class OrderItem {
+        +OrderItemId: Guid
+        +OrderId: Guid
+        +CourseId: Guid
+        +CourseName: string
+        +Price: decimal
+        +Discount: decimal
+        --
+        +Create(orderId, course, price): OrderItem
+    }
+
+    class BillingInfo {
+        +BillingInfoId: Guid
+        +OrderId: Guid
+        +FullName: string
+        +Email: string
+        +AddressLine1: string
+        +AddressLine2: string
+        +City: string
+        +State: string
+        +PostalCode: string
+        +Country: string
+        --
+        +Create(order, details): BillingInfo
+        +Update(details): void
+    }
+}
+
+package "Payment Aggregate" {
+    class Payment {
+        +PaymentId: Guid
+        +OrderId: Guid
+        +TransactionId: string
+        +Amount: decimal
+        +Currency: string
+        +Status: PaymentStatus
+        +PaymentMethodType: PaymentMethodType
+        +GatewayProvider: string
+        +GatewayResponse: string
+        +ProcessedAt: DateTime
+        +FailureReason: string
+        +RetryCount: int
+        --
+        +Create(order, amount): Payment
+        +Initiate(): void
+        +Succeed(transactionId): void
+        +Fail(reason): void
+        +Retry(): void
+    }
+
+    enum PaymentStatus {
+        Pending
+        Processing
+        Succeeded
+        Failed
+        Refunded
+        PartiallyRefunded
+        Disputed
+    }
+
+    enum PaymentMethodType {
+        CreditCard
+        DebitCard
+        PayPal
+        ApplePay
+        GooglePay
+    }
+
+    class PaymentMethod {
+        +PaymentMethodId: Guid
+        +UserId: Guid
+        +Type: PaymentMethodType
+        +Token: string
+        +Last4Digits: string
+        +CardBrand: string
+        +ExpiryMonth: int
+        +ExpiryYear: int
+        +IsDefault: bool
+        +CreatedAt: DateTime
+        --
+        +Create(user, token, details): PaymentMethod
+        +SetAsDefault(): void
+        +Remove(): void
+        +IsExpired(): bool
+    }
+
+    class ThreeDSecure {
+        +ThreeDSecureId: Guid
+        +PaymentId: Guid
+        +Status: string
+        +ChallengeUrl: string
+        +CompletedAt: DateTime
+        --
+        +Create(payment): ThreeDSecure
+        +Complete(): void
+    }
+}
+
+package "Invoice Aggregate" {
+    class Invoice {
+        +InvoiceId: Guid
+        +InvoiceNumber: string
+        +OrderId: Guid
+        +UserId: Guid
+        +IssuedAt: DateTime
+        +DueDate: DateTime
+        +PdfUrl: string
+        +Status: InvoiceStatus
+        --
+        +Generate(order): Invoice
+        +MarkAsPaid(): void
+        +MarkAsVoid(): void
+    }
+
+    enum InvoiceStatus {
+        Draft
+        Issued
+        Paid
+        Void
+    }
+
+    class Receipt {
+        +ReceiptId: Guid
+        +PaymentId: Guid
+        +ReceiptNumber: string
+        +IssuedAt: DateTime
+        +PdfUrl: string
+        --
+        +Generate(payment): Receipt
+    }
+}
+
+package "Refund Aggregate" {
+    class Refund {
+        +RefundId: Guid
+        +OrderId: Guid
+        +PaymentId: Guid
+        +Amount: decimal
+        +Reason: RefundReason
+        +Status: RefundStatus
+        +RequestedBy: Guid
+        +ApprovedBy: Guid
+        +RequestedAt: DateTime
+        +ProcessedAt: DateTime
+        +GatewayRefundId: string
+        +Notes: string
+        --
+        +Create(order, amount, reason): Refund
+        +Approve(adminId): void
+        +Reject(adminId, reason): void
+        +Process(): void
+        +Complete(gatewayId): void
+        +Fail(reason): void
+    }
+
+    enum RefundStatus {
+        Requested
+        Approved
+        Rejected
+        Processing
+        Completed
+        Failed
+    }
+
+    enum RefundReason {
+        CustomerRequest
+        CourseNotAsDescribed
+        TechnicalIssues
+        CourseCancelled
+        Duplicate
+        Fraudulent
+        Other
+    }
+}
+
+package "Dispute Aggregate" {
+    class Dispute {
+        +DisputeId: Guid
+        +PaymentId: Guid
+        +OrderId: Guid
+        +Amount: decimal
+        +Reason: DisputeReason
+        +Status: DisputeStatus
+        +OpenedAt: DateTime
+        +ResolvedAt: DateTime
+        +GatewayDisputeId: string
+        +EvidenceDueBy: DateTime
+        +Resolution: DisputeResolution
+        --
+        +Create(payment, reason): Dispute
+        +SubmitEvidence(evidence): void
+        +Resolve(resolution): void
+    }
+
+    enum DisputeStatus {
+        Open
+        UnderReview
+        Won
+        Lost
+        Closed
+    }
+
+    enum DisputeReason {
+        Fraudulent
+        Unrecognized
+        Duplicate
+        ProductNotReceived
+        ProductUnacceptable
+        Other
+    }
+
+    enum DisputeResolution {
+        Pending
+        MerchantWon
+        CustomerWon
+        Settled
+    }
+
+    class DisputeEvidence {
+        +DisputeEvidenceId: Guid
+        +DisputeId: Guid
+        +EvidenceType: string
+        +DocumentUrl: string
+        +Description: string
+        +SubmittedAt: DateTime
+        --
+        +Create(dispute, type, url): DisputeEvidence
+    }
+}
+
+package "Coupon Aggregate" {
+    class Coupon {
+        +CouponId: Guid
+        +Code: string
+        +DiscountType: DiscountType
+        +DiscountValue: decimal
+        +MinimumPurchase: decimal
+        +MaxUses: int
+        +CurrentUses: int
+        +ValidFrom: DateTime
+        +ValidUntil: DateTime
+        +IsActive: bool
+        --
+        +Create(code, discount): Coupon
+        +Validate(): bool
+        +Apply(): void
+        +Deactivate(): void
+    }
+
+    enum DiscountType {
+        Percentage
+        FixedAmount
+    }
+}
+
+package "Bundle Aggregate" {
+    class Bundle {
+        +BundleId: Guid
+        +Name: string
+        +Description: string
+        +Price: decimal
+        +OriginalPrice: decimal
+        +IsActive: bool
+        +CreatedAt: DateTime
+        --
+        +Create(name, price): Bundle
+        +AddCourse(courseId): void
+        +RemoveCourse(courseId): void
+        +Activate(): void
+        +Deactivate(): void
+    }
+
+    class BundleCourse {
+        +BundleCourseId: Guid
+        +BundleId: Guid
+        +CourseId: Guid
+        +AddedAt: DateTime
+        --
+        +Create(bundle, course): BundleCourse
+    }
+}
+
+ShoppingCart "1" --> "*" CartItem
+Order "1" --> "*" OrderItem
+Order "1" --> "1" BillingInfo
+Order "1" --> "0..1" Payment
+Payment "1" --> "0..1" ThreeDSecure
+Order "1" --> "0..1" Invoice
+Payment "1" --> "0..1" Receipt
+Order "1" --> "0..1" Refund
+Payment "1" --> "0..1" Refund
+Payment "1" --> "0..1" Dispute
+Dispute "1" --> "*" DisputeEvidence
+Bundle "1" --> "*" BundleCourse
+
+@enduml

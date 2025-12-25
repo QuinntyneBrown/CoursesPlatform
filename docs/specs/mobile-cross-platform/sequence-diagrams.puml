@@ -1,0 +1,465 @@
+@startuml Register Device Flow
+
+title Register Device Flow
+
+actor "Mobile User" as User
+participant "Mobile App\n/PWA" as App
+participant "API Gateway" as API
+participant "RegisterDeviceCommand\nHandler" as Handler
+participant "IDeviceManagementService" as DeviceService
+participant "ICoursesPlatformContext" as Context
+database "SQL Server" as DB
+
+User -> App: Open app for first time
+activate App
+
+App -> App: Generate device fingerprint
+App -> App: Detect platform, OS version
+
+App -> API: POST /api/devices/register\n{platform, model, osVersion, deviceToken}
+activate API
+
+API -> API: Authenticate user\n(JWT validation)
+API -> Handler: RegisterDeviceCommand
+activate Handler
+
+Handler -> DeviceService: ValidateDeviceRegistration(userId, deviceToken)
+activate DeviceService
+
+DeviceService -> Context: DeviceRegistrations.Where(d => d.UserId == userId)
+activate Context
+Context -> DB: SELECT * FROM DeviceRegistrations\nWHERE UserId = @userId
+activate DB
+DB --> Context: Device list
+deactivate DB
+Context --> DeviceService: List<DeviceRegistration>
+deactivate Context
+
+DeviceService -> DeviceService: Check device count < 10
+DeviceService -> DeviceService: Check for duplicate token
+
+alt Device count >= 10
+    DeviceService --> Handler: ValidationException\n"Maximum devices exceeded"
+    Handler --> API: 400 Bad Request
+    API --> App: Error response
+    App -> User: Show error:\n"Too many devices"
+else Duplicate device token
+    DeviceService -> DeviceService: Return existing device
+    DeviceService --> Handler: Existing DeviceRegistration
+    Handler -> Context: Update LastActiveAt
+    Context -> DB: UPDATE DeviceRegistrations
+    Handler --> API: 200 OK with existing device
+    API --> App: Device info + auth token
+    App -> User: Registration successful\n(existing device)
+else Valid registration
+    DeviceService --> Handler: Validation passed
+    deactivate DeviceService
+
+    Handler -> Handler: Create DeviceRegistration aggregate\nDeviceId = Guid.NewGuid()
+    Handler -> Context: DeviceRegistrations.Add(deviceRegistration)
+    activate Context
+    Context -> DB: INSERT INTO DeviceRegistrations
+    activate DB
+    DB --> Context: Success
+    deactivate DB
+    Context --> Handler: Device saved
+    deactivate Context
+
+    Handler -> Handler: Generate device-specific JWT token\nwith DeviceId claim
+    Handler -> Handler: Log.Information("Device registered")
+
+    Handler --> API: DeviceDto with auth token
+    deactivate Handler
+    API --> App: 201 Created\n{deviceId, authToken, expiresAt}
+    deactivate API
+
+    App -> App: Store deviceId in localStorage
+    App -> App: Store auth token securely
+    App -> User: Registration successful
+    deactivate App
+end
+
+@enduml
+
+@startuml Download Content for Offline Flow
+
+title Download Content for Offline Flow
+
+actor "Mobile User" as User
+participant "Mobile App" as App
+participant "DownloadService" as DownloadSvc
+participant "OfflineStorageService" as Storage
+participant "API" as API
+participant "DownloadContentCommand\nHandler" as Handler
+participant "ICoursesPlatformContext" as Context
+participant "IContentDeliveryService" as CDN
+database "SQL Server" as DB
+database "IndexedDB" as IDB
+
+User -> App: Select course/lesson\nfor offline access
+activate App
+
+App -> App: Check available storage
+App -> User: Show content details\n(size, duration)
+User -> App: Confirm download
+
+App -> DownloadSvc: addToDownloadQueue(contentId, contentType)
+activate DownloadSvc
+
+DownloadSvc -> Storage: saveToQueue(queueItem)
+activate Storage
+Storage -> IDB: Add to DownloadQueue table
+activate IDB
+IDB --> Storage: Success
+deactivate IDB
+Storage --> DownloadSvc: Queued
+deactivate Storage
+
+DownloadSvc -> DownloadSvc: Start queue processing
+DownloadSvc -> API: POST /api/offline/content/download\n{contentIds: [id1, id2]}
+activate API
+
+API -> Handler: DownloadContentCommand
+activate Handler
+
+Handler -> Context: Enrollments.Any(e => e.UserId == userId && e.CourseId == courseId)
+activate Context
+Context -> DB: SELECT COUNT(*) FROM Enrollments\nWHERE UserId = @userId AND CourseId = @courseId
+activate DB
+DB --> Context: Count
+deactivate DB
+Context --> Handler: bool hasAccess
+deactivate Context
+
+alt No enrollment
+    Handler --> API: 403 Forbidden
+    API --> DownloadSvc: Error: Access denied
+    DownloadSvc -> User: Show error:\n"Not enrolled in course"
+else Has enrollment
+    Handler -> CDN: GenerateDownloadUrls(contentIds, deviceId)
+    activate CDN
+
+    CDN -> CDN: Create signed URLs\nwith 24-hour expiration
+    CDN -> CDN: Generate content hash (SHA256)
+    CDN -> Context: Create OfflineContent records
+    Context -> DB: INSERT INTO OfflineContents
+
+    CDN --> Handler: List<DownloadUrl>
+    deactivate CDN
+
+    Handler -> Handler: Log.Information("Download URLs generated")
+    Handler --> API: DownloadUrlsDto
+    deactivate Handler
+
+    API --> DownloadSvc: 200 OK\n{urls, sizes, hashes, expiresAt}
+    deactivate API
+
+    loop For each content item
+        DownloadSvc -> DownloadSvc: Update queue status: InProgress
+        DownloadSvc -> API: GET download URL\n(with progress tracking)
+        activate API
+
+        API -> DownloadSvc: Stream content with progress
+        deactivate API
+
+        DownloadSvc -> App: Update progress (0-100%)
+        App -> User: Show progress bar
+
+        DownloadSvc -> DownloadSvc: Verify hash (integrity check)
+
+        alt Hash mismatch
+            DownloadSvc -> DownloadSvc: Retry download (max 3 attempts)
+        else Hash valid
+            DownloadSvc -> Storage: saveOfflineContent(content, metadata)
+            activate Storage
+            Storage -> IDB: Store in OfflineContents table
+            activate IDB
+            IDB --> Storage: Success
+            deactivate IDB
+            Storage --> DownloadSvc: Saved
+            deactivate Storage
+
+            DownloadSvc -> DownloadSvc: Update queue status: Completed
+        end
+    end
+
+    DownloadSvc -> App: Download complete
+    deactivate DownloadSvc
+
+    App -> User: Show notification:\n"Content downloaded"
+    deactivate App
+end
+
+@enduml
+
+@startuml Sync Progress Flow
+
+title Sync Progress Flow
+
+actor "Mobile User" as User
+participant "Mobile App" as App
+participant "SyncService" as SyncSvc
+participant "OfflineStorageService" as Storage
+participant "API" as API
+participant "SyncProgressCommand\nHandler" as Handler
+participant "IProgressSyncService" as SyncService
+participant "ICoursesPlatformContext" as Context
+database "IndexedDB" as IDB
+database "SQL Server" as DB
+
+User -> App: Complete lesson offline
+activate App
+
+App -> Storage: saveProgress(lessonId, percentage, position)
+activate Storage
+Storage -> IDB: INSERT/UPDATE Progress table
+activate IDB
+IDB --> Storage: Success
+deactivate IDB
+Storage --> App: Saved locally
+deactivate Storage
+
+App -> User: Progress saved\n(offline indicator shown)
+
+... Time passes, connection restored ...
+
+App -> App: Detect online status
+App -> SyncSvc: triggerSync()
+activate SyncSvc
+
+SyncSvc -> Storage: getPendingProgressUpdates()
+activate Storage
+Storage -> IDB: SELECT * FROM Progress\nWHERE IsSynced = false
+activate IDB
+IDB --> Storage: List of progress items
+deactivate IDB
+Storage --> SyncSvc: pendingUpdates[]
+deactivate Storage
+
+SyncSvc -> SyncSvc: Batch updates (max 100 per request)
+
+SyncSvc -> API: POST /api/sync/progress\n{deviceId, updates: [...]}
+activate API
+
+API -> Handler: SyncProgressCommand
+activate Handler
+
+loop For each progress update
+    Handler -> Context: LearningProgress.FirstOrDefault(\np => p.UserId == userId && p.LessonId == lessonId)
+    activate Context
+    Context -> DB: SELECT TOP 1 * FROM LearningProgress\nWHERE UserId = @userId AND LessonId = @lessonId
+    activate DB
+    DB --> Context: Existing progress (or null)
+    deactivate DB
+    Context --> Handler: LearningProgress entity
+    deactivate Context
+
+    alt No existing progress
+        Handler -> Handler: Create new LearningProgress
+        Handler -> Context: LearningProgress.Add(progress)
+        Context -> DB: INSERT INTO LearningProgress
+    else Existing progress found
+        Handler -> SyncService: ResolveConflict(existingProgress, newProgress)
+        activate SyncService
+
+        SyncService -> SyncService: Compare timestamps
+
+        alt Server timestamp > Client timestamp
+            SyncService -> SyncService: Keep server version
+            SyncService -> Handler: ConflictResolution: KeepServer
+            Handler -> Handler: Log.Warning("Conflict resolved: keep server")
+        else Client timestamp > Server timestamp
+            SyncService -> SyncService: Update with client version
+            SyncService -> Handler: ConflictResolution: UpdateFromClient
+            Handler -> Context: Update LearningProgress
+            Context -> DB: UPDATE LearningProgress\nSET ProgressPercentage, LastPosition, UpdatedAt
+        else Same timestamp, different values
+            SyncService -> SyncService: Use highest percentage
+            SyncService -> Handler: ConflictResolution: HighestProgress
+            Handler -> Context: Update LearningProgress
+            Context -> DB: UPDATE LearningProgress
+            Handler -> Context: ConflictLogs.Add(conflictLog)
+            Context -> DB: INSERT INTO ConflictLogs
+        end
+
+        deactivate SyncService
+    end
+end
+
+Handler -> Context: SaveChangesAsync()
+Context -> DB: COMMIT TRANSACTION
+DB --> Context: Success
+Context --> Handler: Changes saved
+
+Handler -> Handler: Generate sync token (Guid)
+Handler -> Handler: Log.Information("Progress synced")
+
+Handler --> API: SyncResultDto\n{syncToken, timestamp, conflicts: [...]}
+deactivate Handler
+
+API --> SyncSvc: 200 OK with sync results
+deactivate API
+
+SyncSvc -> Storage: markAsSynced(updates, syncToken)
+activate Storage
+Storage -> IDB: UPDATE Progress SET IsSynced = true,\nSyncToken = @token
+activate IDB
+IDB --> Storage: Success
+deactivate IDB
+Storage --> SyncSvc: Updated
+deactivate Storage
+
+alt Conflicts detected
+    SyncSvc -> App: Show conflict notification
+    App -> User: "Some progress was\nsynced with conflicts"
+else No conflicts
+    SyncSvc -> App: Sync successful
+    App -> User: Show sync complete indicator
+    deactivate App
+end
+
+SyncSvc -> SyncSvc: Update last sync timestamp
+deactivate SyncSvc
+
+@enduml
+
+@startuml Push Notification Flow
+
+title Push Notification Flow
+
+actor "System/Instructor" as Sender
+participant "Notification\nTrigger" as Trigger
+participant "SendPushNotification\nCommand Handler" as Handler
+participant "IPushNotificationService" as PushService
+participant "ICoursesPlatformContext" as Context
+database "SQL Server" as DB
+participant "Firebase Cloud\nMessaging (FCM)" as FCM
+participant "Apple Push\nNotification (APNs)" as APNS
+participant "Mobile Device" as Device
+participant "Mobile App" as App
+actor "Mobile User" as User
+
+Sender -> Trigger: Create notification\n(e.g., new course content)
+activate Trigger
+
+Trigger -> Trigger: Determine target users\n(enrolled students)
+
+Trigger -> Handler: SendPushNotificationCommand\n{userIds, title, body, data, type}
+activate Handler
+
+Handler -> Context: DeviceRegistrations.Where(\nd => userIds.Contains(d.UserId) && d.IsActive)
+activate Context
+Context -> DB: SELECT * FROM DeviceRegistrations\nWHERE UserId IN (@userIds) AND IsActive = 1
+activate DB
+DB --> Context: List of devices
+deactivate DB
+Context --> Handler: List<DeviceRegistration>
+deactivate Context
+
+Handler -> Handler: Filter by notification preferences
+
+loop For each device
+    Handler -> Context: NotificationPreferences for device
+    Context -> DB: SELECT * FROM NotificationPreferences
+
+    alt Notifications disabled
+        Handler -> Handler: Skip this device\nLog.Information("User opted out")
+    else In quiet hours
+        Handler -> Handler: Skip this device\nLog.Information("Quiet hours")
+    else Daily limit reached
+        Handler -> Handler: Skip this device\nLog.Warning("Rate limit exceeded")
+    else Allowed
+        Handler -> PushService: SendNotification(device, notification)
+        activate PushService
+
+        PushService -> PushService: Format payload for platform
+
+        alt Platform is iOS
+            PushService -> APNS: POST /3/device/{pushToken}\n{aps: {alert, badge, sound}, data}
+            activate APNS
+
+            alt APNs success
+                APNS --> PushService: 200 OK
+                deactivate APNS
+                PushService -> PushService: status = Sent
+            else APNs error
+                APNS --> PushService: 400/410 Error
+                deactivate APNS
+                PushService -> PushService: status = Failed
+                PushService -> PushService: Check if retry needed
+
+                alt Invalid token (410)
+                    PushService -> Context: Update DeviceRegistration\nClear PushToken
+                    Context -> DB: UPDATE DeviceRegistrations\nSET PushToken = NULL
+                end
+            end
+
+        else Platform is Android or Web
+            PushService -> FCM: POST /v1/projects/{project}/messages:send\n{token, notification, data}
+            activate FCM
+
+            alt FCM success
+                FCM --> PushService: 200 OK {messageId}
+                deactivate FCM
+                PushService -> PushService: status = Sent
+            else FCM error
+                FCM --> PushService: Error response
+                deactivate FCM
+                PushService -> PushService: status = Failed
+
+                alt Invalid token
+                    PushService -> Context: Update DeviceRegistration\nClear PushToken
+                    Context -> DB: UPDATE DeviceRegistrations
+                end
+            end
+        end
+
+        PushService -> Context: PushNotificationLogs.Add(log)
+        Context -> DB: INSERT INTO PushNotificationLogs\n(DeviceId, Status, SentAt, ...)
+
+        PushService -> PushService: Log.Information("Notification sent")
+
+        PushService --> Handler: SendResult {status, messageId}
+        deactivate PushService
+    end
+end
+
+Handler -> Context: SaveChangesAsync()
+Context -> DB: COMMIT TRANSACTION
+DB --> Context: Success
+
+Handler --> Trigger: NotificationResultDto\n{sent: 150, failed: 5, skipped: 20}
+deactivate Handler
+
+Trigger -> Trigger: Log.Information("Batch notification complete")
+deactivate Trigger
+
+... Notification delivered to device ...
+
+Device -> Device: Receive push notification
+Device -> App: Notification tap event
+activate App
+
+App -> App: Parse notification data
+App -> App: Extract deep link (courseId, lessonId)
+
+App -> App: Navigate to content
+App -> User: Show course/lesson
+deactivate App
+
+App -> API: PUT /api/notifications/{notificationId}/opened
+activate API
+
+API -> Context: Update PushNotificationLog.OpenedAt
+activate Context
+Context -> DB: UPDATE PushNotificationLogs\nSET OpenedAt = @timestamp, Status = 'Opened'
+activate DB
+DB --> Context: Success
+deactivate DB
+Context --> API: Updated
+deactivate Context
+
+API --> App: 200 OK
+deactivate API
+
+@enduml

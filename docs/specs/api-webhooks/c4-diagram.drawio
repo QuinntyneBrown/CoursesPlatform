@@ -1,0 +1,182 @@
+<mxfile host="app.diagrams.net" modified="2025-12-25T00:00:00.000Z" agent="Claude" version="22.0.0" type="device">
+  <diagram id="C4ContainerDiagram" name="C4 Container Diagram - API and Webhooks">
+    <mxGraphModel dx="1434" dy="844" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="CoursesPlatform - API and Webhooks&#xa;C4 Container Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="320" y="20" width="530" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- External Developer -->
+        <mxCell id="developer" value="Developer&#xa;[Person]&#xa;&#xa;External developer integrating&#xa;with CoursesPlatform API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="120" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- External System -->
+        <mxCell id="externalSystem" value="External System&#xa;[Software System]&#xa;&#xa;Third-party application&#xa;receiving webhook events" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="920" y="120" width="180" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Developer Portal Container -->
+        <mxCell id="developerPortal" value="Developer Portal&#xa;[Angular Application]&#xa;&#xa;Web application for managing&#xa;API keys, webhooks, and viewing&#xa;API documentation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#2E6295;fontColor=#FFFFFF;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="320" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- API Gateway Container -->
+        <mxCell id="apiGateway" value="API Gateway&#xa;[ASP.NET Core Middleware]&#xa;&#xa;Handles authentication,&#xa;rate limiting, and request&#xa;routing for public API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#2E6295;fontColor=#FFFFFF;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="180" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- API Application Container -->
+        <mxCell id="apiApplication" value="API Application&#xa;[ASP.NET Core Web API]&#xa;&#xa;Provides public RESTful API&#xa;endpoints for courses, enrollments,&#xa;users (MediatR CQRS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#2E6295;fontColor=#FFFFFF;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="360" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Webhook Delivery Service Container -->
+        <mxCell id="webhookService" value="Webhook Delivery Service&#xa;[Background Service]&#xa;&#xa;Processes webhook delivery queue,&#xa;sends events to external systems,&#xa;handles retries" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#2E6295;fontColor=#FFFFFF;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="640" y="360" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Core Domain Container -->
+        <mxCell id="coreDomain" value="Core Domain&#xa;[C# Class Library]&#xa;&#xa;Business logic, domain models,&#xa;services (ApiKeyService,&#xa;WebhookService)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#2E6295;fontColor=#FFFFFF;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="540" width="200" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Database Container -->
+        <mxCell id="database" value="Database&#xa;[SQL Server]&#xa;&#xa;Stores API keys, webhook&#xa;subscriptions, delivery records,&#xa;API usage data" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#438DD5;strokeColor=#2E6295;fontColor=#FFFFFF;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="640" y="540" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Redis Cache Container -->
+        <mxCell id="redis" value="Redis Cache&#xa;[In-Memory Cache]&#xa;&#xa;Stores rate limit counters&#xa;with sliding window tracking" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#438DD5;strokeColor=#2E6295;fontColor=#FFFFFF;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="120" y="540" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Relationships -->
+
+        <!-- Developer uses Portal -->
+        <mxCell id="rel1" value="Uses to manage API&#xa;keys and webhooks" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=11;fontColor=#000000;startArrow=none;startFill=0;endArrow=classic;endFill=1;dashed=0;" edge="1" parent="1" source="developer" target="developerPortal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Developer calls API -->
+        <mxCell id="rel2" value="Makes API calls using&#xa;API key [HTTPS/JSON]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;fontSize=11;fontColor=#000000;startArrow=none;startFill=0;endArrow=classic;endFill=1;dashed=0;" edge="1" parent="1" source="developer" target="apiGateway">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="280" y="170" />
+              <mxPoint x="280" y="210" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Portal calls API Gateway -->
+        <mxCell id="rel3" value="Calls management&#xa;endpoints [HTTPS/JSON]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;fontSize=11;fontColor=#000000;startArrow=none;startFill=0;endArrow=classic;endFill=1;dashed=0;" edge="1" parent="1" source="developerPortal" target="apiGateway">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="380" />
+              <mxPoint x="320" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- API Gateway to API Application -->
+        <mxCell id="rel4" value="Routes authenticated&#xa;requests" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=11;fontColor=#000000;startArrow=none;startFill=0;endArrow=classic;endFill=1;dashed=0;" edge="1" parent="1" source="apiGateway" target="apiApplication">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API Gateway to Redis -->
+        <mxCell id="rel5" value="Checks rate limits" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryDz=0;fontSize=11;fontColor=#000000;startArrow=none;startFill=0;endArrow=classic;endFill=1;dashed=0;" edge="1" parent="1" source="apiGateway" target="redis">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="270" />
+              <mxPoint x="320" y="500" />
+              <mxPoint x="200" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- API Application to Core -->
+        <mxCell id="rel6" value="Uses services&#xa;and domain logic" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=11;fontColor=#000000;startArrow=none;startFill=0;endArrow=classic;endFill=1;dashed=0;" edge="1" parent="1" source="apiApplication" target="coreDomain">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Core to Database -->
+        <mxCell id="rel7" value="Reads/writes via&#xa;ICoursesPlatformContext" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryDz=0;fontSize=11;fontColor=#000000;startArrow=none;startFill=0;endArrow=classic;endFill=1;dashed=0;" edge="1" parent="1" source="coreDomain" target="database">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Webhook Service to Database -->
+        <mxCell id="rel8" value="Reads delivery queue,&#xa;updates status" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryDz=0;fontSize=11;fontColor=#000000;startArrow=none;startFill=0;endArrow=classic;endFill=1;dashed=0;" edge="1" parent="1" source="webhookService" target="database">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Webhook Service to External System -->
+        <mxCell id="rel9" value="Sends webhook events&#xa;[HTTPS/JSON + HMAC]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;fontSize=11;fontColor=#000000;startArrow=none;startFill=0;endArrow=classic;endFill=1;dashed=0;" edge="1" parent="1" source="webhookService" target="externalSystem">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="740" y="280" />
+              <mxPoint x="1010" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- API Application to Webhook Service -->
+        <mxCell id="rel10" value="Queues webhook&#xa;deliveries" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;fontColor=#000000;startArrow=none;startFill=0;endArrow=classic;endFill=1;dashed=1;" edge="1" parent="1" source="apiApplication" target="webhookService">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legendBox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="880" y="540" width="260" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legendTitle" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="890" y="550" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legendPerson" value="Person" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="900" y="580" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legendSystem" value="External System" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="580" width="120" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legendContainer" value="Container" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#2E6295;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="900" y="620" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legendDatabase" value="Database" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=5;fillColor=#438DD5;strokeColor=#2E6295;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="620" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legendSync" value="Synchronous" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#000000;endArrow=classic;endFill=1;dashed=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="900" y="665" as="sourcePoint" />
+            <mxPoint x="970" y="665" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="legendAsync" value="Asynchronous" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#000000;endArrow=classic;endFill=1;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1000" y="665" as="sourcePoint" />
+            <mxPoint x="1070" y="665" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Notes -->
+        <mxCell id="note1" value="API Gateway enforces:&#xa;- API key authentication&#xa;- Rate limiting (Redis)&#xa;- Scope validation&#xa;- Request/response logging" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF4C3;strokeColor=#C9AB2F;align=left;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="600" y="160" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note2" value="No Repository pattern used.&#xa;All services use&#xa;ICoursesPlatformContext&#xa;directly for data access." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF4C3;strokeColor=#C9AB2F;align=left;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="670" width="200" height="70" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

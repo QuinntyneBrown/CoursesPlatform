@@ -1,0 +1,219 @@
+@startuml API and Webhooks Class Diagram
+
+title API and Webhooks - Domain Model Class Diagram
+
+' API Key Aggregate
+package "ApiKeyAggregate" {
+  class ApiKey <<Aggregate Root>> {
+    + ApiKeyId : Guid
+    + OrganizationId : Guid
+    + KeyName : string
+    + KeyHash : string
+    + Scopes : string
+    + CreatedAt : DateTime
+    + ExpiresAt : DateTime?
+    + IsActive : bool
+    + LastUsedAt : DateTime?
+    + UsageCount : long
+    + RateLimitPolicyId : Guid?
+    --
+    + Create() : ApiKey
+    + Revoke() : void
+    + UpdateUsage() : void
+    + IsExpired() : bool
+    + HasScope(scope) : bool
+  }
+
+  class RateLimitPolicy <<Value Object>> {
+    + RequestsPerMinute : int
+    + RequestsPerHour : int
+    + RequestsPerDay : int
+    + BurstLimit : int
+    + Tier : string
+    --
+    + IsWithinLimit(count, window) : bool
+    + GetLimit(window) : int
+  }
+
+  class ApiUsage <<Entity>> {
+    + ApiUsageId : Guid
+    + ApiKeyId : Guid
+    + Timestamp : DateTime
+    + Endpoint : string
+    + HttpMethod : string
+    + ResponseStatus : int
+    + ResponseTimeMs : int
+    + RequestIp : string
+    --
+    + Create() : ApiUsage
+  }
+
+  enum ApiKeyStatus {
+    Active
+    Revoked
+    Expired
+  }
+
+  enum RateLimitTier {
+    Free
+    Basic
+    Premium
+    Enterprise
+  }
+
+  ApiKey "1" *-- "0..1" RateLimitPolicy : has custom policy
+  ApiKey "1" -- "0..*" ApiUsage : tracks usage
+  ApiKey ..> ApiKeyStatus : status
+  RateLimitPolicy ..> RateLimitTier : tier
+}
+
+' Webhook Subscription
+package "WebhookAggregate" {
+  class WebhookSubscription <<Entity>> {
+    + WebhookSubscriptionId : Guid
+    + OrganizationId : Guid
+    + EventType : string
+    + CallbackUrl : string
+    + Secret : string
+    + IsActive : bool
+    + CreatedAt : DateTime
+    + UpdatedAt : DateTime
+    + FailureCount : int
+    + LastFailureAt : DateTime?
+    + DeactivatedAt : DateTime?
+    --
+    + Create() : WebhookSubscription
+    + Update(url, secret) : void
+    + Deactivate() : void
+    + IncrementFailure() : void
+    + ResetFailures() : void
+    + ShouldDeactivate() : bool
+  }
+
+  class WebhookDelivery <<Entity>> {
+    + WebhookDeliveryId : Guid
+    + WebhookSubscriptionId : Guid
+    + EventType : string
+    + Payload : string
+    + Signature : string
+    + Status : DeliveryStatus
+    + AttemptCount : int
+    + NextAttemptAt : DateTime
+    + CreatedAt : DateTime
+    + DeliveredAt : DateTime?
+    + ResponseStatus : int?
+    + ResponseBody : string?
+    --
+    + Create() : WebhookDelivery
+    + MarkDelivered(status, body) : void
+    + MarkFailed(status, body) : void
+    + ScheduleRetry() : void
+    + Abandon() : void
+    + CanRetry() : bool
+  }
+
+  enum DeliveryStatus {
+    Pending
+    Delivered
+    Failed
+    Abandoned
+  }
+
+  enum WebhookEventType {
+    CourseCreated
+    CourseUpdated
+    CourseDeleted
+    EnrollmentCreated
+    EnrollmentCompleted
+    OrderCreated
+    OrderCompleted
+    OrderRefunded
+    CertificateIssued
+    ReviewCreated
+  }
+
+  WebhookSubscription "1" -- "0..*" WebhookDelivery : generates deliveries
+  WebhookDelivery ..> DeliveryStatus : status
+  WebhookSubscription ..> WebhookEventType : event type
+}
+
+' External References
+class Organization <<External>> {
+  + OrganizationId : Guid
+  + Name : string
+  + SubscriptionTier : string
+}
+
+' Relationships
+Organization "1" -- "0..*" ApiKey : owns
+Organization "1" -- "0..*" WebhookSubscription : owns
+
+' Services
+package "Services" {
+  interface IApiKeyService {
+    + GenerateApiKey(request) : ApiKey
+    + ValidateApiKey(key) : ApiKey?
+    + RevokeApiKey(keyId) : void
+    + GetApiKeys(orgId) : List<ApiKey>
+  }
+
+  interface IWebhookService {
+    + CreateSubscription(request) : WebhookSubscription
+    + UpdateSubscription(id, request) : void
+    + DeleteSubscription(id) : void
+    + GetSubscriptions(orgId) : List<WebhookSubscription>
+  }
+
+  interface IWebhookDeliveryService {
+    + PublishEvent(eventType, payload) : void
+    + ProcessDeliveries() : void
+    + RetryDelivery(deliveryId) : void
+    + GetDeliveryHistory(subscriptionId) : List<WebhookDelivery>
+  }
+
+  interface IRateLimitService {
+    + CheckRateLimit(apiKeyId) : bool
+    + RecordRequest(apiKeyId, endpoint) : void
+    + GetRateLimitStatus(apiKeyId) : RateLimitStatus
+  }
+
+  class RateLimitStatus {
+    + RequestsUsed : int
+    + RequestsLimit : int
+    + WindowResetsAt : DateTime
+  }
+}
+
+IApiKeyService ..> ApiKey : manages
+IWebhookService ..> WebhookSubscription : manages
+IWebhookDeliveryService ..> WebhookDelivery : manages
+IRateLimitService ..> RateLimitPolicy : uses
+IRateLimitService ..> ApiUsage : tracks
+
+' Context Interface
+interface ICoursesPlatformContext {
+  + ApiKeys : DbSet<ApiKey>
+  + ApiUsage : DbSet<ApiUsage>
+  + WebhookSubscriptions : DbSet<WebhookSubscription>
+  + WebhookDeliveries : DbSet<WebhookDelivery>
+  + SaveChangesAsync() : Task<int>
+}
+
+IApiKeyService ..> ICoursesPlatformContext : uses
+IWebhookService ..> ICoursesPlatformContext : uses
+IWebhookDeliveryService ..> ICoursesPlatformContext : uses
+IRateLimitService ..> ICoursesPlatformContext : uses
+
+note top of ICoursesPlatformContext
+  All data access performed directly
+  through ICoursesPlatformContext.
+  No Repository pattern used.
+end note
+
+note top of IApiKeyService
+  Services preferably implemented
+  in CoursesPlatform.Core/Services
+  unless infrastructure dependencies exist.
+end note
+
+@enduml

@@ -1,0 +1,160 @@
+@startuml Reviews and Ratings Class Diagram
+
+title Reviews & Ratings - Class Diagram
+
+package "Review Aggregate" {
+    class Review {
+        +ReviewId: Guid
+        +CourseId: Guid
+        +StudentId: Guid
+        +Rating: int
+        +Title: string
+        +Body: string
+        +IsVerified: bool
+        +IsHidden: bool
+        +IsFlagged: bool
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        +DeletedAt: DateTime
+        +IsDeleted: bool
+        --
+        +Create(courseId, studentId, rating, title, body): Review
+        +UpdateContent(rating, title, body): void
+        +Delete(): void
+        +Flag(): void
+        +Hide(): void
+        +Unhide(): void
+        +MarkAsVerified(): void
+        +CalculateHelpfulScore(): int
+    }
+
+    class ReviewEditHistory {
+        +ReviewEditHistoryId: Guid
+        +ReviewId: Guid
+        +Rating: int
+        +Title: string
+        +Body: string
+        +EditedAt: DateTime
+        --
+        +Create(review): ReviewEditHistory
+    }
+}
+
+package "Rating Aggregate" {
+    class CourseRating {
+        +CourseRatingId: Guid
+        +CourseId: Guid
+        +AverageRating: decimal
+        +TotalReviews: int
+        +FiveStarCount: int
+        +FourStarCount: int
+        +ThreeStarCount: int
+        +TwoStarCount: int
+        +OneStarCount: int
+        +LastUpdatedAt: DateTime
+        --
+        +Create(courseId): CourseRating
+        +Recalculate(reviews): void
+        +GetDistribution(): RatingDistribution
+        +GetPercentage(stars): decimal
+    }
+
+    class RatingDistribution <<ValueObject>> {
+        +FiveStars: int
+        +FourStars: int
+        +ThreeStars: int
+        +TwoStars: int
+        +OneStar: int
+        --
+        +GetPercentage(stars): decimal
+        +GetTotal(): int
+    }
+}
+
+package "Interaction Aggregate" {
+    class ReviewInteraction {
+        +ReviewInteractionId: Guid
+        +ReviewId: Guid
+        +UserId: Guid
+        +InteractionType: InteractionType
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(review, user, type): ReviewInteraction
+        +ChangeType(type): void
+        +Remove(): void
+    }
+
+    enum InteractionType {
+        Helpful
+        NotHelpful
+    }
+}
+
+package "Instructor Response Aggregate" {
+    class InstructorResponse {
+        +InstructorResponseId: Guid
+        +ReviewId: Guid
+        +InstructorId: Guid
+        +ResponseText: string
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        +DeletedAt: DateTime
+        +IsDeleted: bool
+        --
+        +Create(review, instructor, text): InstructorResponse
+        +UpdateText(text): void
+        +Delete(): void
+    }
+
+    class ResponseEditHistory {
+        +ResponseEditHistoryId: Guid
+        +InstructorResponseId: Guid
+        +ResponseText: string
+        +EditedAt: DateTime
+        --
+        +Create(response): ResponseEditHistory
+    }
+}
+
+package "Report Aggregate" {
+    class ReviewReport {
+        +ReviewReportId: Guid
+        +ReviewId: Guid
+        +ReportedByUserId: Guid
+        +ReasonType: ReportReason
+        +Comment: string
+        +Status: ReportStatus
+        +CreatedAt: DateTime
+        +ResolvedAt: DateTime
+        +ResolvedByUserId: Guid
+        --
+        +Create(review, user, reason, comment): ReviewReport
+        +Resolve(admin): void
+        +Dismiss(): void
+    }
+
+    enum ReportReason {
+        Spam
+        Offensive
+        Misleading
+        Inappropriate
+        Other
+    }
+
+    enum ReportStatus {
+        Pending
+        UnderReview
+        Resolved
+        Dismissed
+    }
+}
+
+Review "1" --> "*" ReviewEditHistory
+Review "1" --> "*" ReviewInteraction
+Review "1" --> "0..1" InstructorResponse
+Review "1" --> "*" ReviewReport
+InstructorResponse "1" --> "*" ResponseEditHistory
+CourseRating "1" *-- "1" RatingDistribution
+
+@enduml

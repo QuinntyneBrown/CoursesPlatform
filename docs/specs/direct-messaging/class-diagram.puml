@@ -1,0 +1,162 @@
+@startuml Direct Messaging Class Diagram
+
+title Direct Messaging - Class Diagram
+
+package "Conversation Aggregate" {
+    class Conversation {
+        +ConversationId: Guid
+        +CreatedAt: DateTime
+        +LastActivityAt: DateTime
+        +Status: ConversationStatus
+        --
+        +Create(userId1, userId2): Conversation
+        +UpdateActivity(): void
+        +AddMessage(message): void
+        +GetParticipant(userId): ConversationParticipant
+    }
+
+    enum ConversationStatus {
+        Active
+        Deleted
+    }
+
+    class ConversationParticipant {
+        +ConversationParticipantId: Guid
+        +ConversationId: Guid
+        +UserId: Guid
+        +IsArchived: bool
+        +IsMuted: bool
+        +IsDeleted: bool
+        +LastReadAt: DateTime
+        +JoinedAt: DateTime
+        --
+        +Archive(): void
+        +Unarchive(): void
+        +Mute(): void
+        +Unmute(): void
+        +Delete(): void
+        +MarkAsRead(timestamp): void
+    }
+}
+
+package "Message Aggregate" {
+    class Message {
+        +MessageId: Guid
+        +ConversationId: Guid
+        +SenderId: Guid
+        +Content: string
+        +SentAt: DateTime
+        +IsEdited: bool
+        +IsDeleted: bool
+        +DeletedAt: DateTime
+        --
+        +Create(senderId, content): Message
+        +Edit(newContent): void
+        +Delete(): void
+        +MarkAsRead(userId): void
+        +AttachFile(attachment): void
+    }
+
+    class MessageEdit {
+        +MessageEditId: Guid
+        +MessageId: Guid
+        +OriginalContent: string
+        +EditedContent: string
+        +EditedAt: DateTime
+        --
+        +Create(message, originalContent): MessageEdit
+    }
+
+    class MessageReadReceipt {
+        +MessageReadReceiptId: Guid
+        +MessageId: Guid
+        +UserId: Guid
+        +ReadAt: DateTime
+        --
+        +Create(message, userId): MessageReadReceipt
+    }
+
+    class MessageAttachment {
+        +MessageAttachmentId: Guid
+        +MessageId: Guid
+        +FileName: string
+        +FileUrl: string
+        +FileSize: long
+        +MimeType: string
+        +UploadedAt: DateTime
+        --
+        +Create(fileName, url, size, mimeType): MessageAttachment
+    }
+}
+
+package "Moderation Aggregate" {
+    class MessageReport {
+        +MessageReportId: Guid
+        +MessageId: Guid
+        +ReportedByUserId: Guid
+        +ReportedUserId: Guid
+        +Reason: ReportReason
+        +Description: string
+        +Status: ReportStatus
+        +ReportedAt: DateTime
+        +ReviewedAt: DateTime
+        +ReviewedByUserId: Guid
+        +ReviewOutcome: string
+        --
+        +Create(message, reporterId, reason): MessageReport
+        +Review(moderatorId, outcome): void
+        +Approve(): void
+        +Reject(): void
+    }
+
+    enum ReportReason {
+        Spam
+        Harassment
+        InappropriateContent
+        Threats
+        Other
+    }
+
+    enum ReportStatus {
+        Pending
+        UnderReview
+        Approved
+        Rejected
+    }
+
+    class BlockedUser {
+        +BlockedUserId: Guid
+        +UserId: Guid
+        +BlockedUserAccountId: Guid
+        +BlockedAt: DateTime
+        +Reason: string
+        --
+        +Create(userId, blockedUserId): BlockedUser
+        +Unblock(): void
+    }
+
+    class MessagingBan {
+        +MessagingBanId: Guid
+        +UserId: Guid
+        +BannedByUserId: Guid
+        +Reason: string
+        +BannedAt: DateTime
+        +ExpiresAt: DateTime
+        +IsPermanent: bool
+        +IsActive: bool
+        --
+        +Create(userId, reason, isPermanent): MessagingBan
+        +Lift(): void
+        +IsExpired(): bool
+    }
+}
+
+Conversation "1" --> "2" ConversationParticipant
+Conversation "1" --> "*" Message
+Message "1" --> "*" MessageEdit
+Message "1" --> "*" MessageReadReceipt
+Message "1" --> "*" MessageAttachment
+Message "1" --> "*" MessageReport
+BlockedUser "*" --> "1" User : blocks
+
+@enduml

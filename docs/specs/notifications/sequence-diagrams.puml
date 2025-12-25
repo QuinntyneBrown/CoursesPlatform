@@ -1,0 +1,306 @@
+@startuml Send Push Notification Sequence
+
+title Send Push Notification Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "FCM/APNS" as Push
+
+User -> App: Enable push notifications
+App -> App: Request browser permission
+alt Permission granted
+    App -> App: Register service worker
+    App -> App: Get push token
+    App -> API: POST /api/notifications/push/register
+    API -> DB: Store push token
+    DB --> API: Token stored
+    API -> API: Publish PushTokenRegistered event
+    API --> App: 200 OK
+    App --> User: Notifications enabled
+else Permission denied
+    App --> User: Show settings link
+end
+
+@enduml
+
+@startuml Create and Send Notification Sequence
+
+title Create and Send Notification Flow
+
+participant "Event Handler" as Handler
+participant "Notification Service" as NotifSvc
+participant "Database" as DB
+participant "Preference Service" as PrefSvc
+participant "Push Service" as PushSvc
+participant "Email Service" as EmailSvc
+participant "FCM/APNS" as Push
+
+Handler -> NotifSvc: Create notification (event)
+NotifSvc -> DB: Get user preferences
+DB --> NotifSvc: User preferences
+
+NotifSvc -> NotifSvc: Check notification type enabled
+alt Notification type enabled
+    NotifSvc -> DB: Create notification record
+    DB --> NotifSvc: Notification created
+    NotifSvc -> NotifSvc: Publish NotificationCreated event
+
+    alt In-App enabled
+        NotifSvc -> DB: Store in-app notification
+        NotifSvc -> NotifSvc: Send via WebSocket
+    end
+
+    alt Push enabled
+        NotifSvc -> PrefSvc: Check DND status
+        PrefSvc --> NotifSvc: DND status
+        alt Not in DND window
+            NotifSvc -> DB: Get push tokens
+            DB --> NotifSvc: Active tokens
+            loop For each token
+                NotifSvc -> PushSvc: Send push notification
+                PushSvc -> Push: Send to FCM/APNS
+                alt Send successful
+                    Push --> PushSvc: Success
+                    PushSvc -> DB: Log success
+                    PushSvc -> PushSvc: Publish PushNotificationSent event
+                else Send failed
+                    Push --> PushSvc: Error
+                    PushSvc -> DB: Log failure
+                    PushSvc -> PushSvc: Publish PushNotificationFailed event
+                end
+            end
+        end
+    end
+
+    alt Email enabled
+        NotifSvc -> PrefSvc: Check digest frequency
+        PrefSvc --> NotifSvc: Digest frequency
+        alt Real-time
+            NotifSvc -> EmailSvc: Queue email
+            EmailSvc -> DB: Add to email queue
+            DB --> EmailSvc: Email queued
+        else Digest mode
+            NotifSvc -> DB: Add to digest batch
+        end
+    end
+else Notification type disabled
+    NotifSvc -> NotifSvc: Skip notification
+end
+
+@enduml
+
+@startuml Update Preferences Sequence
+
+title Update Notification Preferences Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Navigate to notification settings
+App -> API: GET /api/notifications/preferences
+API -> DB: Get user preferences
+DB --> API: Preferences
+API --> App: 200 OK with preferences
+App --> User: Show preferences page
+
+User -> App: Toggle notification type
+App -> App: Update local state
+User -> App: Click save (or auto-save)
+App -> API: PUT /api/notifications/preferences
+API -> API: Validate preferences
+alt Valid preferences
+    API -> DB: Update preferences
+    DB --> API: Updated
+    API -> API: Publish NotificationPreferencesUpdated event
+    API --> App: 200 OK
+    App --> User: Show success message
+else Invalid preferences
+    API --> App: 400 Bad Request
+    App --> User: Show error message
+end
+
+@enduml
+
+@startuml Mark Notification as Read Sequence
+
+title Mark Notification as Read Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: View notifications
+App -> API: GET /api/notifications
+API -> DB: Get user notifications
+DB --> API: Notifications
+API --> App: 200 OK with notifications
+App --> User: Show notification list
+
+User -> App: Click notification
+App -> API: PUT /api/notifications/{id}/read
+API -> DB: Update notification read status
+DB --> API: Updated
+API -> API: Publish NotificationRead event
+API -> DB: Update unread count
+API --> App: 200 OK
+App -> App: Update badge count
+App -> App: Navigate to action URL
+App --> User: Show destination page
+
+@enduml
+
+@startuml Enable Do Not Disturb Sequence
+
+title Enable Do Not Disturb Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Navigate to notification settings
+App -> API: GET /api/notifications/preferences
+API -> DB: Get preferences
+DB --> API: Preferences
+API --> App: 200 OK
+App --> User: Show settings
+
+User -> App: Enable DND toggle
+User -> App: Set start time (22:00)
+User -> App: Set end time (08:00)
+App -> API: PUT /api/notifications/dnd
+API -> API: Validate DND schedule
+alt Valid schedule
+    API -> DB: Update DND settings
+    DB --> API: Updated
+    API -> API: Publish DoNotDisturbEnabled event
+    API --> App: 200 OK
+    App --> User: Show DND enabled confirmation
+else Invalid schedule
+    API --> App: 400 Bad Request
+    App --> User: Show error message
+end
+
+@enduml
+
+@startuml Email Digest Processing Sequence
+
+title Email Digest Processing Flow
+
+participant "Background Job" as Job
+participant "Database" as DB
+participant "Email Service" as EmailSvc
+participant "Template Service" as TmplSvc
+participant "Email Provider" as Provider
+
+Job -> Job: Run scheduled digest job
+Job -> DB: Get users with digest enabled
+DB --> Job: Users list
+
+loop For each user
+    Job -> DB: Get unread notifications since last digest
+    DB --> Job: Notifications
+    alt Has unread notifications
+        Job -> TmplSvc: Render digest template
+        TmplSvc -> TmplSvc: Group by notification type
+        TmplSvc -> TmplSvc: Format timestamps
+        TmplSvc --> Job: Rendered email
+        Job -> EmailSvc: Queue digest email
+        EmailSvc -> DB: Add to email queue
+        DB --> EmailSvc: Queued
+        EmailSvc -> EmailSvc: Publish MarketingEmailSent event
+        Job -> DB: Update last digest sent time
+    end
+end
+
+Job -> Job: Wait for next scheduled run
+
+@enduml
+
+@startuml Email Queue Processing Sequence
+
+title Email Queue Processing Flow
+
+participant "Background Job" as Job
+participant "Database" as DB
+participant "Template Service" as TmplSvc
+participant "Email Provider" as Provider
+
+Job -> Job: Run queue processor (every 60s)
+Job -> DB: Get pending emails (by priority)
+DB --> Job: Email batch (max 100)
+
+loop For each email
+    Job -> Job: Check rate limits
+    alt Within rate limits
+        alt Has template
+            Job -> TmplSvc: Render template with data
+            TmplSvc --> Job: Rendered content
+        end
+        Job -> Provider: Send email
+        alt Send successful
+            Provider --> Job: Success (messageId)
+            Job -> DB: Mark email as sent
+            Job -> DB: Create EmailEvent (Sent)
+            Job -> Job: Publish EmailSent event
+        else Send failed
+            Provider --> Job: Error
+            Job -> DB: Increment retry count
+            alt Can retry
+                Job -> DB: Update status (retry later)
+            else Max retries reached
+                Job -> DB: Mark as failed
+                Job -> DB: Move to dead letter queue
+                Job -> Job: Publish EmailFailed event
+            end
+        end
+    else Rate limit exceeded
+        Job -> Job: Wait and retry
+    end
+end
+
+Job -> Job: Wait for next run
+
+@enduml
+
+@startuml Notification Cleanup Sequence
+
+title Notification Cleanup Flow
+
+participant "Background Job" as Job
+participant "Database" as DB
+
+Job -> Job: Run daily cleanup job
+Job -> DB: Get read notifications older than 30 days
+DB --> Job: Old read notifications
+
+loop For each notification
+    Job -> DB: Soft delete notification
+    DB --> Job: Deleted
+    Job -> Job: Publish NotificationExpired event
+end
+
+Job -> DB: Get unread notifications older than 90 days
+DB --> Job: Old unread notifications
+
+loop For each notification
+    Job -> DB: Soft delete notification
+    DB --> Job: Deleted
+    Job -> Job: Publish NotificationExpired event
+end
+
+Job -> DB: Get soft-deleted notifications older than 30 days
+DB --> Job: Archived notifications
+
+loop For each notification
+    Job -> DB: Permanently delete notification
+end
+
+Job -> Job: Schedule next run (tomorrow)
+
+@enduml

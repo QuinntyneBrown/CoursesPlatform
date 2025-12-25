@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-system-infrastructure" name="C4 Container">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="C4 Container Diagram - System Infrastructure" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="350" y="20" width="400" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Actors -->
+        <mxCell id="admin" value="System Admin&#xa;[Person]&#xa;&#xa;Monitors and manages&#xa;system infrastructure" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="140" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="system" value="System Scheduler&#xa;[Actor]&#xa;&#xa;Executes background&#xa;jobs and health checks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="880" y="80" width="140" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- Containers -->
+        <mxCell id="angular-app" value="Angular Admin App&#xa;[Container: Angular]&#xa;&#xa;System monitoring and&#xa;configuration dashboard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="240" width="140" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="api" value="System API&#xa;[Container: ASP.NET]&#xa;&#xa;Health, logging, cache,&#xa;jobs, flags, config APIs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="240" width="160" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Stores audit logs, jobs,&#xa;flags, config, health data" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="450" width="160" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="redis" value="Redis Cache&#xa;[Container: Redis]&#xa;&#xa;Distributed cache for&#xa;data and feature flags" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="540" y="450" width="160" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="queue" value="Message Queue&#xa;[Container: Hangfire]&#xa;&#xa;Background job&#xa;processing queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="780" y="450" width="160" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="monitoring" value="Monitoring Service&#xa;[Container: Azure]&#xa;&#xa;Azure Log Analytics&#xa;and Application Insights" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="540" y="240" width="160" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="external" value="External Services&#xa;[Container: External]&#xa;&#xa;Third-party APIs&#xa;and services" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="780" y="240" width="160" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Relationships -->
+        <mxCell id="r1" value="Views health,&#xa;manages settings" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="admin" target="angular-app">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r2" value="API calls&#xa;[HTTPS/JSON]" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="angular-app" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r3" value="Read/Write&#xa;[EF Core]" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r4" value="Cache operations&#xa;[Redis protocol]" style="endArrow=classic;html=1;exitX=1;exitY=1;entryX=0;entryY=0;" edge="1" parent="1" source="api" target="redis">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r5" value="Enqueue/Dequeue&#xa;jobs" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0;" edge="1" parent="1" source="api" target="queue">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r6" value="Send logs,&#xa;metrics, traces" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="monitoring">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r7" value="Health check&#xa;[HTTPS]" style="endArrow=classic;html=1;exitX=1;exitY=0;entryX=0;entryY=1;" edge="1" parent="1" source="api" target="external">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r8" value="Execute jobs" style="endArrow=classic;html=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="queue" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r9" value="Trigger jobs,&#xa;health checks" style="endArrow=classic;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0;" edge="1" parent="1" source="system" target="queue">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r10" value="Job data&#xa;[SQL]" style="endArrow=classic;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;dashed=1;" edge="1" parent="1" source="queue" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="640" width="100" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="legend-person" value="Person" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="680" width="100" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="legend-container" value="Container" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="200" y="680" width="100" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="legend-arrow" value="Relationship" style="endArrow=classic;html=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry x="320" y="700" width="100" height="40" as="geometry">
+            <mxPoint x="320" y="700" as="sourcePoint"/>
+            <mxPoint x="420" y="700" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

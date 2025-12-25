@@ -1,0 +1,215 @@
+@startuml Set Course Pricing Sequence
+
+title Set Course Pricing Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Event Bus" as Events
+
+Instructor -> App: Navigate to pricing settings
+App -> API: GET /api/courses/{id}/pricing
+API -> DB: Query current pricing
+DB --> API: Pricing data
+API --> App: Current price
+App --> Instructor: Display pricing form
+
+Instructor -> App: Enter new base price
+Instructor -> App: Set regional prices (optional)
+App -> App: Validate price range
+App -> API: POST /api/courses/{id}/pricing
+API -> API: Validate request
+API -> DB: Check course ownership
+DB --> API: Ownership confirmed
+API -> DB: Query current price
+DB --> API: Current price
+alt Price changed
+    API -> DB: Create price history record
+    API -> DB: Update course price
+    DB --> API: Price updated
+    API -> Events: Publish CoursePriceUpdated event
+    Events --> API: Event published
+    API --> App: 200 OK
+    App --> Instructor: Success notification
+else No change
+    API --> App: 200 OK (no change)
+    App --> Instructor: Price unchanged
+end
+
+@enduml
+
+@startuml Create Promotion Sequence
+
+title Create Promotion Flow
+
+actor Administrator
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Scheduler" as Scheduler
+participant "Event Bus" as Events
+
+Administrator -> App: Navigate to promotions
+App --> Administrator: Show promotion form
+
+Administrator -> App: Fill promotion details
+Administrator -> App: Select courses/categories
+Administrator -> App: Set start and end dates
+Administrator -> App: Set discount
+App -> App: Validate dates and discount
+App -> API: POST /api/promotions
+API -> API: Validate request
+API -> API: Validate date range
+API -> DB: Create promotion
+DB --> API: Promotion created
+API -> DB: Add promotion courses
+DB --> API: Courses added
+API -> Events: Publish PromotionCreated event
+Events --> API: Event published
+
+alt Immediate start
+    API -> DB: Mark promotion as active
+    API -> Events: Publish PromotionActivated event
+else Scheduled start
+    API -> Scheduler: Schedule activation job
+    Scheduler --> API: Job scheduled
+    API -> Scheduler: Schedule deactivation job
+    Scheduler --> API: Job scheduled
+end
+
+API --> App: 201 Created
+App --> Administrator: Show success message
+
+note over Scheduler: At scheduled start time
+Scheduler -> API: Trigger activation
+API -> DB: Activate promotion
+DB --> API: Promotion activated
+API -> Events: Publish PromotionActivated event
+
+note over Scheduler: At scheduled end time
+Scheduler -> API: Trigger deactivation
+API -> DB: Deactivate promotion
+DB --> API: Promotion deactivated
+API -> Events: Publish PromotionDeactivated event
+
+@enduml
+
+@startuml Redeem Coupon Sequence
+
+title Redeem Coupon Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Event Bus" as Events
+
+User -> App: Add course to cart
+App --> User: Show checkout page
+
+User -> App: Enter coupon code
+App -> App: Format code (uppercase)
+App -> API: POST /api/coupons/{code}/validate
+API -> DB: Query coupon by code
+alt Coupon found
+    DB --> API: Coupon data
+    API -> API: Check expiration
+    alt Not expired
+        API -> API: Check usage limit
+        alt Limit not reached
+            API -> DB: Check user restrictions
+            alt User eligible
+                API -> DB: Check course restrictions
+                alt Course eligible
+                    API -> API: Calculate discount
+                    API --> App: 200 OK with discount
+                    App -> App: Apply discount to total
+                    App --> User: Show discount applied
+                else Course not eligible
+                    API --> App: 422 Course not eligible
+                    App --> User: Error: Coupon not valid for this course
+                end
+            else User not eligible
+                API --> App: 422 User not eligible
+                App --> User: Error: You are not eligible for this coupon
+            end
+        else Limit reached
+            API --> App: 422 Usage limit reached
+            App --> User: Error: Coupon has reached usage limit
+        end
+    else Expired
+        API -> Events: Publish CouponExpired event
+        API --> App: 422 Coupon expired
+        App --> User: Error: Coupon has expired
+    end
+else Coupon not found
+    API --> App: 404 Not found
+    App --> User: Error: Invalid coupon code
+end
+
+User -> App: Complete purchase
+App -> API: POST /api/checkout
+API -> API: Recalculate with coupon
+API -> DB: Create order
+DB --> API: Order created
+API -> DB: Create coupon redemption
+DB --> API: Redemption recorded
+API -> DB: Increment usage count
+DB --> API: Count updated
+API -> Events: Publish CouponRedeemed event
+Events --> API: Event published
+API --> App: 200 OK
+App --> User: Purchase successful
+
+@enduml
+
+@startuml Purchase Bundle Sequence
+
+title Purchase Bundle Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Event Bus" as Events
+
+User -> App: Browse bundles
+App -> API: GET /api/bundles
+API -> DB: Query active bundles
+DB --> API: Bundle list
+API -> DB: Calculate savings
+DB --> API: Bundle details with savings
+API --> App: Bundles with pricing
+App --> User: Display bundles
+
+User -> App: Select bundle
+App --> User: Show bundle details
+
+User -> App: Add bundle to cart
+App -> App: Store bundle in cart state
+App --> User: Show checkout
+
+User -> App: Complete purchase
+App -> API: POST /api/checkout
+API -> API: Validate bundle still active
+API -> DB: Query bundle courses
+DB --> API: Course list
+API -> API: Calculate final price
+API -> DB: Create order
+DB --> API: Order created
+
+loop For each course in bundle
+    API -> DB: Create enrollment
+    DB --> API: Enrollment created
+    API -> Events: Publish StudentEnrolled event
+end
+
+API -> DB: Create bundle purchase record
+DB --> API: Purchase recorded
+API -> Events: Publish BundlePurchased event
+Events --> API: Event published
+API --> App: 200 OK with enrollments
+App --> User: Purchase successful, access all courses
+
+@enduml

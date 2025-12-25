@@ -1,0 +1,115 @@
+<mxfile host="app.diagrams.net" modified="2025-12-25T00:00:00.000Z" agent="Claude" version="22.0.0" type="device">
+  <diagram name="C4 Container Diagram - Referral Program" id="referral-program-c4">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="C4 Container Diagram - Referral Program" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="350" y="20" width="470" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- System Boundary -->
+        <mxCell id="system-boundary" value="CoursesPlatform System" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontSize=14;fontStyle=1;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="200" y="140" width="780" height="580" as="geometry" />
+        </mxCell>
+
+        <!-- External Actors -->
+        <mxCell id="referrer-user" value="Referrer&lt;br&gt;(Existing User)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="60" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="referee-user" value="Referee&lt;br&gt;(New User)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="40" y="380" width="60" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="admin-user" value="Administrator" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="40" y="560" width="60" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Angular Application -->
+        <mxCell id="angular-app" value="&lt;b&gt;Angular Web Application&lt;/b&gt;&lt;br&gt;&lt;br&gt;[Container: Angular/TypeScript]&lt;br&gt;&lt;br&gt;Provides referral program UI including:&lt;br&gt;- Referral dashboard&lt;br&gt;- Code generation &amp; sharing&lt;br&gt;- Referral tracking&lt;br&gt;- Rewards display&lt;br&gt;- Campaign management (admin)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="240" y="180" width="280" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- API Container -->
+        <mxCell id="api-container" value="&lt;b&gt;API Application&lt;/b&gt;&lt;br&gt;&lt;br&gt;[Container: .NET 8 Web API]&lt;br&gt;&lt;br&gt;Provides referral program API:&lt;br&gt;- Referral code generation&lt;br&gt;- Referral tracking&lt;br&gt;- Reward distribution&lt;br&gt;- Campaign management&lt;br&gt;- Analytics &amp; metrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="660" y="180" width="280" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- Database -->
+        <mxCell id="database" value="&lt;b&gt;Database&lt;/b&gt;&lt;br&gt;&lt;br&gt;[Container: SQL Server]&lt;br&gt;&lt;br&gt;Stores:&lt;br&gt;- Referral codes&lt;br&gt;- Referrals&lt;br&gt;- Referral rewards&lt;br&gt;- Referral campaigns&lt;br&gt;- Analytics data" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="720" y="480" width="160" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- Notification Service -->
+        <mxCell id="notification-service" value="&lt;b&gt;Notification Service&lt;/b&gt;&lt;br&gt;&lt;br&gt;[Container: External Service]&lt;br&gt;&lt;br&gt;Sends notifications:&lt;br&gt;- Referral code shared&lt;br&gt;- Referral converted&lt;br&gt;- Rewards distributed&lt;br&gt;- Campaign updates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;fontSize=12;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="480" width="280" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- Relationships -->
+
+        <!-- Referrer to Angular App -->
+        <mxCell id="edge-referrer-app" value="Views dashboard,&lt;br&gt;generates code,&lt;br&gt;shares referral&lt;br&gt;[HTTPS]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="referrer-user" target="angular-app">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Referee to Angular App -->
+        <mxCell id="edge-referee-app" value="Applies referral code,&lt;br&gt;views rewards&lt;br&gt;[HTTPS]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="referee-user" target="angular-app">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Admin to Angular App -->
+        <mxCell id="edge-admin-app" value="Manages campaigns,&lt;br&gt;views analytics&lt;br&gt;[HTTPS]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=1;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="admin-user" target="angular-app">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Angular App to API -->
+        <mxCell id="edge-app-api" value="Makes API calls&lt;br&gt;[HTTPS/JSON]&lt;br&gt;&lt;br&gt;POST /api/referrals/generate-code&lt;br&gt;GET /api/referrals/my-code&lt;br&gt;POST /api/referrals/apply-code&lt;br&gt;GET /api/referrals/my-referrals&lt;br&gt;GET /api/referrals/my-rewards&lt;br&gt;POST /api/referral-campaigns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=9;" edge="1" parent="1" source="angular-app" target="api-container">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API to Database -->
+        <mxCell id="edge-api-db" value="Reads from and&lt;br&gt;writes to&lt;br&gt;[EF Core/SQL]&lt;br&gt;&lt;br&gt;Uses ICoursesPlatformContext&lt;br&gt;for data access" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;fontSize=10;" edge="1" parent="1" source="api-container" target="database">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API to Notification Service -->
+        <mxCell id="edge-api-notification" value="Sends notifications&lt;br&gt;[Event-driven]&lt;br&gt;&lt;br&gt;- Code generated&lt;br&gt;- Referral applied&lt;br&gt;- Reward distributed" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="api-container" target="notification-service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;verticalAlign=top;fontSize=12;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="140" width="220" height="240" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-title" value="&lt;b&gt;Legend&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1030" y="150" width="100" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-person" value="Person/Actor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="190" width="180" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-container" value="Container (Internal)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="230" width="180" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-ui" value="UI Container" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="270" width="180" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-database" value="Database" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="310" width="180" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-external" value="External System" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="350" width="180" height="30" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

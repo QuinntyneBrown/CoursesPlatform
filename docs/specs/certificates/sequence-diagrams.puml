@@ -1,0 +1,250 @@
+@startuml Earn Certificate Sequence
+
+title Earn Certificate Flow (Course Completion)
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "PDF Generator" as PDF
+participant "Email Service" as Email
+
+Student -> App: Complete final lesson
+App -> API: POST /api/courses/{id}/lessons/{lessonId}/complete
+API -> DB: Update lesson progress
+API -> DB: Check course completion (100%)
+DB --> API: Course completed
+
+alt Course 100% Complete
+    API -> DB: Get course and user details
+    API -> DB: Get default certificate template
+    DB --> API: Template found
+    API -> API: Generate certificate data
+    API -> API: Generate verification code
+    API -> API: Generate public URL
+    API -> DB: Create Certificate record
+    DB --> API: Certificate created
+    API -> PDF: Generate certificate PDF
+    PDF --> API: PDF generated
+    API -> DB: Store PDF URL
+    API -> API: Publish CertificateIssued event
+    API -> Email: Send certificate notification
+    Email --> API: Email queued
+    API --> App: 200 OK with certificate details
+    App --> Student: Show congratulations message
+    App -> App: Navigate to certificate page
+end
+
+@enduml
+
+@startuml Download Certificate Sequence
+
+title Download Certificate Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "PDF Generator" as PDF
+participant "Storage" as Storage
+
+Student -> App: Click download button
+App -> API: GET /api/users/me/certificates/{id}/download
+API -> API: Verify user owns certificate
+API -> DB: Get certificate details
+DB --> API: Certificate found
+
+alt PDF already generated
+    API -> Storage: Get PDF file
+    Storage --> API: PDF file
+else PDF not yet generated
+    API -> DB: Get certificate template
+    API -> PDF: Generate PDF with data
+    PDF --> API: PDF generated
+    API -> Storage: Store PDF file
+    Storage --> API: File stored
+    API -> DB: Update PDF URL
+end
+
+API -> DB: Log download event
+API -> API: Publish CertificateDownloaded event
+API --> App: 200 OK with PDF file
+App -> App: Trigger browser download
+App --> Student: PDF downloaded
+
+@enduml
+
+@startuml Verify Certificate Sequence
+
+title Verify Certificate Flow (Public)
+
+actor Verifier
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Verifier -> App: Enter certificate ID
+App -> API: GET /api/certificates/verify/{certificateId}
+API -> DB: Find certificate by ID
+DB --> API: Certificate found
+
+alt Certificate exists
+    API -> API: Check certificate status
+    alt Certificate active
+        API -> DB: Log verification attempt
+        API -> API: Publish CertificateVerified event
+        API --> App: 200 OK with certificate details
+        App --> Verifier: Show valid certificate
+    else Certificate revoked
+        API -> DB: Get revocation details
+        API -> DB: Log verification attempt
+        API --> App: 200 OK with revoked status
+        App --> Verifier: Show revoked certificate warning
+    end
+else Certificate not found
+    API -> DB: Log failed verification
+    API --> App: 404 Not found
+    App --> Verifier: Show invalid certificate message
+end
+
+@enduml
+
+@startuml QR Code Verification Sequence
+
+title QR Code Verification Flow
+
+actor Verifier
+participant "Mobile Device" as Mobile
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Verifier -> Mobile: Scan QR code on certificate
+Mobile -> App: Open verification URL
+note right: URL contains certificate ID\nand verification code
+App -> API: GET /api/certificates/verify/{certificateId}?code={code}
+API -> DB: Find certificate by ID
+DB --> API: Certificate found
+API -> API: Verify code matches
+alt Code valid
+    API -> DB: Log QR verification
+    API -> API: Publish CertificateVerifiedViaQR event
+    API --> App: 200 OK with details
+    App --> Mobile: Display certificate details
+    Mobile --> Verifier: Show valid certificate
+else Code invalid
+    API --> App: 400 Invalid code
+    App --> Mobile: Show error message
+    Mobile --> Verifier: Verification failed
+end
+
+@enduml
+
+@startuml Email Certificate Sequence
+
+title Email Certificate Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "PDF Generator" as PDF
+participant "Email Service" as Email
+
+Student -> App: Click email certificate
+App --> Student: Show email dialog
+Student -> App: Enter recipient email
+App -> API: POST /api/users/me/certificates/{id}/email
+API -> API: Verify user owns certificate
+API -> DB: Get certificate details
+DB --> API: Certificate found
+
+alt PDF exists
+    API -> DB: Get PDF URL
+else PDF not generated
+    API -> PDF: Generate PDF
+    PDF --> API: PDF generated
+    API -> DB: Store PDF URL
+end
+
+API -> Email: Send email with PDF attachment
+note right: Email includes:\n- PDF attachment\n- Verification link\n- Congratulations message
+Email --> API: Email queued
+API -> DB: Log email event
+API -> API: Publish CertificateEmailed event
+API --> App: 200 OK
+App --> Student: Email sent successfully
+
+@enduml
+
+@startuml Revoke Certificate Sequence
+
+title Revoke Certificate Flow (Admin)
+
+actor Admin
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Email Service" as Email
+
+Admin -> App: Navigate to certificate details
+App -> API: GET /api/certificates/{id}
+API --> App: Certificate details
+App --> Admin: Show certificate
+Admin -> App: Click revoke button
+App --> Admin: Show revocation dialog
+Admin -> App: Enter revocation reason
+App -> API: POST /api/certificates/{id}/revoke
+API -> API: Verify admin permissions
+API -> DB: Get certificate
+DB --> API: Certificate found
+API -> API: Validate certificate is active
+API -> DB: Update certificate status to Revoked
+API -> DB: Create CertificateRevocation record
+API -> API: Publish CertificateRevoked event
+API -> DB: Get student email
+API -> Email: Send revocation notification
+Email --> API: Email queued
+API --> App: 200 OK
+App --> Admin: Certificate revoked
+
+@enduml
+
+@startuml Manual Certificate Issuance Sequence
+
+title Manual Certificate Issuance Flow (Instructor)
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "PDF Generator" as PDF
+participant "Email Service" as Email
+
+Instructor -> App: Navigate to issue certificate
+App --> Instructor: Show issuance form
+Instructor -> App: Select student and course
+Instructor -> App: Enter completion date and reason
+App -> API: POST /api/certificates/issue
+API -> API: Verify instructor permissions
+API -> DB: Check student enrolled in course
+DB --> API: Enrollment confirmed
+API -> DB: Check certificate doesn't exist
+DB --> API: No existing certificate
+
+API -> DB: Get course and student details
+API -> DB: Get default template for course
+DB --> API: Template found
+API -> API: Generate certificate data
+API -> API: Generate verification code
+API -> DB: Create Certificate record (Manual type)
+API -> PDF: Generate certificate PDF
+PDF --> API: PDF generated
+API -> DB: Store PDF URL
+API -> API: Publish CertificateManuallyIssued event
+API -> Email: Send certificate to student
+Email --> API: Email queued
+API --> App: 201 Created
+App --> Instructor: Certificate issued successfully
+
+@enduml

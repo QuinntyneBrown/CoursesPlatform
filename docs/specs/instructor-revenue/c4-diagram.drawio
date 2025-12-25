@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-instructor-revenue" name="C4 Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="C4 Context Diagram - Instructor Revenue" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="450" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Instructor -->
+        <mxCell id="instructor" value="Instructor&#xa;[Person]&#xa;&#xa;A course instructor who&#xa;earns revenue from sales" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="350" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Web App -->
+        <mxCell id="webapp" value="Web Application&#xa;[Container: Angular]&#xa;&#xa;Provides earnings tracking&#xa;and payout management UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="240" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- API -->
+        <mxCell id="api" value="API Application&#xa;[Container: ASP.NET Core]&#xa;&#xa;Processes earnings and&#xa;manages payouts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="240" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Database -->
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Stores earnings, payouts,&#xa;and tax information" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="480" y="240" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Payout Worker -->
+        <mxCell id="worker" value="Payout Worker&#xa;[Container: Background Service]&#xa;&#xa;Processes scheduled&#xa;payouts automatically" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="680" y="240" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Payment Provider -->
+        <mxCell id="provider" value="Payment Provider&#xa;[External System]&#xa;&#xa;Stripe/PayPal for&#xa;processing payouts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="680" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Email Service -->
+        <mxCell id="email" value="Email Service&#xa;[External System]&#xa;&#xa;Sends payout and&#xa;tax notifications" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="480" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- File Storage -->
+        <mxCell id="storage" value="File Storage&#xa;[External System]&#xa;&#xa;Stores tax forms and&#xa;reports securely" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Tax Service -->
+        <mxCell id="taxsvc" value="Tax Service&#xa;[External System]&#xa;&#xa;Validates tax IDs and&#xa;generates tax reports" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Arrows -->
+        <mxCell id="arrow1" value="Views earnings and&#xa;manages payouts" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="instructor" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow2" value="Uses" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="instructor" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow3" value="API Calls" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="webapp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow4" value="Reads/Writes&#xa;earnings data" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow5" value="Sends notifications" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="email">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow6" value="Stores tax forms" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="storage">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow7" value="Validates tax info" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="webapp" target="taxsvc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow8" value="Reads payout data" style="endArrow=classic;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="worker" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow9" value="Processes payouts" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="worker" target="provider">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow10" value="Sends payout&#xa;notifications" style="endArrow=classic;html=1;exitX=0.25;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="worker" target="email">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

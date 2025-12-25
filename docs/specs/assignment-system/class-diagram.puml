@@ -1,0 +1,244 @@
+@startuml Assignment System Class Diagram
+
+title Assignment System - Class Diagram
+
+package "Assignment Aggregate" {
+    class Assignment {
+        +AssignmentId: Guid
+        +CourseId: Guid
+        +Title: string
+        +Description: string
+        +Instructions: string
+        +DueDate: DateTime
+        +PointsPossible: decimal
+        +PassingThreshold: decimal
+        +SubmissionType: SubmissionType
+        +AllowLateSubmission: bool
+        +LatePenaltyPercentage: decimal
+        +MaxResubmissions: int
+        +Status: AssignmentStatus
+        +CreatedAt: DateTime
+        +PublishedAt: DateTime
+        --
+        +Create(courseId, title, description): Assignment
+        +Update(title, description, instructions): void
+        +Publish(): void
+        +Unpublish(): void
+        +SetDueDate(dueDate): void
+        +ConfigureSubmissionSettings(type, allowLate): void
+        +AttachRubric(rubric): void
+    }
+
+    enum AssignmentStatus {
+        Draft
+        Published
+        Closed
+        Archived
+    }
+
+    enum SubmissionType {
+        File
+        Text
+        Link
+        Mixed
+    }
+
+    class Rubric {
+        +RubricId: Guid
+        +AssignmentId: Guid
+        +Title: string
+        +TotalPoints: decimal
+        +CreatedAt: DateTime
+        --
+        +Create(assignmentId, title): Rubric
+        +AddCriterion(criterion): void
+        +RemoveCriterion(criterionId): void
+        +CalculateTotalPoints(): decimal
+    }
+
+    class RubricCriterion {
+        +RubricCriterionId: Guid
+        +RubricId: Guid
+        +Description: string
+        +Points: decimal
+        +Order: int
+        --
+        +Create(description, points): RubricCriterion
+        +Update(description, points): void
+    }
+}
+
+package "Submission Aggregate" {
+    class Submission {
+        +SubmissionId: Guid
+        +AssignmentId: Guid
+        +StudentId: Guid
+        +SubmittedAt: DateTime
+        +TextContent: string
+        +LinkUrl: string
+        +IsLate: bool
+        +LatePenalty: decimal
+        +Status: SubmissionStatus
+        +ResubmissionCount: int
+        +Version: int
+        --
+        +Create(assignmentId, studentId): Submission
+        +Submit(content, files): void
+        +Resubmit(content, files): void
+        +Withdraw(): void
+        +MarkAsLate(penalty): void
+    }
+
+    enum SubmissionStatus {
+        Pending
+        Submitted
+        Graded
+        Returned
+        Withdrawn
+    }
+
+    class SubmissionFile {
+        +SubmissionFileId: Guid
+        +SubmissionId: Guid
+        +FileName: string
+        +FileSize: long
+        +FileType: string
+        +StorageUrl: string
+        +UploadedAt: DateTime
+        --
+        +Upload(fileName, fileSize, url): SubmissionFile
+        +Delete(): void
+    }
+
+    class SubmissionComment {
+        +SubmissionCommentId: Guid
+        +SubmissionId: Guid
+        +AuthorId: Guid
+        +CommentText: string
+        +IsInline: bool
+        +LineNumber: int
+        +CreatedAt: DateTime
+        --
+        +Create(submissionId, authorId, text): SubmissionComment
+        +Update(text): void
+        +Delete(): void
+    }
+}
+
+package "Grade Aggregate" {
+    class Grade {
+        +GradeId: Guid
+        +SubmissionId: Guid
+        +GraderId: Guid
+        +PointsAwarded: decimal
+        +PointsPossible: decimal
+        +PercentageScore: decimal
+        +LetterGrade: string
+        +Feedback: string
+        +GradedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(submissionId, graderId): Grade
+        +SetScore(points): void
+        +ApplyRubricGrade(rubricGrade): void
+        +ProvideFeedback(feedback): void
+        +Update(points, feedback): void
+        +CalculatePercentage(): decimal
+    }
+
+    class RubricGrade {
+        +RubricGradeId: Guid
+        +GradeId: Guid
+        +RubricId: Guid
+        +TotalPoints: decimal
+        --
+        +Create(gradeId, rubricId): RubricGrade
+        +AddCriterionScore(criterion, points): void
+        +CalculateTotal(): decimal
+    }
+
+    class RubricCriterionScore {
+        +RubricCriterionScoreId: Guid
+        +RubricGradeId: Guid
+        +RubricCriterionId: Guid
+        +PointsAwarded: decimal
+        +Comments: string
+        --
+        +Create(criterionId, points): RubricCriterionScore
+        +Update(points, comments): void
+    }
+
+    class GradeHistory {
+        +GradeHistoryId: Guid
+        +GradeId: Guid
+        +PreviousPoints: decimal
+        +NewPoints: decimal
+        +Reason: string
+        +ChangedBy: Guid
+        +ChangedAt: DateTime
+        --
+        +Record(gradeId, oldPoints, newPoints): GradeHistory
+    }
+}
+
+package "Peer Review Aggregate" {
+    class PeerReview {
+        +PeerReviewId: Guid
+        +AssignmentId: Guid
+        +SubmissionId: Guid
+        +ReviewerId: Guid
+        +Score: decimal
+        +Feedback: string
+        +IsAnonymous: bool
+        +Status: PeerReviewStatus
+        +SubmittedAt: DateTime
+        --
+        +Create(assignmentId, submissionId, reviewerId): PeerReview
+        +Submit(score, feedback): void
+        +Update(score, feedback): void
+    }
+
+    enum PeerReviewStatus {
+        Assigned
+        InProgress
+        Submitted
+        Completed
+    }
+
+    class PeerReviewAssignment {
+        +PeerReviewAssignmentId: Guid
+        +AssignmentId: Guid
+        +ReviewerId: Guid
+        +RevieweeId: Guid
+        +DueDate: DateTime
+        +AssignedAt: DateTime
+        --
+        +Create(assignmentId, reviewerId, revieweeId): PeerReviewAssignment
+    }
+
+    class PeerReviewCriterionScore {
+        +PeerReviewCriterionScoreId: Guid
+        +PeerReviewId: Guid
+        +RubricCriterionId: Guid
+        +PointsAwarded: decimal
+        +Comments: string
+        --
+        +Create(criterionId, points): PeerReviewCriterionScore
+        +Update(points, comments): void
+    }
+}
+
+Assignment "1" --> "0..1" Rubric
+Assignment "1" --> "*" Submission
+Rubric "1" --> "*" RubricCriterion
+Submission "1" --> "*" SubmissionFile
+Submission "1" --> "*" SubmissionComment
+Submission "1" --> "0..1" Grade
+Grade "1" --> "0..1" RubricGrade
+Grade "1" --> "*" GradeHistory
+RubricGrade "1" --> "*" RubricCriterionScore
+Submission "1" --> "*" PeerReview
+PeerReview "1" --> "*" PeerReviewCriterionScore
+Assignment "1" --> "*" PeerReviewAssignment
+
+@enduml

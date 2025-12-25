@@ -1,0 +1,171 @@
+@startuml Shopping Cart Class Diagram
+
+title Shopping & Cart - Class Diagram
+
+package "Cart Aggregate" {
+    class Cart {
+        +CartId: Guid
+        +UserId: Guid
+        +SessionId: string
+        +Status: CartStatus
+        +Subtotal: decimal
+        +Discount: decimal
+        +Total: decimal
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        +ExpiresAt: DateTime
+        +IsAnonymous: bool
+        --
+        +Create(user): Cart
+        +AddItem(course, price): void
+        +RemoveItem(courseId): void
+        +Clear(): void
+        +ApplyCoupon(coupon): void
+        +RemoveCoupon(): void
+        +CalculateTotal(): void
+        +Merge(otherCart): void
+        +Expire(): void
+        +IsExpired(): bool
+    }
+
+    enum CartStatus {
+        Active
+        Expired
+        Converted
+        Abandoned
+    }
+
+    class CartItem {
+        +CartItemId: Guid
+        +CartId: Guid
+        +CourseId: Guid
+        +CourseName: string
+        +InstructorName: string
+        +Price: decimal
+        +DiscountedPrice: decimal
+        +AddedAt: DateTime
+        --
+        +Create(cart, course, price): CartItem
+        +UpdatePrice(newPrice): void
+    }
+}
+
+package "Coupon Aggregate" {
+    class Coupon {
+        +CouponId: Guid
+        +Code: string
+        +Description: string
+        +DiscountType: DiscountType
+        +DiscountValue: decimal
+        +MinimumPurchase: decimal
+        +MaxUsageTotal: int
+        +MaxUsagePerUser: int
+        +StartDate: DateTime
+        +ExpirationDate: DateTime
+        +IsActive: bool
+        +CreatedAt: DateTime
+        --
+        +Create(code, type, value): Coupon
+        +Activate(): void
+        +Deactivate(): void
+        +IsValid(): bool
+        +IsExpired(): bool
+        +CanBeUsedBy(userId): bool
+        +CalculateDiscount(subtotal): decimal
+    }
+
+    enum DiscountType {
+        Percentage
+        FixedAmount
+    }
+
+    class CouponUsage {
+        +CouponUsageId: Guid
+        +CouponId: Guid
+        +UserId: Guid
+        +CartId: Guid
+        +OrderId: Guid
+        +DiscountAmount: decimal
+        +UsedAt: DateTime
+        --
+        +Create(coupon, user): CouponUsage
+        +Complete(orderId): void
+    }
+
+    class CouponCourse {
+        +CouponCourseId: Guid
+        +CouponId: Guid
+        +CourseId: Guid
+        --
+        +Create(coupon, course): CouponCourse
+    }
+}
+
+package "Wishlist Aggregate" {
+    class Wishlist {
+        +WishlistId: Guid
+        +UserId: Guid
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(user): Wishlist
+        +AddItem(course): void
+        +RemoveItem(courseId): void
+        +MoveToCart(courseId, cart): void
+    }
+
+    class WishlistItem {
+        +WishlistItemId: Guid
+        +WishlistId: Guid
+        +CourseId: Guid
+        +CourseName: string
+        +OriginalPrice: decimal
+        +CurrentPrice: decimal
+        +AddedAt: DateTime
+        +NotifyOnPriceDrop: bool
+        --
+        +Create(wishlist, course, price): WishlistItem
+        +UpdatePrice(newPrice): void
+        +HasPriceDropped(): bool
+    }
+
+    class SharedWishlist {
+        +SharedWishlistId: Guid
+        +WishlistId: Guid
+        +ShareToken: string
+        +CreatedAt: DateTime
+        +ExpiresAt: DateTime
+        +IsActive: bool
+        --
+        +Create(wishlist): SharedWishlist
+        +Revoke(): void
+        +IsExpired(): bool
+    }
+}
+
+package "Discount Rules Aggregate" {
+    class BulkDiscountRule {
+        +BulkDiscountRuleId: Guid
+        +InstructorId: Guid
+        +MinimumCourses: int
+        +DiscountPercentage: decimal
+        +IsActive: bool
+        +StartDate: DateTime
+        +EndDate: DateTime
+        --
+        +Create(instructor, minCourses, percentage): BulkDiscountRule
+        +IsApplicable(courseCount): bool
+        +CalculateDiscount(subtotal): decimal
+    }
+}
+
+Cart "1" --> "*" CartItem
+Cart "0..1" --> "0..1" Coupon
+Coupon "1" --> "*" CouponUsage
+Coupon "1" --> "*" CouponCourse
+Wishlist "1" --> "*" WishlistItem
+Wishlist "1" --> "0..1" SharedWishlist
+Cart --> CartStatus
+Coupon --> DiscountType
+
+@enduml

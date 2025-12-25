@@ -1,0 +1,288 @@
+@startuml Search Discovery Class Diagram
+
+title Search & Discovery - Class Diagram
+
+package "Search Aggregate" {
+    class SearchQuery {
+        +SearchQueryId: Guid
+        +UserId: Guid
+        +QueryText: string
+        +CreatedAt: DateTime
+        +ResultCount: int
+        +SessionId: string
+        +DeviceInfo: string
+        --
+        +Create(userId, queryText): SearchQuery
+        +RecordResults(count): void
+        +AddFilter(filter): void
+        +ApplySort(sortBy): void
+    }
+
+    class SearchFilter {
+        +SearchFilterId: Guid
+        +SearchQueryId: Guid
+        +FilterType: FilterType
+        +FilterValue: string
+        +AppliedAt: DateTime
+        --
+        +Apply(): void
+        +Remove(): void
+    }
+
+    enum FilterType {
+        Category
+        SubCategory
+        PriceRange
+        DifficultyLevel
+        Rating
+        Language
+        Duration
+        LastUpdated
+    }
+
+    class SearchResult {
+        +SearchResultId: Guid
+        +SearchQueryId: Guid
+        +CourseId: Guid
+        +Rank: int
+        +RelevanceScore: decimal
+        +WasClicked: bool
+        +ClickedAt: DateTime
+        --
+        +RecordClick(): void
+        +CalculateRelevance(): decimal
+    }
+
+    class SearchSuggestion {
+        +SearchSuggestionId: Guid
+        +SuggestionText: string
+        +SuggestionType: SuggestionType
+        +Frequency: int
+        +LastUsed: DateTime
+        --
+        +IncrementFrequency(): void
+        +UpdateLastUsed(): void
+    }
+
+    enum SuggestionType {
+        CourseTitle
+        InstructorName
+        Category
+        Keyword
+    }
+
+    enum SortOption {
+        Relevance
+        Popularity
+        Rating
+        Newest
+        PriceLowToHigh
+        PriceHighToLow
+    }
+}
+
+package "Recommendation Aggregate" {
+    class Recommendation {
+        +RecommendationId: Guid
+        +UserId: Guid
+        +CourseId: Guid
+        +RecommendationType: RecommendationType
+        +Score: decimal
+        +Reason: string
+        +GeneratedAt: DateTime
+        +ExpiresAt: DateTime
+        +WasClicked: bool
+        --
+        +Create(user, course, type, score): Recommendation
+        +RecordClick(): void
+        +IsExpired(): bool
+        +CalculateScore(): decimal
+    }
+
+    enum RecommendationType {
+        Personalized
+        Similar
+        Collaborative
+        ContentBased
+        Trending
+        Popular
+    }
+
+    class RecommendationSettings {
+        +RecommendationSettingsId: Guid
+        +UserId: Guid
+        +CollaborativeWeight: decimal
+        +ContentBasedWeight: decimal
+        +TrendingWeight: decimal
+        +LastRefreshed: DateTime
+        --
+        +UpdateWeights(collab, content, trending): void
+        +ScheduleRefresh(): void
+    }
+
+    class UserInteraction {
+        +UserInteractionId: Guid
+        +UserId: Guid
+        +CourseId: Guid
+        +InteractionType: InteractionType
+        +InteractedAt: DateTime
+        +DurationSeconds: int
+        --
+        +Record(user, course, type): void
+    }
+
+    enum InteractionType {
+        Viewed
+        Enrolled
+        Completed
+        Wishlist
+        Rated
+        Reviewed
+    }
+}
+
+package "Trending Aggregate" {
+    class TrendingCourse {
+        +TrendingCourseId: Guid
+        +CourseId: Guid
+        +TrendingScore: decimal
+        +Rank: int
+        +CalculatedAt: DateTime
+        +EnrollmentVelocity: decimal
+        +RatingImprovement: decimal
+        +SocialEngagement: int
+        --
+        +CalculateTrendingScore(): decimal
+        +UpdateRank(rank): void
+    }
+
+    class PopularCourse {
+        +PopularCourseId: Guid
+        +CourseId: Guid
+        +CategoryId: Guid
+        +PopularityScore: decimal
+        +Rank: int
+        +TotalEnrollments: int
+        +AverageRating: decimal
+        +CalculatedAt: DateTime
+        --
+        +CalculatePopularityScore(): decimal
+        +UpdateRank(rank): void
+    }
+
+    class TrendingInstructor {
+        +TrendingInstructorId: Guid
+        +InstructorId: Guid
+        +TrendingScore: decimal
+        +Rank: int
+        +TotalStudents: int
+        +AverageCourseRating: decimal
+        +NewCoursesCount: int
+        +CalculatedAt: DateTime
+        --
+        +CalculateTrendingScore(): decimal
+    }
+}
+
+package "Search Index Aggregate" {
+    class SearchIndex {
+        +SearchIndexId: Guid
+        +CourseId: Guid
+        +Title: string
+        +Description: string
+        +InstructorName: string
+        +CategoryName: string
+        +Keywords: string
+        +LastIndexed: DateTime
+        +IsPublished: bool
+        --
+        +UpdateIndex(course): void
+        +CalculateTFIDF(): void
+        +Publish(): void
+        +Unpublish(): void
+    }
+
+    class IndexField {
+        +IndexFieldId: Guid
+        +SearchIndexId: Guid
+        +FieldName: string
+        +FieldValue: string
+        +Weight: decimal
+        +TFIDFScore: decimal
+        --
+        +CalculateTFIDF(): decimal
+        +UpdateWeight(weight): void
+    }
+}
+
+package "Search Analytics Aggregate" {
+    class SearchAnalytics {
+        +SearchAnalyticsId: Guid
+        +Date: DateTime
+        +TotalSearches: int
+        +UniqueUsers: int
+        +AverageResultCount: decimal
+        +ZeroResultCount: int
+        +ClickThroughRate: decimal
+        +ConversionRate: decimal
+        --
+        +CalculateMetrics(): void
+        +Export(): byte[]
+    }
+
+    class PopularSearchTerm {
+        +PopularSearchTermId: Guid
+        +SearchTerm: string
+        +Frequency: int
+        +Trend: TrendDirection
+        +Date: DateTime
+        --
+        +IncrementFrequency(): void
+        +CalculateTrend(): TrendDirection
+    }
+
+    enum TrendDirection {
+        Rising
+        Falling
+        Stable
+    }
+
+    class SearchPerformanceMetrics {
+        +SearchPerformanceMetricsId: Guid
+        +Date: DateTime
+        +AverageResponseTime: int
+        +P95ResponseTime: int
+        +ErrorRate: decimal
+        +TimeoutRate: decimal
+        +CacheHitRate: decimal
+        --
+        +RecordMetric(responseTime): void
+        +CheckThresholds(): bool
+    }
+}
+
+package "User Search History Aggregate" {
+    class UserSearchHistory {
+        +UserSearchHistoryId: Guid
+        +UserId: Guid
+        +SearchQueryText: string
+        +SearchedAt: DateTime
+        +ResultCount: int
+        +ClickedCourseId: Guid
+        --
+        +Record(user, query, results): void
+        +GetRecentSearches(count): List
+    }
+}
+
+SearchQuery "1" --> "*" SearchFilter
+SearchQuery "1" --> "*" SearchResult
+SearchQuery "1" --> "1" SortOption
+SearchSuggestion "1" --> "1" SuggestionType
+Recommendation "1" --> "1" RecommendationType
+RecommendationSettings "1" --> "*" Recommendation
+UserInteraction "1" --> "1" InteractionType
+SearchIndex "1" --> "*" IndexField
+PopularSearchTerm "1" --> "1" TrendDirection
+
+@enduml

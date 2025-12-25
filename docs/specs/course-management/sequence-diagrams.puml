@@ -1,0 +1,122 @@
+@startuml Create Course Sequence
+
+title Create Course Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Instructor -> App: Click Create Course
+App --> Instructor: Show course wizard
+
+Instructor -> App: Enter title and description
+App -> App: Validate input
+Instructor -> App: Click Next
+
+Instructor -> App: Select category and level
+App -> App: Validate selection
+Instructor -> App: Click Next
+
+Instructor -> App: Add learning objectives
+App -> App: Validate minimum objectives
+Instructor -> App: Click Create
+
+App -> API: POST /api/courses
+API -> API: Validate request
+API -> DB: Create Course (Draft)
+DB --> API: Course created
+API -> API: Publish CourseDraftCreated event
+API --> App: 201 Created with CourseId
+App --> Instructor: Redirect to course editor
+
+@enduml
+
+@startuml Publish Course Sequence
+
+title Publish Course Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Instructor -> App: Click Publish Course
+App -> App: Check course requirements
+App --> Instructor: Show publish confirmation
+
+Instructor -> App: Confirm publish
+App -> API: POST /api/courses/{id}/publish
+API -> DB: Get course
+DB --> API: Course data
+API -> API: Validate course status
+
+alt Course is Approved
+    API -> DB: Update status to Published
+    API -> DB: Set published timestamp
+    DB --> API: Updated
+    API -> API: Publish CoursePublished event
+    API --> App: 200 OK
+    App --> Instructor: Show success message
+else Course not Approved
+    API --> App: 400 Bad Request
+    App --> Instructor: Show error message
+end
+
+@enduml
+
+@startuml Course Review Sequence
+
+title Course Review Flow
+
+actor Instructor
+actor Reviewer
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification" as Notify
+
+Instructor -> App: Submit for Review
+App -> API: POST /api/courses/{id}/submit-for-review
+API -> API: Validate requirements
+API -> DB: Update status to PendingReview
+API -> API: Publish CourseSubmittedForReview event
+API -> Notify: Send notification to reviewers
+API --> App: 200 OK
+App --> Instructor: Show submitted message
+
+Reviewer -> App: Open review queue
+App -> API: GET /api/admin/courses/pending-review
+API -> DB: Get pending courses
+DB --> API: Courses list
+API --> App: Courses data
+App --> Reviewer: Show courses list
+
+Reviewer -> App: Start review
+App -> API: POST /api/courses/{id}/start-review
+API -> DB: Assign reviewer
+API -> API: Publish CourseReviewStarted event
+API --> App: 200 OK
+
+Reviewer -> App: Review course content
+App --> Reviewer: Show course details
+
+alt Approve Course
+    Reviewer -> App: Click Approve
+    App -> API: POST /api/courses/{id}/approve
+    API -> DB: Update status to Approved
+    API -> API: Publish CourseApproved event
+    API -> Notify: Notify instructor
+    API --> App: 200 OK
+else Reject Course
+    Reviewer -> App: Enter rejection reason
+    Reviewer -> App: Click Reject
+    App -> API: POST /api/courses/{id}/reject
+    API -> DB: Update status to Rejected
+    API -> DB: Store rejection reason
+    API -> API: Publish CourseRejected event
+    API -> Notify: Notify instructor
+    API --> App: 200 OK
+end
+
+@enduml
