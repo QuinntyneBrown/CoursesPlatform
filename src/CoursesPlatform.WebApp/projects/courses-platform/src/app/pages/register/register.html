@@ -1,0 +1,14 @@
+<div class="register-page">
+  <div class="register-page__container">
+    <h1 class="register-page__title">Create Account</h1>
+    <p class="register-page__subtitle">Start your learning journey today</p>
+
+    <lib-register-form
+      [isLoading]="isLoading"
+      [errorMessage]="errorMessage"
+      [successMessage]="successMessage"
+      (register)="onRegister($event)"
+      (login)="onLogin()">
+    </lib-register-form>
+  </div>
+</div>

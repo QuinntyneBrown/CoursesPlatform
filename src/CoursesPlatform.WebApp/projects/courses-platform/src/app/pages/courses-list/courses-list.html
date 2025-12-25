@@ -1,0 +1,42 @@
+<div class="courses-list-page">
+  <div class="courses-list-page__header">
+    <h1 class="courses-list-page__title">My Courses</h1>
+    <button mat-raised-button color="primary" (click)="onCreateCourse()">
+      <mat-icon>add</mat-icon>
+      Create Course
+    </button>
+  </div>
+
+  @if (isLoading) {
+    <div class="courses-list-page__loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (courses.length === 0) {
+    <div class="courses-list-page__empty">
+      <mat-icon class="courses-list-page__empty-icon">school</mat-icon>
+      <h2>No courses yet</h2>
+      <p>Create your first course and start sharing your knowledge!</p>
+      <button mat-raised-button color="primary" (click)="onCreateCourse()">
+        Create Your First Course
+      </button>
+    </div>
+  } @else {
+    <div class="courses-list-page__grid">
+      @for (course of courses; track course.courseId) {
+        <div class="courses-list-page__card">
+          <lib-course-card
+            [title]="course.title"
+            [subtitle]="course.subtitle || ''"
+            [thumbnailUrl]="course.thumbnailUrl || ''"
+            [status]="getStatusNumber(course.status)"
+            [enrollmentCount]="0"
+            (edit)="onEditCourse(course)"
+            (publish)="onPublishCourse(course)"
+            (unpublish)="onUnpublishCourse(course)"
+            (delete)="onDeleteCourse(course)">
+          </lib-course-card>
+        </div>
+      }
+    </div>
+  }
+</div>
