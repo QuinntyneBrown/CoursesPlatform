@@ -7,6 +7,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../services';
+import { BehaviorSubject, combineLatest, map } from 'rxjs';
+
+interface ForgotPasswordViewModel {
+  isLoading: boolean;
+  successMessage: string;
+  errorMessage: string;
+}
 
 @Component({
   selector: 'app-forgot-password',
@@ -27,13 +34,25 @@ export class ForgotPassword {
   private router = inject(Router);
   private fb = inject(FormBuilder);
 
+  private isLoading$ = new BehaviorSubject<boolean>(false);
+  private successMessage$ = new BehaviorSubject<string>('');
+  private errorMessage$ = new BehaviorSubject<string>('');
+
   form: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]]
   });
 
-  isLoading = false;
-  successMessage = '';
-  errorMessage = '';
+  viewModel$ = combineLatest([
+    this.isLoading$,
+    this.successMessage$,
+    this.errorMessage$
+  ]).pipe(
+    map(([isLoading, successMessage, errorMessage]) => ({
+      isLoading,
+      successMessage,
+      errorMessage
+    } as ForgotPasswordViewModel))
+  );
 
   onSubmit(): void {
     if (this.form.invalid) {
@@ -41,18 +60,18 @@ export class ForgotPassword {
       return;
     }
 
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.isLoading$.next(true);
+    this.errorMessage$.next('');
+    this.successMessage$.next('');
 
     this.authService.forgotPassword(this.form.value.email).subscribe({
       next: (response) => {
-        this.isLoading = false;
-        this.successMessage = response.message;
+        this.isLoading$.next(false);
+        this.successMessage$.next(response.message);
       },
       error: () => {
-        this.isLoading = false;
-        this.errorMessage = 'An error occurred. Please try again.';
+        this.isLoading$.next(false);
+        this.errorMessage$.next('An error occurred. Please try again.');
       }
     });
   }

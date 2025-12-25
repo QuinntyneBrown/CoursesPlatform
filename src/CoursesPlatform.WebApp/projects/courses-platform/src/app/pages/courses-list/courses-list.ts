@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,6 +6,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CourseCard, CourseCardData, CourseStatus as CourseStatusType } from 'courses-platform-components';
 import { AuthService, CourseService, Course } from '../../services';
+import { BehaviorSubject, switchMap, map, of, startWith, catchError } from 'rxjs';
+
+interface CoursesViewModel {
+  courses: Course[];
+  isLoading: boolean;
+  error: string | null;
+}
 
 @Component({
   selector: 'app-courses-list',
@@ -20,35 +27,30 @@ import { AuthService, CourseService, Course } from '../../services';
   templateUrl: './courses-list.html',
   styleUrl: './courses-list.scss'
 })
-export class CoursesList implements OnInit {
+export class CoursesList {
   private router = inject(Router);
   private authService = inject(AuthService);
   private courseService = inject(CourseService);
-  private _changeDetectorRef = inject(ChangeDetectorRef);
 
-  courses: Course[] = [];
-  isLoading = false;
+  private refreshTrigger$ = new BehaviorSubject<void>(undefined);
 
-  ngOnInit(): void {
-    this.loadCourses();
-  }
-
-  loadCourses(): void {
-    const user = this.authService.currentUser;
-    if (!user) return;
-
-    this.isLoading = true;
-    this.courseService.getCourses({ instructorId: user.userId }).subscribe({
-      next: (response) => {
-        this.courses = response.courses;
-        this.isLoading = false;
-        this._changeDetectorRef.markForCheck();
-      },
-      error: () => {
-        this.isLoading = false;
+  viewModel$ = this.refreshTrigger$.pipe(
+    switchMap(() => {
+      const user = this.authService.currentUser;
+      if (!user) {
+        return of<CoursesViewModel>({ courses: [], isLoading: false, error: null });
       }
-    });
-  }
+      return this.courseService.getCourses({ instructorId: user.userId }).pipe(
+        map(response => ({
+          courses: response.courses,
+          isLoading: false,
+          error: null
+        } as CoursesViewModel)),
+        startWith<CoursesViewModel>({ courses: [], isLoading: true, error: null }),
+        catchError(() => of<CoursesViewModel>({ courses: [], isLoading: false, error: 'Failed to load courses' }))
+      );
+    })
+  );
 
   onCreateCourse(): void {
     this.router.navigate(['/courses/new']);
@@ -60,20 +62,20 @@ export class CoursesList implements OnInit {
 
   onPublishCourse(course: Course): void {
     this.courseService.publishCourse(course.courseId).subscribe({
-      next: () => this.loadCourses()
+      next: () => this.refreshTrigger$.next()
     });
   }
 
   onUnpublishCourse(course: Course): void {
     this.courseService.unpublishCourse(course.courseId).subscribe({
-      next: () => this.loadCourses()
+      next: () => this.refreshTrigger$.next()
     });
   }
 
   onDeleteCourse(course: Course): void {
     if (confirm('Are you sure you want to delete this course?')) {
       this.courseService.deleteCourse(course.courseId).subscribe({
-        next: () => this.loadCourses()
+        next: () => this.refreshTrigger$.next()
       });
     }
   }

@@ -1,15 +1,17 @@
-<div class="login-page">
-  <div class="login-page__container">
-    <h1 class="login-page__title">Welcome Back</h1>
-    <p class="login-page__subtitle">Sign in to continue learning</p>
+@if (viewModel$ | async; as vm) {
+  <div class="login-page">
+    <div class="login-page__container">
+      <h1 class="login-page__title">Welcome Back</h1>
+      <p class="login-page__subtitle">Sign in to continue learning</p>
 
-    <lib-login-form
-      [isLoading]="isLoading"
-      [errorMessage]="errorMessage"
-      [lockoutMessage]="lockoutMessage"
-      (login)="onLogin($event)"
-      (forgotPassword)="onForgotPassword()"
-      (register)="onRegister()">
-    </lib-login-form>
+      <lib-login-form
+        [isLoading]="vm.isLoading"
+        [errorMessage]="vm.errorMessage"
+        [lockoutMessage]="vm.lockoutMessage"
+        (login)="onLogin($event)"
+        (forgotPassword)="onForgotPassword()"
+        (register)="onRegister()">
+      </lib-login-form>
+    </div>
   </div>
-</div>
+}
