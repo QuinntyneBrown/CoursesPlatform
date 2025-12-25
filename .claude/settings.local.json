@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build-storybook:*)",
+      "Bash(npm run storybook:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill /F /PID 39880)",
+      "Bash(taskkill //F //PID 39880)",
+      "Bash(ng build:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(Select-String -Pattern \"error|Error|ERROR|fail|Fail|FAIL\" -Context 2)",
+      "Bash(dir:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(dotnet msbuild:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

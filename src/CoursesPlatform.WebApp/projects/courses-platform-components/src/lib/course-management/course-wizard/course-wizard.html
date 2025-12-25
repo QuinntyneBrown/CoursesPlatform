@@ -87,7 +87,8 @@
           <div class="course-wizard__setting">
             <lib-category-selector
               [categories]="categories"
-              (ngModelChange)="onCategoryChange($event)"
+              [ngModel]="data.category"
+              (ngModelChange)="onCategoryChange($any($event))"
             ></lib-category-selector>
           </div>
 

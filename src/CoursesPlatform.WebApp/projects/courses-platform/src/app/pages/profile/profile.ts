@@ -5,7 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { AvatarUpload } from 'courses-platform-components';
+import { AvatarUpload, AvatarUploadEvent } from 'courses-platform-components';
 import { AuthService, UserService } from '../../services';
 
 @Component({
@@ -75,8 +75,8 @@ export class Profile implements OnInit {
     });
   }
 
-  onAvatarSelected(file: File): void {
-    this.userService.uploadAvatar(file).subscribe({
+  onAvatarChange(event: AvatarUploadEvent): void {
+    this.userService.uploadAvatar(event.file).subscribe({
       next: (response) => {
         if (response.success && response.avatarUrl) {
           this.avatarUrl = response.avatarUrl;

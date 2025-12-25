@@ -25,11 +25,7 @@
       @for (course of courses; track course.courseId) {
         <div class="courses-list-page__card">
           <lib-course-card
-            [title]="course.title"
-            [subtitle]="course.subtitle || ''"
-            [thumbnailUrl]="course.thumbnailUrl || ''"
-            [status]="getStatusNumber(course.status)"
-            [enrollmentCount]="0"
+            [course]="toCourseCardData(course)"
             (edit)="onEditCourse(course)"
             (publish)="onPublishCourse(course)"
             (unpublish)="onUnpublishCourse(course)"

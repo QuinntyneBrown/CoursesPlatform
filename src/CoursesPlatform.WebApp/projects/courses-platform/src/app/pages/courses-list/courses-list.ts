@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { CourseCard, CourseStatusBadge, CourseActionsMenu } from 'courses-platform-components';
+import { CourseCard, CourseCardData, CourseStatus as CourseStatusType } from 'courses-platform-components';
 import { AuthService, CourseService, Course } from '../../services';
 
 @Component({
@@ -15,9 +15,7 @@ import { AuthService, CourseService, Course } from '../../services';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    CourseCard,
-    CourseStatusBadge,
-    CourseActionsMenu
+    CourseCard
   ],
   templateUrl: './courses-list.html',
   styleUrl: './courses-list.scss'
@@ -78,15 +76,27 @@ export class CoursesList implements OnInit {
     }
   }
 
-  getStatusNumber(status: string): number {
-    const statusMap: Record<string, number> = {
-      'Draft': 0,
-      'PendingReview': 1,
-      'Published': 2,
-      'Unpublished': 3,
-      'Rejected': 4,
-      'Archived': 5
+  convertStatusToString(status: string): CourseStatusType {
+    const statusMap: Record<string, CourseStatusType> = {
+      'Draft': 'draft',
+      'PendingReview': 'pending_review',
+      'Published': 'published',
+      'Unpublished': 'unpublished',
+      'Rejected': 'rejected',
+      'Archived': 'draft'
     };
-    return statusMap[status] ?? 0;
+    return statusMap[status] || 'draft';
+  }
+
+  toCourseCardData(course: Course): CourseCardData {
+    return {
+      courseId: course.courseId,
+      title: course.title,
+      subtitle: course.subtitle,
+      thumbnailUrl: course.thumbnailUrl,
+      status: this.convertStatusToString(course.status),
+      enrollmentCount: 0,
+      lastUpdated: new Date(course.updatedAt || course.createdAt)
+    };
   }
 }

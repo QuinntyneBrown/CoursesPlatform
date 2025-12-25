@@ -60,8 +60,7 @@ public class CreateCourseHandlerTests
         var category = new Category
         {
             CategoryId = categoryId,
-            Name = "Programming",
-            Slug = "programming"
+            Name = "Programming"
         };
         context.Categories.Add(category);
         await context.SaveChangesAsync();

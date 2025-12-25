@@ -4,9 +4,9 @@
 
     <div class="profile-page__avatar-section">
       <lib-avatar-upload
-        [currentAvatar]="avatarUrl"
-        (avatarSelected)="onAvatarSelected($event)"
-        (avatarRemoved)="onAvatarRemoved()">
+        [currentAvatar]="avatarUrl || ''"
+        (avatarChange)="onAvatarChange($event)"
+        (avatarRemove)="onAvatarRemoved()">
       </lib-avatar-upload>
     </div>
 

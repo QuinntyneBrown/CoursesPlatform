@@ -1,1 +1,28 @@
 /* You can add global styles to this file, and also import other style files */
+
+// Material Theme
+@use '@angular/material' as mat;
+
+// Include core styles
+@include mat.core();
+
+// Define the theme using M3
+$courses-platform-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$violet-palette,
+  ),
+));
+
+// Apply the theme to all components
+@include mat.all-component-themes($courses-platform-theme);
+
+// Global styles
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}

@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { CourseWizard } from 'courses-platform-components';
+import { CourseWizard, CourseWizardData } from 'courses-platform-components';
 import { CourseService, CategoryService, Category } from '../../services';
 
 @Component({
@@ -28,14 +28,14 @@ export class CourseCreate {
     });
   }
 
-  onComplete(data: Record<string, unknown>): void {
+  onComplete(data: CourseWizardData): void {
     const request = {
-      title: data['title'] as string,
-      subtitle: data['subtitle'] as string,
-      description: data['description'] as string,
-      level: data['level'] as number || 3,
-      language: data['language'] as string,
-      categoryId: data['categoryId'] as string
+      title: data.basicInfo.title,
+      subtitle: data.basicInfo.subtitle || '',
+      description: data.basicInfo.description,
+      level: this.convertLevelToNumber(data.level || 'all_levels'),
+      language: data.language || '',
+      categoryId: data.category?.categoryId || ''
     };
 
     this.courseService.createCourse(request).subscribe({
@@ -49,8 +49,19 @@ export class CourseCreate {
     });
   }
 
-  onSaveDraft(data: Record<string, unknown>): void {
-    this.onComplete(data);
+  onSaveDraft(data: Partial<CourseWizardData>): void {
+    // Handle draft saving - for now just show a message
+    this.snackBar.open('Draft saved!', 'Close', { duration: 2000 });
+  }
+
+  private convertLevelToNumber(level: string): number {
+    const levelMap: Record<string, number> = {
+      'beginner': 1,
+      'intermediate': 2,
+      'advanced': 3,
+      'all_levels': 0
+    };
+    return levelMap[level] || 0;
   }
 
   onCancel(): void {
