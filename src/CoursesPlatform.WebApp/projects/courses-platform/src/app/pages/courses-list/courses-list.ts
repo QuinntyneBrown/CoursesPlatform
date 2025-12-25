@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,6 +24,7 @@ export class CoursesList implements OnInit {
   private router = inject(Router);
   private authService = inject(AuthService);
   private courseService = inject(CourseService);
+  private _changeDetectorRef = inject(ChangeDetectorRef);
 
   courses: Course[] = [];
   isLoading = false;
@@ -41,6 +42,7 @@ export class CoursesList implements OnInit {
       next: (response) => {
         this.courses = response.courses;
         this.isLoading = false;
+        this._changeDetectorRef.markForCheck();
       },
       error: () => {
         this.isLoading = false;
