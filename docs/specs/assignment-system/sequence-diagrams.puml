@@ -1,0 +1,250 @@
+@startuml Submit Assignment Sequence
+
+title Submit Assignment Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "File Storage" as Storage
+participant "Notification Service" as Notify
+
+Student -> App: Navigate to assignment
+App -> API: GET /api/assignments/{id}
+API -> DB: Fetch assignment details
+DB --> API: Assignment data
+API --> App: Assignment with requirements
+App --> Student: Show assignment details
+
+Student -> App: Click submit button
+App --> Student: Show submission form
+Student -> App: Enter content/upload files
+App -> App: Validate submission
+
+alt File submission
+    Student -> App: Select files
+    App -> App: Validate file types and size
+    App -> API: POST /api/submissions/{id}/files
+    API -> Storage: Upload files
+    Storage --> API: File URLs
+    API -> DB: Store file metadata
+    API -> API: Scan files for malware
+    API --> App: Upload successful
+    App --> Student: Show upload progress
+end
+
+Student -> App: Submit assignment
+App -> App: Confirm submission
+App -> API: POST /api/assignments/{id}/submissions
+API -> API: Validate submission
+API -> DB: Check if due date passed
+DB --> API: Due date status
+
+alt Past due date
+    alt Late submission allowed
+        API -> API: Calculate late penalty
+        API -> DB: Create submission (marked late)
+        API -> API: Publish LateSubmissionReceived event
+    else Late submission not allowed
+        API --> App: 400 Submission deadline passed
+        App --> Student: Show error message
+    end
+else On time
+    API -> DB: Create submission
+    API -> API: Publish SubmissionCreated event
+end
+
+alt Submission created
+    DB --> API: Submission created
+    API -> Notify: Send notification to instructor
+    API --> App: 201 Created
+    App --> Student: Show success message
+    App -> App: Update submission status
+end
+
+@enduml
+
+@startuml Grade Submission Sequence
+
+title Grade Submission Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+Instructor -> App: Navigate to grading page
+App -> API: GET /api/assignments/{id}/submissions
+API -> DB: Fetch all submissions
+DB --> API: Submissions list
+API --> App: Submissions with status
+App --> Student: Show submissions list
+
+Instructor -> App: Select submission to grade
+App -> API: GET /api/submissions/{id}
+API -> DB: Fetch submission details
+DB --> API: Submission with files
+API --> App: Submission data
+App --> Instructor: Show submission content
+
+alt With rubric
+    App -> API: GET /api/assignments/{id}/rubric
+    API -> DB: Fetch rubric
+    DB --> API: Rubric with criteria
+    API --> App: Rubric data
+    App --> Instructor: Show rubric grading interface
+
+    Instructor -> App: Score each criterion
+    Instructor -> App: Add comments per criterion
+    App -> App: Calculate total from rubric
+    App --> Instructor: Show calculated total
+else Without rubric
+    Instructor -> App: Enter points manually
+    App -> App: Validate points (0 to max)
+end
+
+Instructor -> App: Enter feedback
+Instructor -> App: Submit grade
+
+App -> API: POST /api/submissions/{id}/grade
+API -> API: Validate grade data
+API -> DB: Find submission
+DB --> API: Submission found
+
+alt With rubric
+    API -> DB: Create RubricGrade
+    API -> DB: Create RubricCriterionScores
+    DB --> API: Rubric grade created
+    API -> API: Publish RubricGradeApplied event
+end
+
+API -> DB: Create Grade record
+DB --> API: Grade created
+API -> DB: Update submission status to Graded
+API -> API: Publish SubmissionGraded event
+API -> Notify: Send notification to student
+API --> App: 201 Grade created
+App --> Instructor: Show success message
+App -> App: Update submission list
+
+@enduml
+
+@startuml Peer Review Assignment Sequence
+
+title Peer Review Assignment Flow
+
+actor Instructor
+actor Student1
+actor Student2
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+Instructor -> App: Enable peer review for assignment
+App -> API: POST /api/assignments/{id}/peer-review/enable
+API -> DB: Update assignment settings
+API -> API: Publish PeerReviewEnabled event
+API --> App: 200 OK
+App --> Instructor: Peer review enabled
+
+note over API,DB: Wait for submission deadline
+
+Instructor -> App: Assign peer reviews
+App -> API: POST /api/assignments/{id}/peer-review/assign
+API -> DB: Fetch all submissions
+DB --> API: Submissions list
+API -> API: Run assignment algorithm
+API -> DB: Create PeerReviewAssignments
+DB --> API: Assignments created
+API -> API: Publish PeerReviewsAssigned event
+API -> Notify: Send notifications to reviewers
+API --> App: 200 Assignments created
+App --> Instructor: Show assignment summary
+
+Student1 -> App: Navigate to assignments
+App -> API: GET /api/assignments/{id}/peer-reviews
+API -> DB: Fetch assigned reviews
+DB --> API: Reviews to complete
+API --> App: Peer reviews list
+App --> Student1: Show reviews to complete
+
+Student1 -> App: Start peer review
+App -> API: GET /api/submissions/{id}
+API -> DB: Fetch submission (anonymized)
+DB --> API: Submission data
+API --> App: Submission content
+App --> Student1: Show peer submission
+
+Student1 -> App: Score rubric criteria
+Student1 -> App: Provide feedback
+App -> App: Validate feedback length
+
+Student1 -> App: Submit peer review
+App -> API: POST /api/peer-reviews/{id}/submit
+API -> API: Validate review
+API -> DB: Create PeerReview record
+DB --> API: Review created
+API -> API: Publish PeerReviewSubmitted event
+API -> Notify: Notify reviewee (Student2)
+API --> App: 201 Review submitted
+App --> Student1: Show success message
+
+Student2 -> App: View received reviews
+App -> API: GET /api/submissions/{id}/peer-reviews
+API -> DB: Fetch reviews for submission
+DB --> API: Peer reviews
+API --> App: Reviews (anonymized if configured)
+App --> Student2: Show peer feedback
+
+@enduml
+
+@startuml Resubmit Assignment Sequence
+
+title Resubmit Assignment Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Student -> App: View submitted assignment
+App -> API: GET /api/submissions/{id}
+API -> DB: Fetch submission
+DB --> API: Submission data
+API --> App: Submission with status
+App --> Student: Show submission details
+
+alt Resubmission allowed
+    App --> Student: Show resubmit button
+    Student -> App: Click resubmit
+    App -> API: GET /api/assignments/{id}
+    API -> DB: Check resubmission settings
+    DB --> API: Max resubmissions, current count
+
+    alt Resubmission limit not reached
+        API --> App: Resubmission allowed
+        App --> Student: Show resubmission form
+        App --> Student: Display previous submission
+
+        Student -> App: Modify content/files
+        Student -> App: Submit changes
+        App -> API: PUT /api/submissions/{id}
+        API -> API: Validate new submission
+        API -> DB: Increment version number
+        API -> DB: Update submission
+        API -> DB: Increment resubmission count
+        DB --> API: Submission updated
+        API -> API: Publish SubmissionUpdated event
+        API --> App: 200 Updated
+        App --> Student: Show success message
+    else Resubmission limit reached
+        API --> App: 400 Resubmission limit reached
+        App --> Student: Show limit message
+    end
+else Resubmission not allowed
+    App --> Student: No resubmit option
+end
+
+@enduml

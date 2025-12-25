@@ -1,0 +1,242 @@
+@startuml Instructor Revenue Class Diagram
+
+title Instructor Revenue - Class Diagram
+
+package "Earnings Aggregate" {
+    class Earning {
+        +EarningId: Guid
+        +InstructorId: Guid
+        +CourseId: Guid
+        +EnrollmentId: Guid
+        +GrossAmount: decimal
+        +Currency: string
+        +RevenueSharePercentage: decimal
+        +PlatformFeeAmount: decimal
+        +NetAmount: decimal
+        +EarningDate: DateTime
+        +Status: EarningStatus
+        +PayoutId: Guid?
+        --
+        +Create(enrollment, revenueShare): Earning
+        +Adjust(amount, reason): void
+        +MarkAsPaid(payoutId): void
+        +CalculateNetAmount(): decimal
+    }
+
+    enum EarningStatus {
+        Pending
+        Paid
+        Adjusted
+        Refunded
+    }
+
+    class EarningAdjustment {
+        +AdjustmentId: Guid
+        +EarningId: Guid
+        +Amount: decimal
+        +Reason: string
+        +AdjustedBy: Guid
+        +AdjustmentDate: DateTime
+        --
+        +Create(earning, amount, reason): EarningAdjustment
+    }
+}
+
+package "Revenue Share Aggregate" {
+    class RevenueShare {
+        +RevenueShareId: Guid
+        +InstructorId: Guid
+        +InstructorPercentage: decimal
+        +PlatformPercentage: decimal
+        +EffectiveFrom: DateTime
+        +EffectiveTo: DateTime?
+        +IsActive: bool
+        --
+        +Create(instructor, percentage): RevenueShare
+        +Update(percentage): void
+        +Expire(): void
+        +CalculateSplit(amount): RevenueSplit
+    }
+
+    class RevenueSplit {
+        +InstructorAmount: decimal
+        +PlatformAmount: decimal
+    }
+}
+
+package "Payout Aggregate" {
+    class Payout {
+        +PayoutId: Guid
+        +InstructorId: Guid
+        +Amount: decimal
+        +Currency: string
+        +Status: PayoutStatus
+        +PayoutMethodId: Guid
+        +ScheduledDate: DateTime
+        +ProcessedDate: DateTime?
+        +CompletedDate: DateTime?
+        +FailureReason: string?
+        +TransactionId: string?
+        +Period: PayoutPeriod
+        --
+        +Create(instructor, amount): Payout
+        +Process(): void
+        +Complete(transactionId): void
+        +Fail(reason): void
+        +Retry(): void
+        +Cancel(): void
+    }
+
+    enum PayoutStatus {
+        Pending
+        Processing
+        Completed
+        Failed
+        Cancelled
+    }
+
+    class PayoutPeriod {
+        +StartDate: DateTime
+        +EndDate: DateTime
+    }
+
+    class PayoutLineItem {
+        +LineItemId: Guid
+        +PayoutId: Guid
+        +EarningId: Guid
+        +Amount: decimal
+        --
+        +Create(payout, earning): PayoutLineItem
+    }
+
+    class PayoutMethod {
+        +PayoutMethodId: Guid
+        +InstructorId: Guid
+        +Type: PayoutMethodType
+        +AccountHolderName: string
+        +AccountDetails: string
+        +IsVerified: bool
+        +IsPrimary: bool
+        +IsActive: bool
+        +CreatedAt: DateTime
+        +VerifiedAt: DateTime?
+        --
+        +Create(instructor, type, details): PayoutMethod
+        +Verify(): void
+        +SetPrimary(): void
+        +Deactivate(): void
+    }
+
+    enum PayoutMethodType {
+        BankAccount
+        PayPal
+        StripeConnect
+    }
+
+    class PayoutSchedule {
+        +ScheduleId: Guid
+        +InstructorId: Guid
+        +Frequency: PayoutFrequency
+        +MinimumThreshold: decimal
+        +NextPayoutDate: DateTime
+        --
+        +Create(instructor): PayoutSchedule
+        +UpdateFrequency(frequency): void
+        +CalculateNextPayoutDate(): DateTime
+    }
+
+    enum PayoutFrequency {
+        Weekly
+        Monthly
+    }
+}
+
+package "Tax Aggregate" {
+    class TaxForm {
+        +TaxFormId: Guid
+        +InstructorId: Guid
+        +FormType: TaxFormType
+        +TaxId: string
+        +LegalName: string
+        +Address: Address
+        +TaxClassification: string
+        +SubmittedDate: DateTime
+        +ExpirationDate: DateTime
+        +Status: TaxFormStatus
+        +DocumentUrl: string
+        --
+        +Submit(instructor, formData): TaxForm
+        +Approve(): void
+        +Reject(reason): void
+        +Expire(): void
+        +IsExpired(): bool
+    }
+
+    enum TaxFormType {
+        W9
+        W8BEN
+        W8BENE
+    }
+
+    enum TaxFormStatus {
+        Pending
+        Approved
+        Rejected
+        Expired
+    }
+
+    class Address {
+        +Street: string
+        +City: string
+        +State: string
+        +PostalCode: string
+        +Country: string
+    }
+
+    class TaxWithholding {
+        +WithholdingId: Guid
+        +PayoutId: Guid
+        +InstructorId: Guid
+        +WithholdingType: WithholdingType
+        +WithholdingRate: decimal
+        +WithheldAmount: decimal
+        +TaxYear: int
+        --
+        +Apply(payout, rate): TaxWithholding
+        +CalculateAmount(amount, rate): decimal
+    }
+
+    enum WithholdingType {
+        BackupWithholding
+        ForeignTaxWithholding
+        StateWithholding
+    }
+
+    class TaxReport {
+        +ReportId: Guid
+        +InstructorId: Guid
+        +TaxYear: int
+        +ReportType: TaxReportType
+        +TotalEarnings: decimal
+        +TotalWithholding: decimal
+        +GeneratedDate: DateTime
+        +DocumentUrl: string
+        --
+        +Generate(instructor, year): TaxReport
+    }
+
+    enum TaxReportType {
+        Form1099
+        AnnualStatement
+    }
+}
+
+Earning "1" --> "*" EarningAdjustment
+Earning "*" --> "1" RevenueShare
+Payout "1" --> "*" PayoutLineItem
+PayoutLineItem "*" --> "1" Earning
+Payout "1" --> "1" PayoutMethod
+Payout "1" --> "0..*" TaxWithholding
+TaxForm "1" --> "1" Address
+
+@enduml

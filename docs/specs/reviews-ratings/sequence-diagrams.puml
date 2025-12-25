@@ -1,0 +1,253 @@
+@startuml Submit Review Sequence
+
+title Submit Review Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Event Bus" as Events
+
+Student -> App: Navigate to course page
+App -> API: GET /api/courses/{courseId}
+API --> App: Course details
+App --> Student: Display course with review section
+
+Student -> App: Click "Write a Review"
+App --> Student: Show review form
+
+Student -> App: Select rating (1-5 stars)
+Student -> App: Enter title and body
+App -> App: Validate form input
+
+Student -> App: Click submit
+App -> API: POST /api/courses/{courseId}/reviews
+API -> API: Validate request
+API -> DB: Check if user is enrolled
+DB --> API: Enrollment confirmed
+
+alt User already reviewed
+    API -> DB: Check for existing review
+    DB --> API: Review exists
+    API --> App: 409 Conflict
+    App --> Student: Show error message
+else No existing review
+    API -> DB: Create Review record
+    DB --> API: Review created
+    API -> Events: Publish ReviewSubmitted event
+    API -> DB: Get course reviews
+    DB --> API: All reviews
+    API -> API: Calculate new average rating
+    API -> DB: Update CourseRating
+    DB --> API: Rating updated
+    API -> Events: Publish CourseRatingUpdated event
+    API --> App: 201 Created
+    App --> Student: Show success message
+    App -> App: Refresh review list
+end
+
+@enduml
+
+@startuml Respond to Review Sequence
+
+title Instructor Response to Review Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Email Service" as Email
+participant "Event Bus" as Events
+
+Instructor -> App: View course reviews
+App -> API: GET /api/courses/{courseId}/reviews
+API --> App: Review list
+App --> Instructor: Display reviews
+
+Instructor -> App: Click "Respond" on review
+App --> Instructor: Show response form
+
+Instructor -> App: Type response text
+App -> App: Validate character count
+
+Instructor -> App: Click submit
+App -> API: POST /api/reviews/{reviewId}/response
+API -> API: Validate request
+API -> DB: Check if user is course instructor
+DB --> API: Instructor verified
+
+alt Instructor owns course
+    API -> DB: Check for existing response
+    DB --> API: No existing response
+    API -> DB: Create InstructorResponse record
+    DB --> API: Response created
+    API -> Events: Publish InstructorResponseSubmitted event
+    API -> DB: Get student email
+    DB --> API: Student details
+    API -> Email: Send notification to student
+    Email --> API: Email queued
+    API --> App: 201 Created
+    App --> Student: Show response below review
+    App --> Instructor: Show success message
+else Not course instructor
+    API --> App: 403 Forbidden
+    App --> Instructor: Show error message
+end
+
+@enduml
+
+@startuml Edit Review Sequence
+
+title Edit Review Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Event Bus" as Events
+
+Student -> App: Click edit on own review
+App --> Student: Load review into edit form
+
+Student -> App: Modify rating/title/body
+App -> App: Validate changes
+
+Student -> App: Click save
+App -> API: PUT /api/reviews/{reviewId}
+API -> API: Validate request
+API -> DB: Check review ownership
+DB --> API: Student owns review
+
+alt Student owns review
+    API -> DB: Save edit history
+    DB --> API: History saved
+    API -> DB: Update Review record
+    DB --> API: Review updated
+    API -> Events: Publish ReviewEdited event
+    API -> DB: Get course reviews
+    DB --> API: All reviews
+    API -> API: Recalculate course rating
+    API -> DB: Update CourseRating
+    DB --> API: Rating updated
+    API -> Events: Publish CourseRatingUpdated event
+    API --> App: 200 OK
+    App --> Student: Show updated review
+    App --> Student: Show success message
+else Student does not own review
+    API --> App: 403 Forbidden
+    App --> Student: Show error message
+end
+
+@enduml
+
+@startuml Mark Review Helpful Sequence
+
+title Mark Review Helpful Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Event Bus" as Events
+
+User -> App: View review
+App --> User: Display review with vote buttons
+
+User -> App: Click "Helpful" button
+App -> App: Optimistically update UI
+App --> User: Show vote as active
+
+App -> API: POST /api/reviews/{reviewId}/helpful
+API -> API: Validate request
+API -> DB: Check for existing vote
+DB --> API: Vote status
+
+alt No existing vote
+    API -> DB: Create ReviewInteraction (Helpful)
+    DB --> API: Interaction created
+    API -> Events: Publish ReviewMarkedHelpful event
+    API -> DB: Get updated vote counts
+    DB --> API: Vote counts
+    API --> App: 200 OK with counts
+    App --> User: Update vote counts
+else User already voted helpful
+    API -> DB: Remove ReviewInteraction
+    DB --> API: Interaction removed
+    API --> App: 200 OK with counts
+    App --> User: Remove vote highlight
+else User voted not helpful
+    API -> DB: Update ReviewInteraction to Helpful
+    DB --> API: Interaction updated
+    API --> App: 200 OK with counts
+    App --> User: Update vote highlight
+end
+
+@enduml
+
+@startuml Delete Review Sequence
+
+title Delete Review Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Event Bus" as Events
+
+Student -> App: Click delete on own review
+App --> Student: Show confirmation dialog
+
+Student -> App: Confirm deletion
+App -> API: DELETE /api/reviews/{reviewId}
+API -> API: Validate request
+API -> DB: Check review ownership
+DB --> API: Student owns review
+
+alt Student owns review
+    API -> DB: Soft delete Review (set IsDeleted)
+    DB --> API: Review deleted
+    API -> Events: Publish ReviewDeleted event
+    API -> DB: Get course reviews (exclude deleted)
+    DB --> API: Active reviews
+    API -> API: Recalculate course rating
+    API -> DB: Update CourseRating
+    DB --> API: Rating updated
+    API -> Events: Publish CourseRatingUpdated event
+    API --> App: 200 OK
+    App -> App: Remove review from list
+    App --> Student: Show success message
+else Student does not own review
+    API --> App: 403 Forbidden
+    App --> Student: Show error message
+end
+
+@enduml
+
+@startuml Calculate Course Rating Sequence
+
+title Calculate Course Rating Flow
+
+participant "Review Service" as Service
+participant "Database" as DB
+participant "Event Bus" as Events
+
+Service -> DB: Get all active reviews for course
+DB --> Service: List of reviews
+
+Service -> Service: Calculate average rating
+Service -> Service: Count reviews by star level
+Service -> Service: Calculate percentages
+
+Service -> DB: Check if CourseRating exists
+DB --> Service: CourseRating record
+
+alt CourseRating exists
+    Service -> DB: Update CourseRating
+else CourseRating does not exist
+    Service -> DB: Create CourseRating
+end
+
+DB --> Service: Rating saved
+Service -> Events: Publish CourseRatingUpdated event
+
+@enduml

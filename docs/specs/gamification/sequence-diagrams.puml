@@ -1,0 +1,252 @@
+@startuml Earn Badge Sequence
+
+title Earn Badge Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+User -> App: Complete course
+App -> API: POST /api/courses/{id}/complete
+API -> DB: Mark course completed
+DB --> API: Course completed
+API -> API: Publish CourseCompleted event
+API -> API: Badge criteria evaluator\nlistens to event
+API -> DB: Check badge criteria
+DB --> API: User meets criteria
+API -> DB: Award badge to user
+DB --> API: Badge awarded
+API -> API: Publish BadgeEarned event
+API -> Notify: Send badge notification
+Notify -> App: WebSocket: BadgeEarned
+App -> App: Show badge animation
+App --> User: Badge earned notification
+API --> App: 200 OK
+App --> User: Course completion confirmed
+
+@enduml
+
+@startuml Update Streak Sequence
+
+title Update Learning Streak Flow
+
+participant "Scheduler" as Sched
+participant "Streak Service" as Streak
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+Sched -> Streak: Daily job at 1 AM UTC
+Streak -> DB: Get all active streaks
+DB --> Streak: List of streaks
+
+loop For each user
+    Streak -> DB: Check activity in last 24h
+    DB --> Streak: Activity status
+
+    alt User has activity
+        Streak -> DB: Increment streak counter
+        Streak -> DB: Check milestone reached
+        alt Milestone reached
+            Streak -> DB: Award milestone badge
+            Streak -> DB: Grant bonus XP
+            Streak -> Streak: Publish StreakMilestoneReached
+            Streak -> Notify: Send milestone notification
+        end
+        Streak -> Streak: Publish StreakUpdated event
+    else No activity and no freeze
+        Streak -> DB: Reset streak to 0
+        Streak -> Streak: Publish StreakBroken event
+        Streak -> Notify: Send streak lost notification
+    else No activity but freeze active
+        Streak -> DB: Consume freeze
+        Streak -> Streak: Publish StreakFreezeActivated
+        Streak -> Notify: Send freeze used notification
+    end
+end
+
+Sched <-- Streak: Job completed
+
+@enduml
+
+@startuml Complete Challenge Sequence
+
+title Complete Challenge Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Leaderboard Service" as Leader
+
+User -> App: View challenge progress
+App -> API: GET /api/gamification/challenges/{id}/progress
+API -> DB: Get user's progress
+DB --> API: Progress data
+API --> App: Progress 95%
+App --> User: Show progress bar
+
+User -> App: Complete final requirement
+App -> API: POST /api/courses/{id}/complete
+API -> DB: Update course completion
+API -> API: Publish CourseCompleted event
+API -> API: Challenge evaluator\nlistens to event
+API -> DB: Check challenge criteria
+DB --> API: Challenge completed!
+API -> DB: Update enrollment status
+DB --> API: Status updated
+API -> DB: Award challenge rewards
+DB --> API: Rewards granted
+API -> API: Publish ChallengeCompleted event
+API -> Leader: Update leaderboard
+Leader -> DB: Update user's rank
+Leader -> API: Publish LeaderboardUpdated event
+API --> App: 200 OK
+App -> App: Show completion animation
+App --> User: Challenge completed!\nRewards earned
+
+@enduml
+
+@startuml Level Up Sequence
+
+title Level Up Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "WebSocket" as WS
+
+User -> App: Complete quiz
+App -> API: POST /api/quizzes/{id}/submit
+API -> API: Grade quiz
+alt Quiz passed
+    API -> DB: Create XP transaction (50 XP)
+    DB --> API: Transaction created
+    API -> DB: Update user level
+    DB -> DB: Calculate new XP total
+    DB -> DB: Check level threshold
+    alt Level threshold reached
+        DB -> DB: Increment level
+        DB --> API: Level up! Now Level 5
+        API -> DB: Award level up rewards
+        API -> API: Publish LevelUp event
+        API -> WS: Broadcast LevelUp to user
+        WS -> App: LevelUp event
+        App -> App: Trigger confetti animation
+        App -> App: Show level up modal
+        App --> User: Level 5 achieved!
+        API -> API: Check for level badges
+        API -> DB: Award level badge
+        API -> API: Publish BadgeEarned event
+        API -> WS: Broadcast BadgeEarned
+        WS -> App: BadgeEarned event
+        App --> User: New badge notification
+    else No level up
+        DB --> API: XP added, same level
+        API -> WS: Broadcast XpEarned
+        WS -> App: XpEarned event
+        App -> App: Animate XP bar
+        App --> User: +50 XP
+    end
+    API --> App: 200 OK with results
+else Quiz failed
+    API --> App: Quiz failed, no XP
+    App --> User: Try again message
+end
+
+@enduml
+
+@startuml Join Challenge Sequence
+
+title Join Challenge Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Browse challenges page
+App -> API: GET /api/gamification/challenges
+API -> DB: Get active challenges
+DB --> API: List of challenges
+API --> App: Challenge list
+App --> User: Show challenge cards
+
+User -> App: Click challenge details
+App -> API: GET /api/gamification/challenges/{id}
+API -> DB: Get challenge details
+DB --> API: Challenge data
+API --> App: Challenge info
+App --> User: Show full description
+
+User -> App: Click Join Challenge
+App -> App: Show confirmation dialog
+User -> App: Confirm join
+App -> API: POST /api/gamification/challenges/{id}/join
+API -> DB: Check enrollment eligibility
+alt Eligible to join
+    alt Challenge has space
+        API -> DB: Create enrollment record
+        DB --> API: Enrolled
+        API -> DB: Initialize progress tracker
+        DB --> API: Progress created
+        API -> API: Publish ChallengeJoined event
+        API --> App: 201 Created
+        App -> App: Update UI state
+        App --> User: Successfully joined!
+    else Challenge is full
+        API --> App: 409 Challenge full
+        App --> User: Challenge is full
+    end
+else Already enrolled
+    API --> App: 409 Already enrolled
+    App --> User: You're already in this challenge
+else Challenge ended
+    API --> App: 400 Challenge ended
+    App --> User: Challenge has ended
+end
+
+@enduml
+
+@startuml Activate Streak Freeze Sequence
+
+title Activate Streak Freeze Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Open streak widget
+App -> API: GET /api/gamification/users/me/streak
+API -> DB: Get user streak data
+DB --> API: Streak info + 2 freezes
+API --> App: Current streak: 15 days\n2 freezes available
+App --> User: Show streak with freeze icons
+
+User -> App: About to miss a day
+User -> App: Click activate freeze
+App -> App: Show confirmation dialog
+App --> User: Use 1 freeze to protect\nyour 15-day streak?
+
+User -> App: Confirm activation
+App -> API: POST /api/gamification/users/me/streak/freeze
+API -> DB: Get available freezes
+DB --> API: 2 freezes found
+alt Has available freeze
+    API -> DB: Mark freeze as used
+    DB --> API: Freeze consumed
+    API -> DB: Set freeze protection for today
+    DB --> API: Protection set
+    API -> API: Publish StreakFreezeActivated event
+    API --> App: 200 OK
+    App -> App: Update freeze count
+    App --> User: Freeze activated!\n1 freeze remaining
+else No freezes available
+    API --> App: 400 No freezes available
+    App --> User: No freezes to use.\nComplete a lesson today!
+end
+
+@enduml

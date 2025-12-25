@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-messaging" name="C4 Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="C4 Container Diagram - Direct Messaging" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="250" y="20" width="350" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Users -->
+        <mxCell id="sender" value="Sender&#xa;[Person]&#xa;&#xa;User sending messages&#xa;to other users" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="recipient" value="Recipient&#xa;[Person]&#xa;&#xa;User receiving messages&#xa;from other users" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Web App -->
+        <mxCell id="webapp" value="Web Application&#xa;[Container: Angular]&#xa;&#xa;Provides messaging UI&#xa;and real-time updates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="webapp2" value="Web Application&#xa;[Container: Angular]&#xa;&#xa;Provides messaging UI&#xa;and real-time updates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- SignalR Hub -->
+        <mxCell id="signalr" value="SignalR Hub&#xa;[Container: ASP.NET Core]&#xa;&#xa;Handles real-time&#xa;message delivery" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="325" y="250" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <!-- API -->
+        <mxCell id="api" value="API Application&#xa;[Container: ASP.NET Core]&#xa;&#xa;Handles messaging requests,&#xa;validation, and moderation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="325" y="420" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Database -->
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Stores conversations,&#xa;messages, and reports" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="325" y="590" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Blob Storage -->
+        <mxCell id="storage" value="Blob Storage&#xa;[Container: Azure Blob]&#xa;&#xa;Stores message&#xa;attachments" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Email Service -->
+        <mxCell id="email" value="Email Service&#xa;[External System]&#xa;&#xa;Sends notification emails&#xa;and moderation alerts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="590" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Arrows -->
+        <mxCell id="arrow1" value="Uses" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="sender" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow2" value="Uses" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="recipient" target="webapp2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow3" value="WebSocket" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;startArrow=classic;startFill=1;" edge="1" parent="1" source="webapp" target="signalr">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow4" value="WebSocket" style="endArrow=classic;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;startArrow=classic;startFill=1;" edge="1" parent="1" source="webapp2" target="signalr">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow5" value="API Calls" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;" edge="1" parent="1" source="webapp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow6" value="API Calls" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=1;entryY=0.5;" edge="1" parent="1" source="webapp2" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow7" value="Broadcasts" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="signalr" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow8" value="Reads/Writes" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow9" value="Uploads files" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="storage">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow10" value="Sends emails" style="endArrow=classic;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="api" target="email">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

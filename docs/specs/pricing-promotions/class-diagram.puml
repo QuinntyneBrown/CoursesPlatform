@@ -1,0 +1,269 @@
+@startuml Pricing Promotions Class Diagram
+
+title Pricing & Promotions - Class Diagram
+
+package "Price Aggregate" {
+    class CoursePrice {
+        +CoursePriceId: Guid
+        +CourseId: Guid
+        +BasePrice: decimal
+        +Currency: string
+        +IsActive: bool
+        +EffectiveFrom: DateTime
+        +CreatedAt: DateTime
+        +CreatedBy: Guid
+        --
+        +SetBasePrice(amount, currency): CoursePrice
+        +UpdatePrice(amount): void
+        +Activate(): void
+        +Deactivate(): void
+    }
+
+    class RegionalPrice {
+        +RegionalPriceId: Guid
+        +CoursePriceId: Guid
+        +Region: string
+        +Price: decimal
+        +Currency: string
+        +IsActive: bool
+        --
+        +Create(region, price, currency): RegionalPrice
+        +UpdatePrice(price): void
+        +Validate(): bool
+    }
+
+    enum Region {
+        US
+        EU
+        UK
+        IN
+        BR
+        AU
+        CA
+    }
+
+    class PriceTier {
+        +PriceTierId: Guid
+        +CoursePriceId: Guid
+        +MinQuantity: int
+        +MaxQuantity: int
+        +Price: decimal
+        +DiscountPercentage: decimal
+        --
+        +Create(min, max, price): PriceTier
+        +AppliesTo(quantity): bool
+    }
+
+    class PriceHistory {
+        +PriceHistoryId: Guid
+        +CourseId: Guid
+        +OldPrice: decimal
+        +NewPrice: decimal
+        +ChangedBy: Guid
+        +ChangedAt: DateTime
+        +Reason: string
+        --
+        +Record(courseId, old, new, by): PriceHistory
+    }
+}
+
+package "Coupon Aggregate" {
+    class Coupon {
+        +CouponId: Guid
+        +Code: string
+        +DiscountType: DiscountType
+        +DiscountValue: decimal
+        +MinimumPurchase: decimal
+        +MaxUsageCount: int
+        +CurrentUsageCount: int
+        +ExpiresAt: DateTime
+        +IsActive: bool
+        +CreatedBy: Guid
+        +CreatedAt: DateTime
+        --
+        +Create(code, type, value, expires): Coupon
+        +Validate(): bool
+        +CanRedeem(): bool
+        +Redeem(): void
+        +Deactivate(reason): void
+        +CalculateDiscount(amount): decimal
+    }
+
+    enum DiscountType {
+        Percentage
+        FixedAmount
+    }
+
+    class CouponRestriction {
+        +CouponRestrictionId: Guid
+        +CouponId: Guid
+        +RestrictionType: RestrictionType
+        +TargetId: Guid
+        --
+        +AppliesTo(courseId, userId): bool
+    }
+
+    enum RestrictionType {
+        Course
+        Category
+        FirstTimeUser
+        SpecificUser
+    }
+
+    class CouponRedemption {
+        +CouponRedemptionId: Guid
+        +CouponId: Guid
+        +UserId: Guid
+        +OrderId: Guid
+        +DiscountAmount: decimal
+        +RedeemedAt: DateTime
+        --
+        +Record(coupon, user, order, amount): CouponRedemption
+    }
+}
+
+package "Promotion Aggregate" {
+    class Promotion {
+        +PromotionId: Guid
+        +Name: string
+        +Description: string
+        +DiscountType: DiscountType
+        +DiscountValue: decimal
+        +StartDate: DateTime
+        +EndDate: DateTime
+        +IsActive: bool
+        +PromotionType: PromotionType
+        +CreatedBy: Guid
+        +CreatedAt: DateTime
+        --
+        +Create(name, discount, start, end): Promotion
+        +Activate(): void
+        +Deactivate(): void
+        +IsCurrentlyActive(): bool
+        +CalculateDiscount(amount): decimal
+    }
+
+    enum PromotionType {
+        Regular
+        FlashSale
+        SeasonalSale
+        ClearanceSale
+    }
+
+    class PromotionCourse {
+        +PromotionCourseId: Guid
+        +PromotionId: Guid
+        +CourseId: Guid
+        +AddedAt: DateTime
+        --
+        +Add(promotionId, courseId): PromotionCourse
+    }
+
+    class PromotionCategory {
+        +PromotionCategoryId: Guid
+        +PromotionId: Guid
+        +CategoryId: Guid
+        +AddedAt: DateTime
+        --
+        +Add(promotionId, categoryId): PromotionCategory
+    }
+}
+
+package "Bundle Aggregate" {
+    class Bundle {
+        +BundleId: Guid
+        +Name: string
+        +Description: string
+        +BundlePrice: decimal
+        +IsActive: bool
+        +CreatedBy: Guid
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(name, description, price, creator): Bundle
+        +UpdatePrice(price): void
+        +AddCourse(courseId): void
+        +RemoveCourse(courseId): void
+        +Activate(): void
+        +Deactivate(): void
+        +CalculateSavings(): decimal
+        +GetTotalValue(): decimal
+    }
+
+    class BundleCourse {
+        +BundleCourseId: Guid
+        +BundleId: Guid
+        +CourseId: Guid
+        +SortOrder: int
+        +AddedAt: DateTime
+        --
+        +Add(bundleId, courseId, order): BundleCourse
+    }
+
+    class BundlePurchase {
+        +BundlePurchaseId: Guid
+        +BundleId: Guid
+        +UserId: Guid
+        +PurchasePrice: decimal
+        +PurchasedAt: DateTime
+        +OrderId: Guid
+        --
+        +Record(bundle, user, price, order): BundlePurchase
+    }
+}
+
+package "Analytics Aggregate" {
+    class CouponAnalytics {
+        +CouponAnalyticsId: Guid
+        +CouponId: Guid
+        +TotalRedemptions: int
+        +TotalRevenue: decimal
+        +TotalDiscount: decimal
+        +ConversionRate: decimal
+        +LastCalculated: DateTime
+        --
+        +Calculate(couponId): CouponAnalytics
+        +Update(): void
+    }
+
+    class PromotionAnalytics {
+        +PromotionAnalyticsId: Guid
+        +PromotionId: Guid
+        +TotalSales: int
+        +TotalRevenue: decimal
+        +TotalDiscount: decimal
+        +ConversionRate: decimal
+        +LastCalculated: DateTime
+        --
+        +Calculate(promotionId): PromotionAnalytics
+        +Update(): void
+    }
+
+    class BundleAnalytics {
+        +BundleAnalyticsId: Guid
+        +BundleId: Guid
+        +TotalPurchases: int
+        +TotalRevenue: decimal
+        +AverageSavings: decimal
+        +ConversionRate: decimal
+        +LastCalculated: DateTime
+        --
+        +Calculate(bundleId): BundleAnalytics
+        +Update(): void
+    }
+}
+
+CoursePrice "1" --> "*" RegionalPrice
+CoursePrice "1" --> "*" PriceTier
+CoursePrice "1" --> "*" PriceHistory
+Coupon "1" --> "*" CouponRestriction
+Coupon "1" --> "*" CouponRedemption
+Coupon "1" --> "0..1" CouponAnalytics
+Promotion "1" --> "*" PromotionCourse
+Promotion "1" --> "*" PromotionCategory
+Promotion "1" --> "0..1" PromotionAnalytics
+Bundle "1" --> "*" BundleCourse
+Bundle "1" --> "*" BundlePurchase
+Bundle "1" --> "0..1" BundleAnalytics
+
+@enduml

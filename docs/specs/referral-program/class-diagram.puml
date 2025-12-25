@@ -1,0 +1,203 @@
+@startuml Referral Program Class Diagram
+
+' Enumerations
+enum ReferralStatus {
+  Pending
+  Active
+  Completed
+  Expired
+  Cancelled
+}
+
+enum RewardType {
+  PercentageDiscount
+  FixedAmount
+  CourseCredits
+  FreeCourse
+  PremiumAccess
+}
+
+enum RewardStatus {
+  Pending
+  Issued
+  Redeemed
+  Expired
+  Cancelled
+}
+
+' Aggregate Root
+class Referral {
+  + ReferralId : Guid
+  + ReferrerUserId : Guid
+  + RefereeUserId : Guid
+  + ReferralCodeId : Guid
+  + CampaignId : Guid?
+  + AppliedDate : DateTime
+  + ConversionDate : DateTime?
+  + Status : ReferralStatus
+  + StatusChangedDate : DateTime
+  + ConversionValue : decimal?
+  --
+  + MarkAsConverted(conversionValue: decimal) : void
+  + UpdateStatus(newStatus: ReferralStatus) : void
+  + CanConvert() : bool
+}
+
+' Entities
+class ReferralCode {
+  + ReferralCodeId : Guid
+  + UserId : Guid
+  + Code : string
+  + CreatedDate : DateTime
+  + ExpiryDate : DateTime?
+  + IsActive : bool
+  + UsageCount : int
+  + MaxUsageLimit : int?
+  + CampaignId : Guid?
+  --
+  + IncrementUsage() : void
+  + IsValid() : bool
+  + CanBeUsed() : bool
+  + Deactivate() : void
+}
+
+class ReferralReward {
+  + ReferralRewardId : Guid
+  + ReferralId : Guid
+  + UserId : Guid
+  + RewardType : RewardType
+  + RewardAmount : decimal
+  + CurrencyCode : string?
+  + Status : RewardStatus
+  + IssuedDate : DateTime
+  + RedeemedDate : DateTime?
+  + ExpiryDate : DateTime?
+  + Description : string
+  --
+  + MarkAsRedeemed() : void
+  + MarkAsIssued() : void
+  + IsExpired() : bool
+  + CanBeRedeemed() : bool
+}
+
+class ReferralCampaign {
+  + ReferralCampaignId : Guid
+  + Name : string
+  + Description : string
+  + StartDate : DateTime
+  + EndDate : DateTime
+  + IsActive : bool
+  + ReferrerRewardType : RewardType
+  + ReferrerRewardAmount : decimal
+  + RefereeRewardType : RewardType
+  + RefereeRewardAmount : decimal
+  + MinimumConversionValue : decimal?
+  + MaxRewardsPerUser : int?
+  + TargetAudienceSegment : string?
+  + CreatedDate : DateTime
+  + CreatedByUserId : Guid
+  --
+  + Activate() : void
+  + Deactivate() : void
+  + IsCurrentlyActive() : bool
+  + CalculateReferrerReward() : decimal
+  + CalculateRefereeReward() : decimal
+}
+
+' Services
+class ReferralCodeGeneratorService {
+  - _context : ICoursesPlatformContext
+  - _logger : ILogger
+  --
+  + GenerateUniqueCode() : string
+  + VerifyUniqueness(code: string) : bool
+}
+
+class RewardCalculationService {
+  - _context : ICoursesPlatformContext
+  - _logger : ILogger
+  --
+  + CalculateReferrerReward(referral: Referral) : decimal
+  + CalculateRefereeReward(referral: Referral) : decimal
+  + GetApplicableCampaign(referral: Referral) : ReferralCampaign
+  + ValidateEligibility(referral: Referral) : bool
+}
+
+class ReferralAnalyticsService {
+  - _context : ICoursesPlatformContext
+  - _logger : ILogger
+  --
+  + GetReferralMetrics(startDate: DateTime, endDate: DateTime) : ReferralMetricsDto
+  + GetConversionRate(campaignId: Guid?) : decimal
+  + GetTopReferrers(count: int) : List<TopReferrerDto>
+  + CalculateROI(campaignId: Guid) : decimal
+}
+
+' Context Interface
+interface ICoursesPlatformContext {
+  + ReferralCodes : DbSet<ReferralCode>
+  + Referrals : DbSet<Referral>
+  + ReferralRewards : DbSet<ReferralReward>
+  + ReferralCampaigns : DbSet<ReferralCampaign>
+  --
+  + SaveChangesAsync() : Task<int>
+}
+
+' Domain Events
+class ReferralCodeGeneratedEvent {
+  + ReferralCodeId : Guid
+  + UserId : Guid
+  + Code : string
+  + Timestamp : DateTime
+}
+
+class ReferralCodeAppliedEvent {
+  + ReferralId : Guid
+  + ReferrerUserId : Guid
+  + RefereeUserId : Guid
+  + ReferralCodeId : Guid
+  + Timestamp : DateTime
+}
+
+class ReferralConvertedEvent {
+  + ReferralId : Guid
+  + ConversionValue : decimal
+  + ConversionDate : DateTime
+  + Timestamp : DateTime
+}
+
+class RewardDistributedEvent {
+  + ReferralRewardId : Guid
+  + UserId : Guid
+  + RewardType : RewardType
+  + RewardAmount : decimal
+  + Timestamp : DateTime
+}
+
+' Relationships
+Referral "1" -- "1" ReferralCode : uses
+Referral "1" -- "0..*" ReferralReward : generates
+Referral "0..*" -- "0..1" ReferralCampaign : participates in
+ReferralCode "0..*" -- "0..1" ReferralCampaign : associated with
+ReferralReward "*" -- "1" Referral : earned from
+
+Referral ..> ReferralStatus : uses
+ReferralReward ..> RewardType : uses
+ReferralReward ..> RewardStatus : uses
+ReferralCampaign ..> RewardType : uses
+
+ReferralCodeGeneratorService ..> ICoursesPlatformContext : uses
+RewardCalculationService ..> ICoursesPlatformContext : uses
+ReferralAnalyticsService ..> ICoursesPlatformContext : uses
+
+ICoursesPlatformContext --> ReferralCode : manages
+ICoursesPlatformContext --> Referral : manages
+ICoursesPlatformContext --> ReferralReward : manages
+ICoursesPlatformContext --> ReferralCampaign : manages
+
+Referral ..> ReferralCodeAppliedEvent : raises
+Referral ..> ReferralConvertedEvent : raises
+ReferralCode ..> ReferralCodeGeneratedEvent : raises
+ReferralReward ..> RewardDistributedEvent : raises
+
+@enduml

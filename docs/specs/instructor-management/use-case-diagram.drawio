@@ -1,0 +1,256 @@
+<mxfile host="app.diagrams.net" modified="2025-12-25T00:00:00.000Z" agent="CoursesPlatform" version="22.0.0" type="device">
+  <diagram name="Instructor Management Use Cases" id="instructor-use-cases">
+    <mxGraphModel dx="1434" dy="844" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Instructor Management - Use Case Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="380" y="20" width="410" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- System Boundary -->
+        <mxCell id="system-boundary" value="Instructor Management System" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;fontSize=14;fontStyle=1;align=center;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="280" y="100" width="620" height="640" as="geometry" />
+        </mxCell>
+
+        <!-- Actors -->
+        <mxCell id="instructor-actor" value="Instructor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="350" width="60" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="admin-actor" value="Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="350" width="60" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Use Cases -->
+
+        <!-- Profile Management -->
+        <mxCell id="uc-create-profile" value="Create Instructor Profile" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="340" y="140" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-edit-profile" value="Edit Profile Information" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="520" y="140" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-statistics" value="View Instructor Statistics" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="710" y="140" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Earnings Management -->
+        <mxCell id="uc-view-earnings" value="View Earnings Dashboard" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="340" y="240" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-course-earnings" value="View Earnings by Course" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="520" y="240" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-transaction-history" value="View Transaction History" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="710" y="240" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Payout Management -->
+        <mxCell id="uc-configure-payout" value="Configure Payout Settings" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="340" y="340" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-request-payout" value="Request Payout" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="520" y="340" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-payout-history" value="View Payout History" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="710" y="340" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Analytics -->
+        <mxCell id="uc-view-engagement" value="View Student Engagement Analytics" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="340" y="440" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-performance" value="View Course Performance Metrics" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="520" y="440" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-view-revenue-analytics" value="View Revenue Analytics" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="710" y="440" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Verification -->
+        <mxCell id="uc-submit-verification" value="Submit Verification Request" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="340" y="540" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-check-verification-status" value="Check Verification Status" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="520" y="540" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Admin Use Cases -->
+        <mxCell id="uc-review-verification" value="Review Verification Request" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="340" y="640" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-approve-verification" value="Approve Instructor Verification" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="520" y="640" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc-reject-verification" value="Reject Instructor Verification" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="710" y="640" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Instructor Relationships -->
+
+        <!-- Profile Management -->
+        <mxCell id="rel-instructor-create-profile" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-create-profile">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-instructor-edit-profile" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-edit-profile">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-instructor-view-stats" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-view-statistics">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Earnings -->
+        <mxCell id="rel-instructor-view-earnings" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-view-earnings">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-instructor-view-course-earnings" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-view-course-earnings">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-instructor-transaction-history" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-transaction-history">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Payout -->
+        <mxCell id="rel-instructor-configure-payout" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-configure-payout">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-instructor-request-payout" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-request-payout">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-instructor-payout-history" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-view-payout-history">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Analytics -->
+        <mxCell id="rel-instructor-engagement" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-view-engagement">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-instructor-performance" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-view-performance">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-instructor-revenue-analytics" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-view-revenue-analytics">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Verification -->
+        <mxCell id="rel-instructor-submit-verification" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-submit-verification">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-instructor-check-verification" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="instructor-actor" target="uc-check-verification-status">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Admin Relationships -->
+        <mxCell id="rel-admin-review" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="admin-actor" target="uc-review-verification">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-admin-approve" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="admin-actor" target="uc-approve-verification">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-admin-reject" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;" edge="1" parent="1" source="admin-actor" target="uc-reject-verification">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Include and Extend Relationships -->
+
+        <!-- Request Payout includes Configure Payout Settings -->
+        <mxCell id="include-payout-settings" value="&amp;lt;&amp;lt;requires&amp;gt;&amp;gt;" style="edgeStyle=none;html=1;strokeWidth=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="uc-request-payout" target="uc-configure-payout">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- View Earnings extends to View Course Earnings -->
+        <mxCell id="extend-course-earnings" value="&amp;lt;&amp;lt;extends&amp;gt;&amp;gt;" style="edgeStyle=none;html=1;strokeWidth=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="uc-view-course-earnings" target="uc-view-earnings">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- View Earnings extends to Transaction History -->
+        <mxCell id="extend-transaction-history" value="&amp;lt;&amp;lt;extends&amp;gt;&amp;gt;" style="edgeStyle=none;html=1;strokeWidth=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="uc-transaction-history" target="uc-view-earnings">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Approve/Reject includes Review -->
+        <mxCell id="include-review-approve" value="&amp;lt;&amp;lt;includes&amp;gt;&amp;gt;" style="edgeStyle=none;html=1;strokeWidth=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="uc-approve-verification" target="uc-review-verification">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="include-review-reject" value="&amp;lt;&amp;lt;includes&amp;gt;&amp;gt;" style="edgeStyle=none;html=1;strokeWidth=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="uc-reject-verification" target="uc-review-verification">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend-boundary" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="620" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="90" y="625" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-association" value="Association" style="edgeStyle=none;html=1;strokeWidth=1;endArrow=none;endFill=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry x="-0.2" relative="1" as="geometry">
+            <mxPoint x="60" y="660" as="sourcePoint" />
+            <mxPoint x="110" y="660" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="legend-association-label" value="(solid line)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="120" y="650" width="80" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-include" value="&amp;lt;&amp;lt;includes&amp;gt;&amp;gt;" style="edgeStyle=none;html=1;strokeWidth=1;dashed=1;endArrow=open;endFill=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="685" as="sourcePoint" />
+            <mxPoint x="110" y="685" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="legend-include-label" value="(dashed arrow)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="120" y="675" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-extend" value="&amp;lt;&amp;lt;extends&amp;gt;&amp;gt;" style="edgeStyle=none;html=1;strokeWidth=1;dashed=1;endArrow=open;endFill=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="710" as="sourcePoint" />
+            <mxPoint x="110" y="710" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="legend-extend-label" value="(dashed arrow)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="120" y="700" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Notes -->
+        <mxCell id="note" value="Phase 5 - Enterprise Feature&#xa;&#xa;Instructor can manage complete profile, track earnings across all courses, configure flexible payout options, access detailed analytics, and achieve verified status through admin approval process." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffcc;strokeColor=#cccc00;align=left;verticalAlign=top;fontSize=10;spacing=5;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="600" width="140" height="140" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

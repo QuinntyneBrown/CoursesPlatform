@@ -1,0 +1,120 @@
+@startuml Course Management Class Diagram
+
+title Course Management - Class Diagram
+
+package "Course Aggregate" {
+    class Course {
+        +CourseId: Guid
+        +InstructorId: Guid
+        +Title: string
+        +Subtitle: string
+        +Description: string
+        +ThumbnailUrl: string
+        +PromoVideoUrl: string
+        +Language: string
+        +Level: CourseLevel
+        +Status: CourseStatus
+        +CategoryId: Guid
+        +Price: decimal
+        +Currency: string
+        +IsFree: bool
+        +CertificateEnabled: bool
+        +CreatedAt: DateTime
+        +PublishedAt: DateTime
+        +LastUpdatedAt: DateTime
+        --
+        +CreateDraft(instructor, title, desc): Course
+        +UpdateTitle(title): void
+        +UpdateDescription(desc): void
+        +SetThumbnail(url): void
+        +SetCategory(category): void
+        +SubmitForReview(): void
+        +Approve(): void
+        +Reject(): void
+        +Publish(): void
+        +Unpublish(): void
+        +Archive(): void
+    }
+
+    enum CourseStatus {
+        Draft
+        PendingReview
+        Approved
+        Rejected
+        Published
+        Unpublished
+        Archived
+    }
+
+    enum CourseLevel {
+        Beginner
+        Intermediate
+        Advanced
+        AllLevels
+    }
+
+    class LearningObjective {
+        +LearningObjectiveId: Guid
+        +CourseId: Guid
+        +Description: string
+        +Order: int
+        --
+        +Update(description): void
+        +SetOrder(order): void
+    }
+
+    class Prerequisite {
+        +PrerequisiteId: Guid
+        +CourseId: Guid
+        +Description: string
+        --
+        +Update(description): void
+    }
+
+    class TargetAudience {
+        +TargetAudienceId: Guid
+        +CourseId: Guid
+        +Description: string
+        --
+        +Update(description): void
+    }
+
+    class CourseSettings {
+        +CourseSettingsId: Guid
+        +CourseId: Guid
+        +AllowFeedback: bool
+        +AllowMessages: bool
+        +CompletionPercentage: int
+        --
+        +UpdateFeedbackSettings(allow): void
+        +UpdateMessageSettings(allow): void
+        +UpdateCompletionSettings(pct): void
+    }
+}
+
+package "Category Aggregate" {
+    class Category {
+        +CategoryId: Guid
+        +Name: string
+        +Description: string
+        +Slug: string
+        +ParentCategoryId: Guid
+        +DisplayOrder: int
+        +IsActive: bool
+        --
+        +Create(name, slug): Category
+        +AddSubcategory(name, slug): Category
+        +UpdateName(name): void
+        +Activate(): void
+        +Deactivate(): void
+    }
+}
+
+Course "1" --> "*" LearningObjective
+Course "1" --> "*" Prerequisite
+Course "1" --> "*" TargetAudience
+Course "1" --> "1" CourseSettings
+Course "*" --> "1" Category
+Category "1" --> "*" Category : subcategories
+
+@enduml

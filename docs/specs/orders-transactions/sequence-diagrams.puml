@@ -1,0 +1,207 @@
+@startuml Order Creation Sequence
+
+title Order Creation Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Payment Gateway" as Payment
+participant "Email Service" as Email
+
+User -> App: Proceed to checkout
+App -> App: Validate cart items
+App -> API: POST /api/orders
+API -> API: Validate request
+API -> DB: Check course availability
+DB --> API: Courses available
+API -> DB: Verify user not already enrolled
+DB --> API: Verification passed
+API -> API: Calculate order total
+API -> DB: Create Order (Pending)
+DB --> API: Order created
+API -> DB: Create OrderItems
+API -> DB: Create BillingAddress
+API -> Payment: Process payment
+Payment --> API: Payment successful
+API -> DB: Update Order (Confirmed)
+API -> DB: Create PaymentTransaction
+API -> DB: Create enrollments
+API -> API: Publish OrderCreated event
+API -> API: Publish OrderConfirmed event
+API --> App: 201 Created with order
+App -> App: Clear cart
+App --> User: Show order confirmation
+
+@enduml
+
+@startuml Invoice Generation Sequence
+
+title Invoice Generation Flow
+
+participant "API" as API
+participant "Database" as DB
+participant "PDF Service" as PDF
+participant "Storage" as Storage
+participant "Email Service" as Email
+
+API -> API: OrderConfirmed event received
+API -> DB: Get order details
+DB --> API: Order with items
+API -> API: Generate invoice number
+API -> DB: Create Invoice
+API -> DB: Create InvoiceLineItems
+DB --> API: Invoice created
+API -> PDF: Generate PDF invoice
+PDF --> API: PDF content
+API -> Storage: Store PDF file
+Storage --> API: PDF URL
+API -> DB: Update Invoice with PDF URL
+API -> API: Publish InvoiceGenerated event
+API -> Email: Send invoice email
+Email --> API: Email queued
+API -> DB: Update Invoice (Sent)
+API -> API: Publish InvoiceSent event
+
+@enduml
+
+@startuml Order Cancellation Sequence
+
+title Order Cancellation Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Payment Gateway" as Payment
+participant "Email Service" as Email
+
+User -> App: Click cancel order
+App --> User: Show cancellation dialog
+User -> App: Confirm cancellation
+App -> API: POST /api/orders/{id}/cancel
+API -> DB: Get order details
+DB --> API: Order found
+API -> API: Validate cancellation eligibility
+alt Eligible for cancellation
+    API -> API: Calculate refund amount
+    API -> Payment: Process refund
+    Payment --> API: Refund initiated
+    API -> DB: Create RefundTransaction
+    API -> DB: Update Order (Cancelled)
+    API -> DB: Update OrderItems (Cancelled)
+    API -> DB: Revoke enrollments
+    API -> DB: Remove course access
+    API -> API: Publish OrderCancelled event
+    API -> API: Publish RefundInitiated event
+    API --> App: 200 OK with refund details
+    App --> User: Show cancellation confirmation
+
+    Payment -> API: Refund completed callback
+    API -> DB: Update RefundTransaction (Completed)
+    API -> API: Publish RefundCompleted event
+    API -> Email: Send refund confirmation
+else Not eligible
+    API -> API: Publish OrderCancellationValidationFailed event
+    API --> App: 400 Bad Request
+    App --> User: Show error message
+end
+
+@enduml
+
+@startuml Credit Note Generation Sequence
+
+title Credit Note Generation Flow
+
+participant "API" as API
+participant "Database" as DB
+participant "PDF Service" as PDF
+participant "Storage" as Storage
+participant "Email Service" as Email
+
+API -> API: RefundCompleted event received
+API -> DB: Get order and invoice
+DB --> API: Order and invoice details
+API -> API: Generate credit note number
+API -> DB: Create CreditNote
+API -> DB: Create CreditNoteLineItems
+DB --> API: Credit note created
+API -> PDF: Generate PDF credit note
+PDF --> API: PDF content
+API -> Storage: Store PDF file
+Storage --> API: PDF URL
+API -> DB: Update CreditNote with PDF URL
+API -> API: Publish CreditNoteGenerated event
+API -> Email: Send credit note email
+Email --> API: Email queued
+API -> DB: Update CreditNote (Sent)
+API -> API: Publish CreditNoteSent event
+
+@enduml
+
+@startuml Partial Order Cancellation Sequence
+
+title Partial Order Cancellation Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Payment Gateway" as Payment
+
+User -> App: Click cancel item
+App --> User: Show item cancellation dialog
+User -> App: Confirm item cancellation
+App -> API: POST /api/orders/{id}/items/{itemId}/cancel
+API -> DB: Get order and item
+DB --> API: Order and item found
+API -> API: Validate item cancellation eligibility
+alt Eligible for cancellation
+    API -> API: Calculate partial refund
+    API -> Payment: Process partial refund
+    Payment --> API: Refund initiated
+    API -> DB: Create RefundTransaction (partial)
+    API -> DB: Update OrderItem (Cancelled)
+    API -> DB: Recalculate order total
+    API -> DB: Revoke item enrollment
+    API -> API: Publish OrderItemCancelled event
+    API -> API: Publish RefundInitiated event
+    API --> App: 200 OK with refund details
+    App -> App: Update order display
+    App --> User: Show item cancellation confirmation
+else Not eligible
+    API --> App: 400 Bad Request
+    App --> User: Show error message
+end
+
+@enduml
+
+@startuml Invoice Download Sequence
+
+title Invoice Download Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Storage" as Storage
+
+User -> App: Click download invoice
+App -> API: GET /api/orders/{orderId}/invoice/download
+API -> API: Validate user owns order
+API -> DB: Get invoice details
+DB --> API: Invoice with PDF URL
+alt PDF exists
+    API -> Storage: Get PDF file
+    Storage --> API: PDF file content
+    API -> API: Publish InvoiceDownloaded event
+    API --> App: PDF file
+    App --> User: Download PDF
+else PDF not found
+    API -> API: Regenerate invoice PDF
+    API -> Storage: Store new PDF
+    API --> App: PDF file
+    App --> User: Download PDF
+end
+
+@enduml

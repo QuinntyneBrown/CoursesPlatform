@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-curriculum" name="C4 Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="C4 Context Diagram - Curriculum Management" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="450" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Instructor -->
+        <mxCell id="instructor" value="Instructor&#xa;[Person]&#xa;&#xa;Course creator who manages&#xa;curriculum and content" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Student -->
+        <mxCell id="student" value="Student&#xa;[Person]&#xa;&#xa;Learner who consumes&#xa;course content" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Web App -->
+        <mxCell id="webapp" value="Web Application&#xa;[Container: Angular]&#xa;&#xa;Provides curriculum builder UI&#xa;and content editor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- API -->
+        <mxCell id="api" value="API Application&#xa;[Container: ASP.NET Core]&#xa;&#xa;Handles curriculum management&#xa;and content operations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Database -->
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Stores sections, lectures,&#xa;and content metadata" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Blob Storage -->
+        <mxCell id="storage" value="Blob Storage&#xa;[Container: Azure Storage]&#xa;&#xa;Stores videos, resources,&#xa;and media files" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Media Service -->
+        <mxCell id="media" value="Media Service&#xa;[External System]&#xa;&#xa;Processes and transcodes&#xa;video content" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Cognitive Services -->
+        <mxCell id="cognitive" value="Cognitive Services&#xa;[External System]&#xa;&#xa;Auto-generates captions&#xa;from video audio" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- CDN -->
+        <mxCell id="cdn" value="CDN&#xa;[External System]&#xa;&#xa;Delivers video and media&#xa;content to students" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Arrows -->
+        <mxCell id="arrow1" value="Manages curriculum" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="instructor" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow2" value="Watches content" style="endArrow=classic;html=1;exitX=0;exitY=1;entryX=1;entryY=0;" edge="1" parent="1" source="student" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow3" value="API Calls" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="webapp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow4" value="Reads/Writes" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow5" value="Streams content" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0.5;entryY=1;" edge="1" parent="1" source="cdn" target="student">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow6" value="Uploads files" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="storage">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow7" value="Process videos" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="media">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow8" value="Generate captions" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="cognitive">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow9" value="Reads files" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="storage" target="media">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow10" value="Writes processed" style="endArrow=classic;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;dashed=1;" edge="1" parent="1" source="media" target="storage">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow11" value="Syncs to CDN" style="endArrow=classic;html=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="storage" target="cdn">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

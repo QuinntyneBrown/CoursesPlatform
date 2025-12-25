@@ -1,0 +1,223 @@
+@startuml Orders Transactions Class Diagram
+
+title Orders & Transactions - Class Diagram
+
+package "Order Aggregate" {
+    class Order {
+        +OrderId: Guid
+        +UserId: Guid
+        +OrderNumber: string
+        +Status: OrderStatus
+        +Subtotal: decimal
+        +DiscountAmount: decimal
+        +TaxAmount: decimal
+        +Total: decimal
+        +Currency: string
+        +CreatedAt: DateTime
+        +ConfirmedAt: DateTime
+        +FulfilledAt: DateTime
+        +CancelledAt: DateTime
+        --
+        +Create(user, items): Order
+        +Confirm(payment): void
+        +Fulfill(): void
+        +Cancel(reason): void
+        +CalculateTotal(): void
+        +AddItem(item): void
+        +RemoveItem(item): void
+    }
+
+    enum OrderStatus {
+        Pending
+        Confirmed
+        Fulfilled
+        Cancelled
+        Refunded
+    }
+
+    class OrderItem {
+        +OrderItemId: Guid
+        +OrderId: Guid
+        +CourseId: Guid
+        +CourseName: string
+        +BasePrice: decimal
+        +DiscountAmount: decimal
+        +TaxAmount: decimal
+        +FinalPrice: decimal
+        +Status: OrderItemStatus
+        --
+        +Create(course, price): OrderItem
+        +ApplyDiscount(amount): void
+        +CalculateTax(rate): void
+        +Cancel(): void
+    }
+
+    enum OrderItemStatus {
+        Active
+        Cancelled
+        Refunded
+    }
+
+    class BillingAddress {
+        +BillingAddressId: Guid
+        +OrderId: Guid
+        +FullName: string
+        +AddressLine1: string
+        +AddressLine2: string
+        +City: string
+        +State: string
+        +PostalCode: string
+        +Country: string
+        --
+        +Create(address): BillingAddress
+        +Update(address): void
+    }
+
+    class OrderAuditLog {
+        +OrderAuditLogId: Guid
+        +OrderId: Guid
+        +Action: string
+        +PerformedBy: Guid
+        +Timestamp: DateTime
+        +Changes: string
+        --
+        +Log(action, user, changes): OrderAuditLog
+    }
+}
+
+package "Invoice Aggregate" {
+    class Invoice {
+        +InvoiceId: Guid
+        +OrderId: Guid
+        +InvoiceNumber: string
+        +IssueDate: DateTime
+        +DueDate: DateTime
+        +Subtotal: decimal
+        +TaxAmount: decimal
+        +Total: decimal
+        +Currency: string
+        +Status: InvoiceStatus
+        +PdfUrl: string
+        +SentAt: DateTime
+        --
+        +Generate(order): Invoice
+        +Send(email): void
+        +Download(): string
+        +Regenerate(): void
+        +MarkAsSent(): void
+    }
+
+    enum InvoiceStatus {
+        Draft
+        Issued
+        Sent
+        Paid
+        Cancelled
+    }
+
+    class InvoiceLineItem {
+        +InvoiceLineItemId: Guid
+        +InvoiceId: Guid
+        +Description: string
+        +Quantity: int
+        +UnitPrice: decimal
+        +TaxRate: decimal
+        +TaxAmount: decimal
+        +Total: decimal
+        --
+        +Create(description, price): InvoiceLineItem
+        +CalculateTax(rate): void
+    }
+}
+
+package "Credit Note Aggregate" {
+    class CreditNote {
+        +CreditNoteId: Guid
+        +InvoiceId: Guid
+        +OrderId: Guid
+        +CreditNoteNumber: string
+        +IssueDate: DateTime
+        +Amount: decimal
+        +Currency: string
+        +Reason: string
+        +Status: CreditNoteStatus
+        +PdfUrl: string
+        +SentAt: DateTime
+        --
+        +Generate(invoice, amount, reason): CreditNote
+        +Send(email): void
+        +Download(): string
+        +MarkAsSent(): void
+    }
+
+    enum CreditNoteStatus {
+        Draft
+        Issued
+        Sent
+        Applied
+    }
+
+    class CreditNoteLineItem {
+        +CreditNoteLineItemId: Guid
+        +CreditNoteId: Guid
+        +Description: string
+        +Amount: decimal
+        --
+        +Create(description, amount): CreditNoteLineItem
+    }
+}
+
+package "Transaction Aggregate" {
+    class PaymentTransaction {
+        +PaymentTransactionId: Guid
+        +OrderId: Guid
+        +TransactionNumber: string
+        +Type: TransactionType
+        +Amount: decimal
+        +Currency: string
+        +Status: TransactionStatus
+        +PaymentMethod: PaymentMethod
+        +GatewayTransactionId: string
+        +ProcessedAt: DateTime
+        +FailureReason: string
+        --
+        +Create(order, amount, method): PaymentTransaction
+        +Complete(): void
+        +Fail(reason): void
+        +Refund(amount, reason): PaymentTransaction
+    }
+
+    enum TransactionType {
+        Payment
+        Refund
+        Chargeback
+    }
+
+    enum TransactionStatus {
+        Pending
+        Processing
+        Completed
+        Failed
+        Refunded
+    }
+
+    enum PaymentMethod {
+        CreditCard
+        DebitCard
+        PayPal
+        BankTransfer
+        Cryptocurrency
+    }
+}
+
+Order "1" --> "*" OrderItem
+Order "1" --> "1" BillingAddress
+Order "1" --> "*" OrderAuditLog
+Order "1" --> "0..1" Invoice
+Order "1" --> "*" PaymentTransaction
+Invoice "1" --> "*" InvoiceLineItem
+Invoice "1" --> "0..1" CreditNote
+CreditNote "1" --> "*" CreditNoteLineItem
+PaymentTransaction "1" --> "0..1" PaymentTransaction : refunds
+
+@enduml

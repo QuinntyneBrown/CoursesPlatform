@@ -1,0 +1,296 @@
+@startuml Course Search Sequence
+
+title Course Search Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Search Service" as Search
+participant "Database" as DB
+participant "Cache" as Cache
+
+User -> App: Type search query
+App -> App: Debounce input (300ms)
+App -> API: GET /api/search/autocomplete?q=python
+API -> Cache: Check cached suggestions
+alt Cache hit
+    Cache --> API: Return suggestions
+else Cache miss
+    API -> DB: Query popular suggestions
+    DB --> API: Suggestions found
+    API -> Cache: Store suggestions (5 min)
+end
+API --> App: Return suggestions
+App --> User: Display autocomplete list
+
+User -> App: Select suggestion / Press enter
+App -> API: GET /api/search/courses?q=python&page=1&size=12
+API -> API: Validate and sanitize query
+API -> Cache: Check cached results
+alt Cache hit
+    Cache --> API: Return cached results
+else Cache miss
+    API -> Search: Execute search query
+    Search -> Search: Normalize query text
+    Search -> Search: Apply filters and sort
+    Search -> DB: Query search index
+    DB --> Search: Matching courses
+    Search -> Search: Calculate relevance scores
+    Search -> Search: Apply boosting (rating, popularity)
+    Search --> API: Ranked results
+    API -> Cache: Store results (15 min)
+    API -> DB: Create SearchQuery record
+    API -> API: Publish CourseSearched event
+end
+API --> App: Return results with facets
+App -> App: Update search state
+App --> User: Display course grid
+
+User -> App: Click course card
+App -> API: POST /api/search/results/click
+API -> DB: Update SearchResult (wasClicked=true)
+API -> API: Publish SearchResultClicked event
+API --> App: 200 OK
+App -> App: Navigate to course detail
+
+@enduml
+
+@startuml Search with Filters Sequence
+
+title Search with Filters Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Search Service" as Search
+participant "Database" as DB
+
+User -> App: View search results
+App --> User: Display filter panel
+
+User -> App: Select category filter
+App -> App: Update filter state
+App -> API: GET /api/search/facets?q=python&category=programming
+API -> Search: Calculate facet counts
+Search -> DB: Query courses with filters
+DB --> Search: Aggregated counts
+Search --> API: Facet counts
+API --> App: Return facets
+App --> User: Update filter counts
+
+User -> App: Apply filter
+App -> App: Add filter chip
+App -> API: GET /api/search/courses?q=python&category=programming
+API -> Search: Execute filtered search
+Search -> DB: Query with filters
+DB --> Search: Filtered results
+Search --> API: Results
+API -> DB: Record filter usage
+API -> API: Publish CourseFiltered event
+API --> App: Return filtered results
+App -> App: Update results grid
+App --> User: Display filtered courses
+
+@enduml
+
+@startuml Get Recommendations Sequence
+
+title Get Personalized Recommendations Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Recommendation Engine" as Engine
+participant "Database" as DB
+participant "Cache" as Cache
+
+User -> App: Login to platform
+App -> API: GET /api/recommendations/personalized
+API -> API: Extract user ID from token
+API -> Cache: Check cached recommendations
+alt Cache hit and not expired
+    Cache --> API: Return cached recommendations
+    API --> App: Return recommendations
+else Cache miss or expired
+    API -> DB: Get user preferences
+    API -> DB: Get user enrollments
+    API -> DB: Get user interactions
+    DB --> API: User data
+    API -> Engine: Generate recommendations
+
+    Engine -> Engine: Calculate collaborative filtering
+    Engine -> DB: Find similar users
+    DB --> Engine: Similar users data
+    Engine -> DB: Get courses from similar users
+    DB --> Engine: Candidate courses
+
+    Engine -> Engine: Calculate content-based filtering
+    Engine -> DB: Get enrolled course topics
+    DB --> Engine: User topics
+    Engine -> DB: Find courses with similar topics
+    DB --> Engine: Similar courses
+
+    Engine -> Engine: Calculate trending boost
+    Engine -> DB: Get trending courses
+    DB --> Engine: Trending data
+
+    Engine -> Engine: Combine scores (40% collab + 40% content + 20% trending)
+    Engine -> Engine: Rank by combined score
+    Engine -> Engine: Filter out enrolled courses
+    Engine -> Engine: Take top 20 recommendations
+    Engine --> API: Ranked recommendations
+
+    API -> DB: Store recommendations
+    API -> Cache: Cache recommendations (24 hours)
+    API -> API: Publish RecommendationsGenerated event
+    API --> App: Return recommendations
+end
+
+App -> App: Update recommendation state
+App --> User: Display recommendation carousel
+
+User -> App: Click recommended course
+App -> API: POST /api/recommendations/click
+API -> DB: Update recommendation (wasClicked=true)
+API -> API: Publish RecommendationClicked event
+API --> App: 200 OK
+App -> App: Navigate to course detail
+
+@enduml
+
+@startuml Get Similar Courses Sequence
+
+title Get Similar Courses Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Recommendation Engine" as Engine
+participant "Database" as DB
+participant "Cache" as Cache
+
+User -> App: View course detail page
+App -> API: GET /api/recommendations/similar/{courseId}
+API -> Cache: Check cached similar courses
+alt Cache hit
+    Cache --> API: Return cached similar courses
+else Cache miss
+    API -> DB: Get course details
+    DB --> API: Course data
+
+    API -> Engine: Find similar courses
+    Engine -> DB: Get course category and topics
+    DB --> Engine: Course metadata
+
+    Engine -> Engine: Calculate category similarity
+    Engine -> DB: Find courses in same category
+    DB --> Engine: Category matches
+
+    Engine -> Engine: Calculate topic similarity
+    Engine -> DB: Find courses with similar topics
+    DB --> Engine: Topic matches
+
+    Engine -> DB: Get instructor's other courses
+    DB --> Engine: Instructor courses
+
+    Engine -> Engine: Calculate similarity scores
+    Engine -> Engine: Combine and rank results
+    Engine -> Engine: Filter out current course
+    Engine -> Engine: Take top 12 similar courses
+    Engine --> API: Similar courses
+
+    API -> Cache: Cache results (1 hour)
+    API -> DB: Record similar courses request
+    API -> API: Publish SimilarCoursesRequested event
+    API --> App: Return similar courses
+end
+
+App --> User: Display similar courses carousel
+
+@enduml
+
+@startuml Trending Courses Calculation Sequence
+
+title Trending Courses Calculation Flow
+
+participant "Scheduler" as Scheduler
+participant "Trending Service" as Trending
+participant "Database" as DB
+participant "Cache" as Cache
+
+Scheduler -> Trending: Execute hourly job
+Trending -> DB: Get courses published in last 90 days
+DB --> Trending: Active courses
+
+loop For each course
+    Trending -> DB: Get enrollments (last 7 days)
+    DB --> Trending: Recent enrollments
+    Trending -> Trending: Calculate enrollment velocity
+
+    Trending -> DB: Get rating changes (last 30 days)
+    DB --> Trending: Rating data
+    Trending -> Trending: Calculate rating improvement
+
+    Trending -> DB: Get reviews and shares (last 7 days)
+    DB --> Trending: Social engagement
+    Trending -> Trending: Calculate social score
+
+    Trending -> Trending: Calculate trending score
+    note right
+        TrendingScore =
+        (EnrollmentVelocity × 0.5) +
+        (RatingImprovement × 0.3) +
+        (SocialEngagement × 0.2)
+    end note
+end
+
+Trending -> Trending: Rank courses by score
+Trending -> Trending: Take top 24 trending courses
+Trending -> DB: Update TrendingCourse table
+Trending -> DB: Publish TrendingCoursesCalculated event
+DB --> Trending: Updated
+
+Trending -> Cache: Invalidate trending cache
+Trending --> Scheduler: Job completed
+
+@enduml
+
+@startuml Refresh User Recommendations Sequence
+
+title Refresh User Recommendations Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Background Job" as Job
+participant "Database" as DB
+
+User -> App: Click refresh recommendations
+App -> API: POST /api/recommendations/refresh
+API -> API: Validate user authentication
+API -> Job: Queue recommendation refresh job
+API --> App: 202 Accepted (job queued)
+App --> User: Show refreshing indicator
+
+Job -> Job: Process refresh job
+Job -> DB: Mark recommendations as stale
+Job -> DB: Get fresh user data
+DB --> Job: Updated user data
+Job -> Job: Generate new recommendations
+note right
+    Uses same algorithm as
+    personalized recommendations
+end note
+Job -> DB: Store new recommendations
+Job -> DB: Publish RecommendationsRefreshed event
+Job -> API: Notify completion
+
+API -> App: Push notification (WebSocket)
+App -> App: Fetch new recommendations
+App -> API: GET /api/recommendations/personalized
+API -> DB: Get fresh recommendations
+DB --> API: New recommendations
+API --> App: Return recommendations
+App --> User: Display updated recommendations
+
+@enduml

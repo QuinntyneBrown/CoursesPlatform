@@ -1,0 +1,166 @@
+@startuml Learning Progress Class Diagram
+
+title Learning Progress - Class Diagram
+
+package "Course Progress Aggregate" {
+    class CourseProgress {
+        +CourseProgressId: Guid
+        +UserId: Guid
+        +CourseId: Guid
+        +Status: ProgressStatus
+        +ProgressPercentage: decimal
+        +EnrollmentDate: DateTime
+        +FirstAccessedAt: DateTime
+        +LastAccessedAt: DateTime
+        +CompletedAt: DateTime
+        +EstimatedCompletionDate: DateTime
+        --
+        +Enroll(user, course): CourseProgress
+        +Start(): void
+        +UpdateProgress(percentage): void
+        +Complete(): void
+        +Unenroll(): void
+        +CalculateProgress(): decimal
+    }
+
+    enum ProgressStatus {
+        NotStarted
+        InProgress
+        Completed
+        Unenrolled
+    }
+}
+
+package "Section Progress Aggregate" {
+    class SectionProgress {
+        +SectionProgressId: Guid
+        +CourseProgressId: Guid
+        +SectionId: Guid
+        +UserId: Guid
+        +ProgressPercentage: decimal
+        +CompletedLecturesCount: int
+        +TotalLecturesCount: int
+        +CompletedAt: DateTime
+        --
+        +UpdateProgress(): void
+        +CalculateProgress(): decimal
+        +MarkComplete(): void
+    }
+}
+
+package "Lecture Progress Aggregate" {
+    class LectureProgress {
+        +LectureProgressId: Guid
+        +SectionProgressId: Guid
+        +LectureId: Guid
+        +UserId: Guid
+        +Status: ProgressStatus
+        +TimeSpentSeconds: int
+        +FirstAccessedAt: DateTime
+        +LastAccessedAt: DateTime
+        +CompletedAt: DateTime
+        --
+        +Start(): void
+        +Complete(): void
+        +Reopen(): void
+        +UpdateTimeSpent(seconds): void
+        +IsCompleted(): bool
+    }
+}
+
+package "Video Progress Aggregate" {
+    class VideoProgress {
+        +VideoProgressId: Guid
+        +LectureProgressId: Guid
+        +LectureId: Guid
+        +UserId: Guid
+        +LastPosition: decimal
+        +WatchTimeSeconds: int
+        +CompletionPercentage: decimal
+        +PlaybackSpeed: decimal
+        +PreferredQuality: VideoQuality
+        +LastUpdatedAt: DateTime
+        --
+        +UpdatePosition(position): void
+        +UpdateWatchTime(seconds): void
+        +CalculateCompletionPercentage(): decimal
+        +SetPlaybackSpeed(speed): void
+        +SetQuality(quality): void
+    }
+
+    enum VideoQuality {
+        Auto
+        Quality360p
+        Quality480p
+        Quality720p
+        Quality1080p
+    }
+}
+
+package "Bookmark Aggregate" {
+    class Bookmark {
+        +BookmarkId: Guid
+        +UserId: Guid
+        +LectureId: Guid
+        +CourseId: Guid
+        +Title: string
+        +TimestampSeconds: decimal
+        +AccessCount: int
+        +CreatedAt: DateTime
+        +LastAccessedAt: DateTime
+        +IsDeleted: bool
+        +DeletedAt: DateTime
+        --
+        +Create(user, lecture, timestamp, title): Bookmark
+        +Update(title): void
+        +Delete(): void
+        +Access(): void
+        +Restore(): void
+    }
+}
+
+package "Note Aggregate" {
+    class Note {
+        +NoteId: Guid
+        +UserId: Guid
+        +LectureId: Guid
+        +CourseId: Guid
+        +Title: string
+        +Content: string
+        +TimestampSeconds: decimal
+        +HasTimestamp: bool
+        +Version: int
+        +CreatedAt: DateTime
+        +LastUpdatedAt: DateTime
+        +IsDeleted: bool
+        +DeletedAt: DateTime
+        --
+        +Create(user, lecture, title, content): Note
+        +Update(title, content): void
+        +Delete(): void
+        +Restore(): void
+        +AttachTimestamp(timestamp): void
+        +RemoveTimestamp(): void
+    }
+
+    class NoteVersion {
+        +NoteVersionId: Guid
+        +NoteId: Guid
+        +Version: int
+        +Title: string
+        +Content: string
+        +CreatedAt: DateTime
+        +CreatedByUserId: Guid
+        --
+        +Create(note): NoteVersion
+    }
+}
+
+CourseProgress "1" --> "*" SectionProgress
+SectionProgress "1" --> "*" LectureProgress
+LectureProgress "1" --> "1" VideoProgress
+LectureProgress "1" --> "*" Bookmark
+LectureProgress "1" --> "*" Note
+Note "1" --> "*" NoteVersion
+
+@enduml

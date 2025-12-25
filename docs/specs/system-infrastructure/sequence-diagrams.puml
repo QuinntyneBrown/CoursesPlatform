@@ -1,0 +1,318 @@
+@startuml Health Check Flow
+
+title Health Check Flow
+
+actor "System/Admin" as Admin
+participant "Health API" as API
+participant "Health Check Handler" as Handler
+participant "ICoursesPlatformContext" as Context
+participant "Database" as DB
+participant "Redis Cache" as Cache
+participant "External Service" as External
+
+Admin -> API: GET /api/health
+activate API
+
+API -> Handler: Execute Health Checks
+activate Handler
+
+Handler -> Context: Check Database
+activate Context
+Context -> DB: SELECT 1
+activate DB
+DB --> Context: Success
+deactivate DB
+Context --> Handler: Healthy (10ms)
+deactivate Context
+
+Handler -> Cache: Ping
+activate Cache
+Cache --> Handler: PONG (5ms)
+deactivate Cache
+
+Handler -> External: Check Service
+activate External
+External --> Handler: 200 OK (50ms)
+deactivate External
+
+Handler -> Context: Save SystemHealth
+activate Context
+Context -> DB: INSERT SystemHealth
+DB --> Context: Success
+deactivate Context
+
+Handler -> Handler: Publish SystemHealthChecked Event
+
+Handler --> API: HealthCheckResult
+deactivate Handler
+
+API --> Admin: 200 OK (Health Status)
+deactivate API
+
+@enduml
+
+@startuml Toggle Feature Flag Flow
+
+title Toggle Feature Flag Flow
+
+actor Admin
+participant "Feature API" as API
+participant "Toggle Handler" as Handler
+participant "ICoursesPlatformContext" as Context
+participant "Database" as DB
+participant "Cache" as Cache
+participant "Audit Service" as Audit
+
+Admin -> API: POST /api/feature-flags/{key}/toggle
+activate API
+
+API -> Handler: ToggleFeatureFlagCommand
+activate Handler
+
+Handler -> Context: GetFeatureFlag(key)
+activate Context
+Context -> DB: SELECT FeatureFlag
+DB --> Context: FeatureFlag
+deactivate Context
+
+Handler -> Handler: Toggle IsEnabled
+
+Handler -> Context: Update FeatureFlag
+activate Context
+Context -> DB: UPDATE FeatureFlag
+DB --> Context: Success
+deactivate Context
+
+Handler -> Cache: InvalidateCache("feature:" + key)
+activate Cache
+Cache --> Handler: Invalidated
+deactivate Cache
+
+Handler -> Audit: CreateAuditLog
+activate Audit
+Audit -> Context: Insert AuditLog
+Context -> DB: INSERT AuditLog
+DB --> Context: Success
+Context --> Audit: Success
+deactivate Audit
+
+Handler -> Handler: Publish FeatureFlagToggled Event
+
+Handler --> API: Success
+deactivate Handler
+
+API --> Admin: 200 OK
+deactivate API
+
+@enduml
+
+@startuml Execute Background Job Flow
+
+title Execute Background Job Flow
+
+participant "Job Scheduler" as Scheduler
+participant "Job Worker" as Worker
+participant "Job Handler" as Handler
+participant "ICoursesPlatformContext" as Context
+participant "Database" as DB
+participant "Email Service" as Email
+
+Scheduler -> Worker: Dequeue Job
+activate Worker
+
+Worker -> Context: GetJob(jobId)
+activate Context
+Context -> DB: SELECT BackgroundJob
+DB --> Context: BackgroundJob
+deactivate Context
+
+Worker -> Context: Update Status to Running
+activate Context
+Context -> DB: UPDATE BackgroundJob
+DB --> Context: Success
+deactivate Context
+
+Worker -> Handler: Execute(jobParams)
+activate Handler
+
+Handler -> Email: SendEmail(params)
+activate Email
+Email --> Handler: Success
+deactivate Email
+
+Handler --> Worker: Result
+deactivate Handler
+
+Worker -> Context: Update Status to Completed
+activate Context
+Context -> DB: UPDATE BackgroundJob
+DB --> Context: Success
+deactivate Context
+
+Worker -> Context: Create JobExecution
+activate Context
+Context -> DB: INSERT JobExecution
+DB --> Context: Success
+deactivate Context
+
+Worker -> Worker: Publish BackgroundJobExecuted Event
+
+deactivate Worker
+
+alt Job Fails
+    Worker -> Context: Update Status to Failed
+    activate Context
+    Context -> DB: UPDATE BackgroundJob
+    DB --> Context: Success
+    deactivate Context
+
+    Worker -> Worker: Check Retry Count
+
+    alt Should Retry
+        Worker -> Scheduler: Schedule Retry
+    else Max Retries Reached
+        Worker -> Worker: Publish BackgroundJobFailed Event
+    end
+end
+
+@enduml
+
+@startuml Cache Invalidation Flow
+
+title Cache Invalidation Flow
+
+actor Admin
+participant "Cache API" as API
+participant "Cache Handler" as Handler
+participant "Redis Cache" as Cache
+participant "ICoursesPlatformContext" as Context
+participant "Database" as DB
+
+Admin -> API: DELETE /api/cache/pattern/{pattern}
+activate API
+
+API -> Handler: InvalidateCacheByPatternCommand
+activate Handler
+
+Handler -> Cache: SCAN pattern*
+activate Cache
+Cache --> Handler: List of Keys
+deactivate Cache
+
+loop For Each Key
+    Handler -> Cache: DEL key
+    activate Cache
+    Cache --> Handler: Deleted
+    deactivate Cache
+end
+
+Handler -> Context: Record CacheEntry Invalidation
+activate Context
+Context -> DB: UPDATE CacheEntry SET Status=Invalidated
+DB --> Context: Success
+deactivate Context
+
+Handler -> Handler: Publish CacheInvalidated Event
+
+Handler -> Handler: Collect Statistics
+Handler -> Context: Update CacheStatistics
+activate Context
+Context -> DB: INSERT CacheStatistics
+DB --> Context: Success
+deactivate Context
+
+Handler --> API: InvalidationResult
+deactivate Handler
+
+API --> Admin: 200 OK (Invalidated Count)
+deactivate API
+
+@enduml
+
+@startuml Configuration Hot Reload Flow
+
+title Configuration Hot Reload Flow
+
+participant "File Watcher" as Watcher
+participant "Config Manager" as Manager
+participant "Validator" as Validator
+participant "ICoursesPlatformContext" as Context
+participant "Database" as DB
+participant "App Services" as Services
+
+Watcher -> Manager: File Changed Event
+activate Manager
+
+Manager -> Manager: Load New Configuration
+
+Manager -> Validator: Validate(newConfig)
+activate Validator
+Validator --> Manager: ValidationResult
+deactivate Validator
+
+alt Valid Configuration
+    Manager -> Context: Update ConfigurationSettings
+    activate Context
+    Context -> DB: UPDATE ConfigurationSetting
+    DB --> Context: Success
+    deactivate Context
+
+    Manager -> Context: Create ConfigurationHistory
+    activate Context
+    Context -> DB: INSERT ConfigurationHistory
+    DB --> Context: Success
+    deactivate Context
+
+    Manager -> Services: Notify Configuration Changed
+    activate Services
+    Services -> Services: Reload Settings
+    Services --> Manager: Acknowledged
+    deactivate Services
+
+    Manager -> Manager: Publish ConfigurationReloaded Event
+
+else Invalid Configuration
+    Manager -> Manager: Rollback to Previous Config
+    Manager -> Manager: Log Validation Error
+    Manager -> Manager: Publish ConfigurationValidationFailed Event
+end
+
+deactivate Manager
+
+@enduml
+
+@startuml Audit Log Query Flow
+
+title Audit Log Query Flow
+
+actor Admin
+participant "Audit API" as API
+participant "Query Handler" as Handler
+participant "ICoursesPlatformContext" as Context
+participant "Database" as DB
+
+Admin -> API: GET /api/audit-logs?filters
+activate API
+
+API -> Handler: GetAuditLogsQuery
+activate Handler
+
+Handler -> Handler: Parse Filters
+Handler -> Handler: Build Query
+
+Handler -> Context: Query AuditLogs
+activate Context
+Context -> DB: SELECT AuditLog WHERE...
+DB --> Context: AuditLog Records
+deactivate Context
+
+Handler -> Handler: Map to DTOs
+Handler -> Handler: Apply Pagination
+
+Handler --> API: PagedAuditLogResult
+deactivate Handler
+
+API --> Admin: 200 OK (Audit Logs)
+deactivate API
+
+@enduml

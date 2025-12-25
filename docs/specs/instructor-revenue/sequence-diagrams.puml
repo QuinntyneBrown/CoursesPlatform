@@ -1,0 +1,197 @@
+@startuml Earnings Calculation Sequence
+
+title Earnings Calculation Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Event Bus" as Events
+
+Student -> App: Purchase course
+App -> API: POST /api/enrollments
+API -> DB: Create enrollment
+DB --> API: Enrollment created
+API -> DB: Get instructor revenue share
+DB --> API: Revenue share config
+API -> API: Calculate earnings
+note right
+  Gross Amount = Course Price
+  Platform Fee = Gross × (1 - Revenue Share %)
+  Net Amount = Gross - Platform Fee
+end note
+API -> DB: Create Earning record
+DB --> API: Earning created
+API -> Events: Publish EarningsCalculated event
+API --> App: 201 Created
+App --> Student: Enrollment confirmed
+
+@enduml
+
+@startuml Payout Request Sequence
+
+title Payout Request Flow
+
+participant "Scheduler" as Scheduler
+participant "API" as API
+participant "Database" as DB
+participant "Payment Provider" as Provider
+participant "Email Service" as Email
+
+Scheduler -> API: Trigger monthly payout job
+API -> DB: Get instructors with schedule
+DB --> API: Instructor list
+loop For each instructor
+    API -> DB: Get unpaid earnings
+    DB --> API: Earnings list
+    alt Earnings >= Minimum threshold
+        API -> API: Calculate total payout amount
+        API -> DB: Get primary payout method
+        DB --> API: Payout method
+        API -> DB: Create Payout record
+        DB --> API: Payout created
+        API -> DB: Create PayoutLineItems
+        API -> API: Publish PayoutCreated event
+        API -> Email: Send payout notification
+        Email --> API: Email queued
+        API -> API: Mark earnings as paid
+    else Below threshold
+        API -> API: Skip instructor
+    end
+end
+
+@enduml
+
+@startuml Payout Processing Sequence
+
+title Payout Processing Flow
+
+participant "Payout Worker" as Worker
+participant "API" as API
+participant "Database" as DB
+participant "Payment Provider" as Provider
+participant "Email Service" as Email
+
+Worker -> API: Process pending payouts
+API -> DB: Get pending payouts
+DB --> API: Payout list
+loop For each payout
+    API -> DB: Get payout method details
+    DB --> API: Payout method
+    API -> API: Check for tax withholding
+    alt Tax withholding required
+        API -> API: Calculate withholding amount
+        API -> DB: Create TaxWithholding record
+        API -> API: Reduce payout amount
+    end
+    API -> DB: Update status to Processing
+    API -> API: Publish PayoutProcessing event
+    API -> Provider: Initiate transfer
+    alt Transfer successful
+        Provider --> API: Transaction ID
+        API -> DB: Update status to Completed
+        API -> DB: Store transaction ID
+        API -> API: Publish PayoutCompleted event
+        API -> Email: Send success notification
+        Email --> API: Email sent
+    else Transfer failed
+        Provider --> API: Failure reason
+        API -> DB: Update status to Failed
+        API -> DB: Store failure reason
+        API -> API: Publish PayoutFailed event
+        API -> Email: Send failure notification
+        Email --> API: Email sent
+    end
+end
+
+@enduml
+
+@startuml Tax Form Submission Sequence
+
+title Tax Form Submission Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Storage" as Storage
+participant "Database" as DB
+
+Instructor -> App: Navigate to tax settings
+App -> API: GET /api/instructors/me/tax-forms
+API -> DB: Get tax forms
+DB --> API: Tax forms list
+API --> App: Tax forms
+App --> Instructor: Show forms with status
+
+Instructor -> App: Click upload new form
+App --> Instructor: Show upload form
+Instructor -> App: Select form type (W-9/W-8BEN)
+Instructor -> App: Fill tax information
+Instructor -> App: Upload document
+App -> App: Validate file (type, size)
+App -> API: POST /api/instructors/me/tax-forms
+API -> API: Validate tax data
+alt Tax ID format valid
+    API -> Storage: Upload document
+    Storage --> API: Document URL
+    API -> DB: Create TaxForm record
+    DB --> API: Tax form created
+    API -> API: Publish TaxFormSubmitted event
+    API --> App: 201 Created
+    App --> Instructor: Success message
+else Invalid tax ID
+    API --> App: 400 Validation error
+    App --> Instructor: Show error message
+end
+
+@enduml
+
+@startuml Add Payout Method Sequence
+
+title Add Payout Method Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Payment Provider" as Provider
+
+Instructor -> App: Navigate to payout methods
+App -> API: GET /api/instructors/me/payout-methods
+API -> DB: Get payout methods
+DB --> API: Methods list
+API --> App: Payout methods
+App --> Instructor: Show methods list
+
+Instructor -> App: Click add method
+App --> Instructor: Show method type selection
+Instructor -> App: Select type (Bank/PayPal)
+App --> Instructor: Show method-specific form
+Instructor -> App: Fill account details
+App -> App: Validate input
+App -> API: POST /api/instructors/me/payout-methods
+API -> API: Validate account details
+alt Details valid
+    API -> Provider: Verify account (if applicable)
+    alt Verification successful
+        Provider --> API: Account verified
+        API -> DB: Create PayoutMethod (verified)
+        API -> API: Publish PayoutMethodAdded event
+    else Verification failed
+        Provider --> API: Verification failed
+        API -> DB: Create PayoutMethod (unverified)
+        API -> API: Publish PayoutMethodAdded event
+    end
+    DB --> API: Method created
+    alt First method added
+        API -> DB: Set as primary method
+        API -> DB: Create default payout schedule
+    end
+    API --> App: 201 Created
+    App --> Instructor: Success message
+else Invalid details
+    API --> App: 400 Validation error
+    App --> Instructor: Show error message
+end
+
+@enduml

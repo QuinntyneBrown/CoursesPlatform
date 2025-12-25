@@ -1,0 +1,310 @@
+@startuml Instructor Management Class Diagram
+
+' Instructor Aggregate Root
+class Instructor {
+  + InstructorId: Guid
+  + UserId: Guid
+  + Bio: string
+  + Headline: string
+  + Website: string
+  + ExpertiseAreas: string
+  + TwitterUrl: string
+  + LinkedInUrl: string
+  + YouTubeUrl: string
+  + FacebookUrl: string
+  + InstagramUrl: string
+  + TotalStudents: int
+  + TotalCourses: int
+  + AverageRating: decimal
+  + IsVerified: bool
+  + VerifiedDate: DateTime?
+  + CreatedAt: DateTime
+  + UpdatedAt: DateTime
+  + PayoutSettings: PayoutSettings
+  + Earnings: List<InstructorEarnings>
+  + Payouts: List<InstructorPayout>
+  + Verification: InstructorVerification
+  --
+  + UpdateProfile(bio, headline, website, socialLinks): void
+  + UpdateStatistics(students, courses, rating): void
+  + MarkAsVerified(verifiedDate): void
+  + CanRequestPayout(): bool
+}
+
+' PayoutSettings Entity
+class PayoutSettings {
+  + PayoutSettingsId: Guid
+  + InstructorId: Guid
+  + PayoutMethod: PayoutMethod
+  + BankAccountNumber: string
+  + BankRoutingNumber: string
+  + BankAccountHolderName: string
+  + PayPalEmail: string
+  + StripeAccountId: string
+  + MinimumPayoutThreshold: decimal
+  + PayoutFrequency: PayoutFrequency
+  + IsActive: bool
+  + CreatedAt: DateTime
+  + UpdatedAt: DateTime
+  --
+  + UpdateBankDetails(accountNumber, routingNumber, holderName): void
+  + UpdatePayPalEmail(email): void
+  + UpdateStripeAccount(accountId): void
+  + SetMinimumThreshold(amount): void
+  + SetPayoutFrequency(frequency): void
+}
+
+' InstructorEarnings Entity
+class InstructorEarnings {
+  + InstructorEarningsId: Guid
+  + InstructorId: Guid
+  + EnrollmentId: Guid
+  + CourseId: Guid
+  + Amount: decimal
+  + GrossAmount: decimal
+  + PlatformCommission: decimal
+  + CommissionRate: decimal
+  + Status: EarningStatus
+  + EarnedDate: DateTime
+  + AvailableDate: DateTime
+  + PaidOutDate: DateTime?
+  + CreatedAt: DateTime
+  --
+  + MarkAsAvailable(): void
+  + MarkAsPaidOut(paidOutDate): void
+  + Refund(): void
+  + CalculateNetAmount(): decimal
+}
+
+' InstructorPayout Entity
+class InstructorPayout {
+  + InstructorPayoutId: Guid
+  + InstructorId: Guid
+  + Amount: decimal
+  + PayoutMethod: PayoutMethod
+  + Status: PayoutStatus
+  + TransactionReference: string
+  + RequestedDate: DateTime
+  + ProcessedDate: DateTime?
+  + CompletedDate: DateTime?
+  + FailureReason: string?
+  + CreatedAt: DateTime
+  --
+  + MarkAsProcessing(): void
+  + MarkAsCompleted(transactionRef): void
+  + MarkAsFailed(reason): void
+  + CanRetry(): bool
+}
+
+' InstructorVerification Entity
+class InstructorVerification {
+  + InstructorVerificationId: Guid
+  + InstructorId: Guid
+  + Status: VerificationStatus
+  + SubmittedDate: DateTime
+  + ReviewedDate: DateTime?
+  + ReviewedByUserId: Guid?
+  + ApprovedDate: DateTime?
+  + RejectionReason: string?
+  + IdentityDocumentUrl: string
+  + ExpertiseDocumentUrl: string
+  + CredentialsDocumentUrl: string
+  + Notes: string?
+  + CreatedAt: DateTime
+  + UpdatedAt: DateTime
+  --
+  + SubmitForReview(): void
+  + StartReview(reviewerId): void
+  + Approve(approvedDate, reviewerId): void
+  + Reject(reason, reviewerId): void
+  + CanResubmit(): bool
+}
+
+' InstructorProfile Value Object
+class InstructorProfile <<ValueObject>> {
+  + Bio: string
+  + Headline: string
+  + Website: string
+  + SocialLinks: SocialMediaLinks
+  + ExpertiseAreas: List<string>
+  --
+  + Validate(): bool
+  + GetSocialLinksCount(): int
+}
+
+' SocialMediaLinks Value Object
+class SocialMediaLinks <<ValueObject>> {
+  + TwitterUrl: string
+  + LinkedInUrl: string
+  + YouTubeUrl: string
+  + FacebookUrl: string
+  + InstagramUrl: string
+  --
+  + HasAnyLinks(): bool
+  + ValidateUrls(): bool
+}
+
+' InstructorAnalytics Value Object
+class InstructorAnalytics <<ValueObject>> {
+  + TotalEnrollments: int
+  + ActiveStudents: int
+  + CompletionRate: decimal
+  + AverageProgress: decimal
+  + MonthlyRevenue: decimal
+  + RevenueGrowthRate: decimal
+  --
+  + CalculateEngagementScore(): decimal
+  + GetTopPerformingCourses(): List<CourseId>
+}
+
+' Enums
+enum PayoutMethod {
+  BankTransfer
+  PayPal
+  Stripe
+}
+
+enum PayoutFrequency {
+  Weekly
+  BiWeekly
+  Monthly
+}
+
+enum EarningStatus {
+  Pending
+  Available
+  PaidOut
+  Refunded
+}
+
+enum PayoutStatus {
+  Pending
+  Processing
+  Completed
+  Failed
+}
+
+enum VerificationStatus {
+  Pending
+  UnderReview
+  Approved
+  Rejected
+}
+
+' Relationships
+Instructor "1" *-- "0..1" PayoutSettings : has
+Instructor "1" *-- "0..*" InstructorEarnings : has
+Instructor "1" *-- "0..*" InstructorPayout : has
+Instructor "1" *-- "0..1" InstructorVerification : has
+Instructor "1" o-- "1" InstructorProfile : contains
+InstructorProfile "1" *-- "1" SocialMediaLinks : contains
+
+PayoutSettings ..> PayoutMethod : uses
+PayoutSettings ..> PayoutFrequency : uses
+InstructorEarnings ..> EarningStatus : uses
+InstructorPayout ..> PayoutStatus : uses
+InstructorPayout ..> PayoutMethod : uses
+InstructorVerification ..> VerificationStatus : uses
+
+' External References
+class User {
+  + UserId: Guid
+  + Email: string
+  + Username: string
+}
+
+class Course {
+  + CourseId: Guid
+  + Title: string
+  + InstructorId: Guid
+}
+
+class Enrollment {
+  + EnrollmentId: Guid
+  + CourseId: Guid
+  + UserId: Guid
+  + EnrolledDate: DateTime
+}
+
+Instructor "1" -- "1" User : belongs to
+Instructor "1" -- "0..*" Course : teaches
+InstructorEarnings "1" -- "1" Enrollment : from
+InstructorEarnings "1" -- "1" Course : for
+
+' Services
+interface IInstructorAnalyticsService {
+  + GetEngagementMetrics(instructorId): StudentEngagement
+  + GetPerformanceMetrics(instructorId): CoursePerformance
+  + GetRevenueAnalytics(instructorId): RevenueAnalytics
+  + CalculateEarningsTrends(instructorId, period): EarningsTrends
+}
+
+interface IInstructorPayoutService {
+  + CalculateAvailableBalance(instructorId): decimal
+  + RequestPayout(instructorId, amount): InstructorPayout
+  + ProcessPayout(payoutId): void
+  + GetPayoutHistory(instructorId): List<InstructorPayout>
+}
+
+interface IInstructorVerificationService {
+  + SubmitVerification(instructorId, documents): InstructorVerification
+  + ReviewVerification(verificationId, status, reason): void
+  + GetVerificationStatus(instructorId): VerificationStatus
+}
+
+class InstructorAnalyticsService {
+  - context: ICoursesPlatformContext
+  --
+  + GetEngagementMetrics(instructorId): StudentEngagement
+  + GetPerformanceMetrics(instructorId): CoursePerformance
+  + GetRevenueAnalytics(instructorId): RevenueAnalytics
+  + CalculateEarningsTrends(instructorId, period): EarningsTrends
+}
+
+class InstructorPayoutService {
+  - context: ICoursesPlatformContext
+  - paymentGateway: IPaymentGateway
+  --
+  + CalculateAvailableBalance(instructorId): decimal
+  + RequestPayout(instructorId, amount): InstructorPayout
+  + ProcessPayout(payoutId): void
+  + GetPayoutHistory(instructorId): List<InstructorPayout>
+}
+
+class InstructorVerificationService {
+  - context: ICoursesPlatformContext
+  - blobStorage: IBlobStorageService
+  - emailService: IEmailService
+  --
+  + SubmitVerification(instructorId, documents): InstructorVerification
+  + ReviewVerification(verificationId, status, reason): void
+  + GetVerificationStatus(instructorId): VerificationStatus
+}
+
+IInstructorAnalyticsService <|.. InstructorAnalyticsService : implements
+IInstructorPayoutService <|.. InstructorPayoutService : implements
+IInstructorVerificationService <|.. InstructorVerificationService : implements
+
+InstructorAnalyticsService ..> Instructor : uses
+InstructorPayoutService ..> Instructor : uses
+InstructorPayoutService ..> PayoutSettings : uses
+InstructorPayoutService ..> InstructorEarnings : uses
+InstructorPayoutService ..> InstructorPayout : uses
+InstructorVerificationService ..> Instructor : uses
+InstructorVerificationService ..> InstructorVerification : uses
+
+' Context
+interface ICoursesPlatformContext {
+  + Instructors: DbSet<Instructor>
+  + PayoutSettings: DbSet<PayoutSettings>
+  + InstructorEarnings: DbSet<InstructorEarnings>
+  + InstructorPayouts: DbSet<InstructorPayout>
+  + InstructorVerifications: DbSet<InstructorVerification>
+  + SaveChangesAsync(): Task<int>
+}
+
+InstructorAnalyticsService ..> ICoursesPlatformContext : uses
+InstructorPayoutService ..> ICoursesPlatformContext : uses
+InstructorVerificationService ..> ICoursesPlatformContext : uses
+
+@enduml

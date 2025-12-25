@@ -1,0 +1,632 @@
+@startuml Update Instructor Profile
+
+title Update Instructor Profile Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "InstructorController" as Controller
+participant "MediatR" as Mediator
+participant "UpdateProfileHandler" as Handler
+participant "ICoursesPlatformContext" as Context
+database "SQL Server" as DB
+
+Instructor -> App: Edit profile form
+activate App
+
+Instructor -> App: Submit profile changes
+App -> App: Validate form inputs
+alt Validation fails
+  App -> Instructor: Display validation errors
+else Validation passes
+  App -> Controller: PUT /api/instructors/me/profile
+  activate Controller
+
+  Controller -> Controller: Extract InstructorId from claims
+  Controller -> Mediator: Send(UpdateProfileCommand)
+  activate Mediator
+
+  Mediator -> Handler: Handle(UpdateProfileCommand)
+  activate Handler
+
+  Handler -> Context: Instructors.FindAsync(instructorId)
+  activate Context
+  Context -> DB: SELECT * FROM Instructors WHERE InstructorId = @id
+  activate DB
+  DB --> Context: Instructor record
+  deactivate DB
+  Context --> Handler: Instructor entity
+  deactivate Context
+
+  alt Instructor not found
+    Handler --> Mediator: throw NotFoundException
+    Mediator --> Controller: NotFoundException
+    Controller --> App: 404 Not Found
+    App --> Instructor: Error: Profile not found
+  else Instructor found
+    Handler -> Handler: instructor.UpdateProfile(bio, headline, website, socialLinks)
+    Handler -> Handler: instructor.UpdatedAt = DateTime.UtcNow
+    Handler -> Handler: Log profile update
+
+    Handler -> Context: SaveChangesAsync()
+    activate Context
+    Context -> DB: UPDATE Instructors SET ...
+    activate DB
+    DB --> Context: Rows affected
+    deactivate DB
+    Context --> Handler: Changes saved
+    deactivate Context
+
+    Handler -> Handler: Map to InstructorProfileDto
+    Handler --> Mediator: InstructorProfileDto
+    deactivate Handler
+    Mediator --> Controller: InstructorProfileDto
+    deactivate Mediator
+    Controller --> App: 200 OK with InstructorProfileDto
+    deactivate Controller
+    App -> App: Update local state
+    App --> Instructor: Success message
+  end
+end
+deactivate App
+
+@enduml
+
+@startuml Request Payout
+
+title Request Payout Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "InstructorController" as Controller
+participant "MediatR" as Mediator
+participant "RequestPayoutHandler" as Handler
+participant "InstructorPayoutService" as PayoutService
+participant "ICoursesPlatformContext" as Context
+database "SQL Server" as DB
+participant "PaymentGateway" as Gateway
+participant "EmailService" as Email
+
+Instructor -> App: Click "Request Payout"
+activate App
+
+App -> App: Check if balance >= minimum threshold
+alt Balance below threshold
+  App -> Instructor: Show error: Minimum threshold not met
+else Balance sufficient
+  App -> Instructor: Show confirmation dialog
+  Instructor -> App: Confirm payout request
+
+  App -> Controller: POST /api/instructors/me/payout
+  activate Controller
+
+  Controller -> Controller: Extract InstructorId from claims
+  Controller -> Mediator: Send(RequestPayoutCommand)
+  activate Mediator
+
+  Mediator -> Handler: Handle(RequestPayoutCommand)
+  activate Handler
+
+  Handler -> PayoutService: CalculateAvailableBalance(instructorId)
+  activate PayoutService
+
+  PayoutService -> Context: InstructorEarnings.Where(...)
+  activate Context
+  Context -> DB: SELECT SUM(Amount) FROM InstructorEarnings\nWHERE InstructorId = @id AND Status = 'Available'
+  activate DB
+  DB --> Context: Available balance
+  deactivate DB
+  Context --> PayoutService: Balance amount
+  deactivate Context
+
+  PayoutService --> Handler: Available balance
+  deactivate PayoutService
+
+  alt Balance below minimum threshold
+    Handler --> Mediator: throw BusinessRuleException
+    Mediator --> Controller: BusinessRuleException
+    Controller --> App: 400 Bad Request
+    App --> Instructor: Error: Insufficient balance
+  else Balance sufficient
+    Handler -> Context: PayoutSettings.FindAsync(instructorId)
+    activate Context
+    Context -> DB: SELECT * FROM PayoutSettings\nWHERE InstructorId = @id
+    activate DB
+    DB --> Context: PayoutSettings
+    deactivate DB
+    Context --> Handler: PayoutSettings entity
+    deactivate Context
+
+    alt Payout settings not configured
+      Handler --> Mediator: throw BusinessRuleException
+      Mediator --> Controller: BusinessRuleException
+      Controller --> App: 400 Bad Request
+      App --> Instructor: Error: Configure payout settings first
+    else Settings configured
+      Handler -> Handler: Create InstructorPayout entity
+      Handler -> Handler: payout.Status = Pending
+      Handler -> Handler: Log payout request
+
+      Handler -> Context: InstructorPayouts.Add(payout)
+      Handler -> Context: SaveChangesAsync()
+      activate Context
+      Context -> DB: INSERT INTO InstructorPayouts ...
+      activate DB
+      DB --> Context: Payout created
+      deactivate DB
+      Context --> Handler: Changes saved
+      deactivate Context
+
+      Handler -> PayoutService: ProcessPayout(payoutId)
+      activate PayoutService
+
+      PayoutService -> PayoutService: payout.Status = Processing
+      PayoutService -> Context: SaveChangesAsync()
+      activate Context
+      Context -> DB: UPDATE InstructorPayouts SET Status = 'Processing'
+      activate DB
+      DB --> Context: Updated
+      deactivate DB
+      deactivate Context
+
+      PayoutService -> Gateway: InitiateTransfer(payoutSettings, amount)
+      activate Gateway
+      Gateway --> PayoutService: Transaction reference
+      deactivate Gateway
+
+      PayoutService -> PayoutService: payout.TransactionReference = reference
+      PayoutService -> PayoutService: payout.Status = Completed
+      PayoutService -> PayoutService: payout.CompletedDate = DateTime.UtcNow
+
+      PayoutService -> Context: SaveChangesAsync()
+      activate Context
+      Context -> DB: UPDATE InstructorPayouts ...
+      activate DB
+      DB --> Context: Updated
+      deactivate DB
+      deactivate Context
+
+      PayoutService -> Context: Update earnings to PaidOut status
+      activate Context
+      Context -> DB: UPDATE InstructorEarnings SET Status = 'PaidOut'
+      activate DB
+      DB --> Context: Updated
+      deactivate DB
+      deactivate Context
+
+      PayoutService --> Handler: Payout completed
+      deactivate PayoutService
+
+      Handler -> Email: SendPayoutConfirmation(instructor)
+      activate Email
+      Email --> Handler: Email sent
+      deactivate Email
+
+      Handler -> Handler: Map to InstructorPayoutDto
+      Handler --> Mediator: InstructorPayoutDto
+      deactivate Handler
+      Mediator --> Controller: InstructorPayoutDto
+      deactivate Mediator
+      Controller --> App: 201 Created with InstructorPayoutDto
+      deactivate Controller
+
+      App -> App: Update balance display
+      App --> Instructor: Success: Payout processed
+    end
+  end
+end
+deactivate App
+
+@enduml
+
+@startuml Verify Instructor
+
+title Verify Instructor Flow
+
+actor Instructor
+actor Admin
+participant "Angular App" as App
+participant "Admin App" as AdminApp
+participant "InstructorController" as Controller
+participant "MediatR" as Mediator
+participant "SubmitVerificationHandler" as SubmitHandler
+participant "ReviewVerificationHandler" as ReviewHandler
+participant "InstructorVerificationService" as VerificationService
+participant "ICoursesPlatformContext" as Context
+database "SQL Server" as DB
+participant "BlobStorage" as Storage
+participant "EmailService" as Email
+
+== Verification Submission ==
+
+Instructor -> App: Navigate to verification page
+activate App
+
+App -> Controller: GET /api/instructors/me/verification
+activate Controller
+Controller -> Context: InstructorVerifications.FindAsync(instructorId)
+activate Context
+Context -> DB: SELECT * FROM InstructorVerifications\nWHERE InstructorId = @id
+activate DB
+DB --> Context: No record found
+deactivate DB
+Context --> Controller: null
+deactivate Context
+Controller --> App: 404 Not Found
+deactivate Controller
+
+App -> Instructor: Show verification form
+Instructor -> App: Upload documents (ID, expertise, credentials)
+Instructor -> App: Submit verification request
+
+App -> Controller: POST /api/instructors/me/verification
+activate Controller
+
+Controller -> Controller: Extract InstructorId from claims
+Controller -> Mediator: Send(SubmitVerificationCommand)
+activate Mediator
+
+Mediator -> SubmitHandler: Handle(SubmitVerificationCommand)
+activate SubmitHandler
+
+SubmitHandler -> VerificationService: SubmitVerification(instructorId, documents)
+activate VerificationService
+
+VerificationService -> Storage: UploadFile(identityDocument)
+activate Storage
+Storage --> VerificationService: identityDocumentUrl
+deactivate Storage
+
+VerificationService -> Storage: UploadFile(expertiseDocument)
+activate Storage
+Storage --> VerificationService: expertiseDocumentUrl
+deactivate Storage
+
+VerificationService -> Storage: UploadFile(credentialsDocument)
+activate Storage
+Storage --> VerificationService: credentialsDocumentUrl
+deactivate Storage
+
+VerificationService -> VerificationService: Create InstructorVerification entity
+VerificationService -> VerificationService: verification.Status = Pending
+VerificationService -> VerificationService: Log verification submission
+
+VerificationService -> Context: InstructorVerifications.Add(verification)
+VerificationService -> Context: SaveChangesAsync()
+activate Context
+Context -> DB: INSERT INTO InstructorVerifications ...
+activate DB
+DB --> Context: Verification created
+deactivate DB
+Context --> VerificationService: Changes saved
+deactivate Context
+
+VerificationService -> Email: SendVerificationReceived(instructor)
+activate Email
+Email --> VerificationService: Email sent
+deactivate Email
+
+VerificationService --> SubmitHandler: InstructorVerification
+deactivate VerificationService
+
+SubmitHandler -> SubmitHandler: Map to VerificationStatusDto
+SubmitHandler --> Mediator: VerificationStatusDto
+deactivate SubmitHandler
+Mediator --> Controller: VerificationStatusDto
+deactivate Mediator
+Controller --> App: 201 Created with VerificationStatusDto
+deactivate Controller
+
+App --> Instructor: Success: Verification submitted
+deactivate App
+
+== Admin Review ==
+
+Admin -> AdminApp: View pending verifications
+activate AdminApp
+
+AdminApp -> Controller: GET /api/instructors/verifications/pending
+activate Controller
+Controller -> Context: InstructorVerifications.Where(v => v.Status == Pending)
+activate Context
+Context -> DB: SELECT * FROM InstructorVerifications\nWHERE Status = 'Pending'
+activate DB
+DB --> Context: Pending verifications
+deactivate DB
+Context --> Controller: List of verifications
+deactivate Context
+Controller --> AdminApp: List of VerificationDto
+deactivate Controller
+
+AdminApp -> Admin: Display pending verifications
+Admin -> AdminApp: Select verification to review
+Admin -> AdminApp: Review documents
+
+AdminApp -> Controller: PUT /api/instructors/{id}/verification/review
+activate Controller
+Controller -> Controller: Extract AdminId from claims
+Controller -> Mediator: Send(UpdateVerificationStatusCommand)
+activate Mediator
+
+Mediator -> ReviewHandler: Handle(UpdateVerificationStatusCommand)
+activate ReviewHandler
+
+ReviewHandler -> Context: InstructorVerifications.FindAsync(verificationId)
+activate Context
+Context -> DB: SELECT * FROM InstructorVerifications\nWHERE VerificationId = @id
+activate DB
+DB --> Context: Verification record
+deactivate DB
+Context --> ReviewHandler: InstructorVerification entity
+deactivate Context
+
+ReviewHandler -> ReviewHandler: verification.Status = UnderReview
+ReviewHandler -> ReviewHandler: verification.ReviewedByUserId = adminId
+ReviewHandler -> ReviewHandler: verification.ReviewedDate = DateTime.UtcNow
+
+ReviewHandler -> Context: SaveChangesAsync()
+activate Context
+Context -> DB: UPDATE InstructorVerifications ...
+activate DB
+DB --> Context: Updated
+deactivate DB
+deactivate Context
+
+ReviewHandler --> Mediator: Success
+deactivate ReviewHandler
+Mediator --> Controller: Success
+deactivate Mediator
+Controller --> AdminApp: 200 OK
+deactivate Controller
+
+AdminApp -> Admin: Show review interface
+
+alt Approve Verification
+  Admin -> AdminApp: Approve verification
+
+  AdminApp -> Controller: PUT /api/instructors/{id}/verification/approve
+  activate Controller
+  Controller -> Mediator: Send(ApproveVerificationCommand)
+  activate Mediator
+
+  Mediator -> ReviewHandler: Handle(ApproveVerificationCommand)
+  activate ReviewHandler
+
+  ReviewHandler -> Context: InstructorVerifications.FindAsync(verificationId)
+  activate Context
+  Context -> DB: SELECT verification
+  activate DB
+  DB --> Context: Verification
+  deactivate DB
+  deactivate Context
+
+  ReviewHandler -> ReviewHandler: verification.Approve(DateTime.UtcNow, adminId)
+  ReviewHandler -> ReviewHandler: verification.Status = Approved
+  ReviewHandler -> ReviewHandler: verification.ApprovedDate = DateTime.UtcNow
+
+  ReviewHandler -> Context: Instructors.FindAsync(instructorId)
+  activate Context
+  Context -> DB: SELECT instructor
+  activate DB
+  DB --> Context: Instructor
+  deactivate DB
+  deactivate Context
+
+  ReviewHandler -> ReviewHandler: instructor.MarkAsVerified(DateTime.UtcNow)
+  ReviewHandler -> ReviewHandler: instructor.IsVerified = true
+  ReviewHandler -> ReviewHandler: Log verification approval
+
+  ReviewHandler -> Context: SaveChangesAsync()
+  activate Context
+  Context -> DB: UPDATE InstructorVerifications ...\nUPDATE Instructors SET IsVerified = 1
+  activate DB
+  DB --> Context: Updated
+  deactivate DB
+  deactivate Context
+
+  ReviewHandler -> Email: SendVerificationApproved(instructor)
+  activate Email
+  Email --> ReviewHandler: Email sent
+  deactivate Email
+
+  ReviewHandler --> Mediator: Success
+  deactivate ReviewHandler
+  Mediator --> Controller: Success
+  deactivate Mediator
+  Controller --> AdminApp: 200 OK
+  deactivate Controller
+
+  AdminApp --> Admin: Verification approved
+
+else Reject Verification
+  Admin -> AdminApp: Reject verification with reason
+
+  AdminApp -> Controller: PUT /api/instructors/{id}/verification/reject
+  activate Controller
+  Controller -> Mediator: Send(RejectVerificationCommand)
+  activate Mediator
+
+  Mediator -> ReviewHandler: Handle(RejectVerificationCommand)
+  activate ReviewHandler
+
+  ReviewHandler -> Context: InstructorVerifications.FindAsync(verificationId)
+  activate Context
+  Context -> DB: SELECT verification
+  activate DB
+  DB --> Context: Verification
+  deactivate DB
+  deactivate Context
+
+  ReviewHandler -> ReviewHandler: verification.Reject(reason, adminId)
+  ReviewHandler -> ReviewHandler: verification.Status = Rejected
+  ReviewHandler -> ReviewHandler: verification.RejectionReason = reason
+  ReviewHandler -> ReviewHandler: Log verification rejection
+
+  ReviewHandler -> Context: SaveChangesAsync()
+  activate Context
+  Context -> DB: UPDATE InstructorVerifications ...
+  activate DB
+  DB --> Context: Updated
+  deactivate DB
+  deactivate Context
+
+  ReviewHandler -> Email: SendVerificationRejected(instructor, reason)
+  activate Email
+  Email --> ReviewHandler: Email sent
+  deactivate Email
+
+  ReviewHandler --> Mediator: Success
+  deactivate ReviewHandler
+  Mediator --> Controller: Success
+  deactivate Mediator
+  Controller --> AdminApp: 200 OK
+  deactivate Controller
+
+  AdminApp --> Admin: Verification rejected
+end
+
+deactivate AdminApp
+
+@enduml
+
+@startuml View Instructor Analytics
+
+title View Instructor Analytics Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "InstructorController" as Controller
+participant "MediatR" as Mediator
+participant "GetAnalyticsHandler" as Handler
+participant "InstructorAnalyticsService" as AnalyticsService
+participant "ICoursesPlatformContext" as Context
+database "SQL Server" as DB
+
+Instructor -> App: Navigate to analytics page
+activate App
+
+App -> Controller: GET /api/instructors/me/analytics/engagement
+activate Controller
+
+Controller -> Controller: Extract InstructorId from claims
+Controller -> Mediator: Send(GetEngagementAnalyticsQuery)
+activate Mediator
+
+Mediator -> Handler: Handle(GetEngagementAnalyticsQuery)
+activate Handler
+
+Handler -> AnalyticsService: GetEngagementMetrics(instructorId)
+activate AnalyticsService
+
+AnalyticsService -> Context: Complex query for engagement data
+activate Context
+Context -> DB: SELECT enrollments, progress, completions\nFROM multiple tables with JOINs
+activate DB
+DB --> Context: Engagement data
+deactivate DB
+Context --> AnalyticsService: Raw data
+deactivate Context
+
+AnalyticsService -> AnalyticsService: Calculate total enrollments
+AnalyticsService -> AnalyticsService: Calculate active students
+AnalyticsService -> AnalyticsService: Calculate completion rate
+AnalyticsService -> AnalyticsService: Calculate average progress
+AnalyticsService -> AnalyticsService: Group by course
+
+AnalyticsService --> Handler: StudentEngagement object
+deactivate AnalyticsService
+
+Handler -> Handler: Map to StudentEngagementDto
+Handler --> Mediator: StudentEngagementDto
+deactivate Handler
+Mediator --> Controller: StudentEngagementDto
+deactivate Mediator
+Controller --> App: 200 OK with StudentEngagementDto
+deactivate Controller
+
+App -> App: Render engagement charts
+App --> Instructor: Display engagement analytics
+
+App -> Controller: GET /api/instructors/me/analytics/performance
+activate Controller
+
+Controller -> Mediator: Send(GetPerformanceAnalyticsQuery)
+activate Mediator
+
+Mediator -> Handler: Handle(GetPerformanceAnalyticsQuery)
+activate Handler
+
+Handler -> AnalyticsService: GetPerformanceMetrics(instructorId)
+activate AnalyticsService
+
+AnalyticsService -> Context: Query for ratings and reviews
+activate Context
+Context -> DB: SELECT ratings, reviews\nFROM Courses, Reviews with aggregations
+activate DB
+DB --> Context: Performance data
+deactivate DB
+Context --> AnalyticsService: Raw data
+deactivate Context
+
+AnalyticsService -> AnalyticsService: Calculate average rating per course
+AnalyticsService -> AnalyticsService: Calculate rating distribution
+AnalyticsService -> AnalyticsService: Get recent reviews
+AnalyticsService -> AnalyticsService: Calculate trends
+
+AnalyticsService --> Handler: CoursePerformance object
+deactivate AnalyticsService
+
+Handler -> Handler: Map to CoursePerformanceDto
+Handler --> Mediator: CoursePerformanceDto
+deactivate Handler
+Mediator --> Controller: CoursePerformanceDto
+deactivate Mediator
+Controller --> App: 200 OK with CoursePerformanceDto
+deactivate Controller
+
+App -> App: Render performance charts
+App --> Instructor: Display performance analytics
+
+App -> Controller: GET /api/instructors/me/analytics/revenue
+activate Controller
+
+Controller -> Mediator: Send(GetRevenueAnalyticsQuery)
+activate Mediator
+
+Mediator -> Handler: Handle(GetRevenueAnalyticsQuery)
+activate Handler
+
+Handler -> AnalyticsService: GetRevenueAnalytics(instructorId)
+activate AnalyticsService
+
+AnalyticsService -> Context: Query for earnings trends
+activate Context
+Context -> DB: SELECT earnings aggregated by month\nFROM InstructorEarnings
+activate DB
+DB --> Context: Revenue data
+deactivate DB
+Context --> AnalyticsService: Raw data
+deactivate Context
+
+AnalyticsService -> AnalyticsService: Calculate monthly trends
+AnalyticsService -> AnalyticsService: Calculate growth rate
+AnalyticsService -> AnalyticsService: Project next month revenue
+AnalyticsService -> AnalyticsService: Identify top courses
+
+AnalyticsService --> Handler: RevenueAnalytics object
+deactivate AnalyticsService
+
+Handler -> Handler: Map to RevenueAnalyticsDto
+Handler --> Mediator: RevenueAnalyticsDto
+deactivate Handler
+Mediator --> Controller: RevenueAnalyticsDto
+deactivate Mediator
+Controller --> App: 200 OK with RevenueAnalyticsDto
+deactivate Controller
+
+App -> App: Render revenue charts
+App -> App: Display projections
+App --> Instructor: Display revenue analytics
+
+deactivate App
+
+@enduml

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-learning-progress" name="C4 Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="C4 Context Diagram - Learning Progress" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="450" height="30" as="geometry"/>
+        </mxCell>
+        <!-- User -->
+        <mxCell id="user" value="Learner&#xa;[Person]&#xa;&#xa;A user enrolled in courses&#xa;who watches lectures and&#xa;takes notes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="150" height="120" as="geometry"/>
+        </mxCell>
+        <!-- Instructor -->
+        <mxCell id="instructor" value="Instructor&#xa;[Person]&#xa;&#xa;Course creator who views&#xa;student progress analytics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="620" y="80" width="150" height="120" as="geometry"/>
+        </mxCell>
+        <!-- Web App -->
+        <mxCell id="webapp" value="Web Application&#xa;[Container: Angular]&#xa;&#xa;Provides video player,&#xa;progress tracking UI,&#xa;bookmarks, and notes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="280" width="150" height="120" as="geometry"/>
+        </mxCell>
+        <!-- API -->
+        <mxCell id="api" value="API Application&#xa;[Container: ASP.NET Core]&#xa;&#xa;Handles progress tracking,&#xa;video position saving,&#xa;bookmarks &amp; notes API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="280" width="150" height="120" as="geometry"/>
+        </mxCell>
+        <!-- Database -->
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Stores progress, video&#xa;positions, bookmarks,&#xa;notes, and versions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="280" width="150" height="120" as="geometry"/>
+        </mxCell>
+        <!-- Video Service -->
+        <mxCell id="video" value="Video Streaming&#xa;[External System]&#xa;&#xa;CDN for video content&#xa;delivery with adaptive&#xa;bitrate streaming" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="480" width="150" height="120" as="geometry"/>
+        </mxCell>
+        <!-- Background Jobs -->
+        <mxCell id="jobs" value="Background Jobs&#xa;[Container: Hangfire]&#xa;&#xa;Processes progress&#xa;calculations and sends&#xa;completion notifications" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="480" width="150" height="120" as="geometry"/>
+        </mxCell>
+        <!-- Cache -->
+        <mxCell id="cache" value="Cache&#xa;[Container: Redis]&#xa;&#xa;Caches video positions&#xa;and progress data for&#xa;fast retrieval" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="480" width="150" height="120" as="geometry"/>
+        </mxCell>
+        <!-- Notification Service -->
+        <mxCell id="notification" value="Notification Service&#xa;[External System]&#xa;&#xa;Sends completion&#xa;notifications and&#xa;achievement alerts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="680" width="150" height="120" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from User -->
+        <mxCell id="arrow1" value="Watches lectures&#xa;Creates notes" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="user" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from Instructor -->
+        <mxCell id="arrow2" value="Views analytics" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=1;entryY=0;" edge="1" parent="1" source="instructor" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from Web App -->
+        <mxCell id="arrow3" value="API Calls&#xa;(progress, bookmarks, notes)" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="webapp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow4" value="Streams video" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="webapp" target="video">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from API -->
+        <mxCell id="arrow5" value="Reads/Writes&#xa;progress data" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow6" value="Queues jobs" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="jobs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow7" value="Cache get/set" style="endArrow=classic;html=1;exitX=1;exitY=1;entryX=0;entryY=0;" edge="1" parent="1" source="api" target="cache">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from Background Jobs -->
+        <mxCell id="arrow8" value="Reads/Updates&#xa;progress" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=1;" edge="1" parent="1" source="jobs" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow9" value="Updates cache" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="jobs" target="cache">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow10" value="Sends notifications" style="endArrow=classic;html=1;exitX=1;exitY=1;entryX=0;entryY=0.5;" edge="1" parent="1" source="jobs" target="notification">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from Cache -->
+        <mxCell id="arrow11" value="Cache misses" style="endArrow=classic;html=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;dashed=1;" edge="1" parent="1" source="cache" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

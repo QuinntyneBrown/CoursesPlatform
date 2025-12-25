@@ -1,0 +1,322 @@
+@startuml Create Section Sequence
+
+title Create Section Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Instructor -> App: Click "Add Section"
+App --> Instructor: Show section form
+Instructor -> App: Enter title and objectives
+App -> App: Validate input
+App -> API: POST /api/courses/{id}/sections
+API -> API: Validate request
+API -> API: Check instructor authorization
+alt Authorized
+    API -> DB: Check course exists
+    DB --> API: Course found
+    API -> API: Calculate order position
+    API -> DB: Create Section (Draft)
+    DB --> API: Section created
+    API -> API: Publish SectionCreated event
+    API --> App: 201 Created with section data
+    App -> App: Add section to list
+    App --> Instructor: Show success notification
+else Not authorized
+    API --> App: 403 Forbidden
+    App --> Instructor: Show error message
+end
+
+@enduml
+
+@startuml Upload Video Sequence
+
+title Upload Video Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Blob Storage" as Storage
+participant "Media Service" as Media
+
+Instructor -> App: Select video file
+App -> App: Validate file (type, size)
+alt Valid file
+    App -> API: POST /api/lectures/{id}/video (multipart)
+    API -> API: Validate lecture exists
+    API -> DB: Check instructor authorization
+    DB --> API: Authorized
+    API -> API: Publish VideoUploadStarted event
+    API -> Storage: Upload video file
+    Storage --> API: Upload complete with URL
+    API -> DB: Create VideoContent (Uploading)
+    DB --> API: VideoContent created
+    API -> API: Publish VideoUploadCompleted event
+    API -> Media: Queue video for processing
+    Media --> API: Processing queued
+    API -> DB: Update status to Processing
+    API -> API: Publish VideoProcessingStarted event
+    API --> App: 201 Created with video metadata
+    App --> Instructor: Show processing status
+
+    Note over Media: Asynchronous Processing
+    Media -> Media: Transcode to 360p
+    Media -> Storage: Upload 360p version
+    Media -> Media: Transcode to 720p
+    Media -> Storage: Upload 720p version
+    Media -> Media: Transcode to 1080p
+    Media -> Storage: Upload 1080p version
+    Media -> Media: Generate thumbnail
+    Media -> Storage: Upload thumbnail
+    Media -> API: Processing complete callback
+    API -> DB: Update VideoContent status
+    API -> DB: Create VideoQuality records
+    API -> API: Publish VideoProcessingCompleted event
+    API -> App: WebSocket notification
+    App --> Instructor: Show completion notification
+else Invalid file
+    App --> Instructor: Show validation error
+end
+
+@enduml
+
+@startuml Add Lecture Sequence
+
+title Add Lecture to Section Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Instructor -> App: Click "Add Lecture"
+App --> Instructor: Show lecture creation modal
+Instructor -> App: Select type (Video/Article)
+Instructor -> App: Enter title and description
+App -> App: Validate input
+App -> API: POST /api/sections/{id}/lectures
+API -> API: Validate request
+API -> DB: Check section exists
+DB --> API: Section found
+API -> API: Check instructor authorization
+alt Authorized
+    API -> API: Calculate order position
+    API -> DB: Create Lecture (Draft)
+    DB --> API: Lecture created
+    API -> API: Publish LectureCreated event
+    API --> App: 201 Created with lecture data
+    App -> App: Add lecture to section
+    App --> Instructor: Close modal, show success
+
+    alt Lecture type is Video
+        App --> Instructor: Navigate to video upload
+    else Lecture type is Article
+        App --> Instructor: Navigate to article editor
+    end
+else Not authorized
+    API --> App: 403 Forbidden
+    App --> Instructor: Show error message
+end
+
+@enduml
+
+@startuml Reorder Curriculum Sequence
+
+title Reorder Sections and Lectures Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Instructor -> App: Drag section to new position
+App -> App: Update UI optimistically
+App -> API: POST /api/sections/reorder
+note right
+{
+  "courseId": "...",
+  "sectionIds": ["id1", "id2", "id3"]
+}
+end note
+API -> API: Validate request
+API -> DB: Check instructor authorization
+DB --> API: Authorized
+API -> DB: Begin transaction
+loop For each section
+    API -> DB: Update OrderPosition
+end
+API -> DB: Commit transaction
+API -> API: Publish SectionsReordered event
+API --> App: 200 OK
+App --> Instructor: Confirm reorder
+
+alt Reorder fails
+    API -> DB: Rollback transaction
+    API --> App: 400 Bad Request
+    App -> App: Revert to original order
+    App --> Instructor: Show error message
+end
+
+@enduml
+
+@startuml Publish Section Sequence
+
+title Publish Section Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Instructor -> App: Click "Publish Section"
+App -> API: POST /api/sections/{id}/publish
+API -> API: Validate request
+API -> DB: Get section with lectures
+DB --> API: Section with lectures
+API -> API: Check instructor authorization
+alt Authorized
+    API -> API: Validate section has published lectures
+    alt Has published lectures
+        API -> DB: Update section status to Published
+        API -> DB: Set PublishedAt timestamp
+        DB --> API: Section updated
+        API -> API: Publish SectionPublished event
+        API --> App: 200 OK with updated section
+        App -> App: Update section status in UI
+        App --> Instructor: Show success notification
+    else No published lectures
+        API --> App: 400 Cannot publish empty section
+        App --> Instructor: Show validation error
+    end
+else Not authorized
+    API --> App: 403 Forbidden
+    App --> Instructor: Show error message
+end
+
+@enduml
+
+@startuml Auto-Generate Captions Sequence
+
+title Auto-Generate Captions Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Cognitive Services" as AI
+
+Instructor -> App: Click "Generate Captions"
+App --> Instructor: Show language selection
+Instructor -> App: Select language
+App -> API: POST /api/lectures/{id}/captions/generate
+API -> API: Validate request
+API -> DB: Get video content
+DB --> API: VideoContent found
+API -> AI: Start speech-to-text
+AI --> API: Job ID
+API -> DB: Create Caption record (Processing)
+DB --> API: Caption created
+API -> API: Publish CaptionsGenerationStarted event
+API --> App: 202 Accepted with job ID
+App --> Instructor: Show processing status
+
+Note over AI: Asynchronous Processing
+AI -> AI: Extract audio from video
+AI -> AI: Transcribe speech to text
+AI -> AI: Generate WebVTT with timestamps
+AI -> API: Transcription complete callback
+API -> DB: Update Caption with content
+API -> DB: Update status to Completed
+API -> API: Publish CaptionsGenerationCompleted event
+API -> App: WebSocket notification
+App --> Instructor: Show completion notification
+
+@enduml
+
+@startuml Create Article Sequence
+
+title Create Article Content Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Instructor -> App: Navigate to article lecture
+App --> Instructor: Show article editor
+Instructor -> App: Type article content
+Note over App: Auto-save every 30 seconds
+App -> App: Debounce save trigger
+App -> API: POST /api/lectures/{id}/article
+API -> API: Validate request
+API -> DB: Get lecture
+DB --> API: Lecture found (Type: Article)
+API -> API: Check instructor authorization
+alt Authorized
+    API -> API: Validate content length
+    API -> API: Calculate read time
+    API -> DB: Upsert ArticleContent
+    DB --> API: ArticleContent saved
+    API -> API: Publish ArticleContentCreated/Updated event
+    API --> App: 200 OK with metadata
+    App -> App: Update save status indicator
+    App --> Instructor: Show "Saved" indicator
+else Not authorized
+    API --> App: 403 Forbidden
+    App --> Instructor: Show error message
+end
+
+Instructor -> App: Insert image
+App --> Instructor: Show upload dialog
+Instructor -> App: Select image file
+App -> API: POST /api/lectures/{id}/article/media
+API -> API: Validate image
+API -> DB: Store image reference
+DB --> API: Media stored
+API -> API: Publish MediaEmbedded event
+API --> App: 200 OK with image URL
+App -> App: Insert markdown image tag
+App --> Instructor: Image appears in editor
+
+@enduml
+
+@startuml Upload Resource Sequence
+
+title Upload Downloadable Resource Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Blob Storage" as Storage
+participant "Virus Scanner" as Scanner
+
+Instructor -> App: Click "Upload Resource"
+App --> Instructor: Show upload dialog
+Instructor -> App: Select file
+Instructor -> App: Enter title and description
+App -> App: Validate file size and type
+App -> API: POST /api/lectures/{id}/resources (multipart)
+API -> API: Validate request
+API -> DB: Check instructor authorization
+DB --> API: Authorized
+API -> Scanner: Scan file for viruses
+Scanner --> API: File is clean
+alt File is clean
+    API -> Storage: Upload file
+    Storage --> API: Upload complete with URL
+    API -> DB: Create DownloadableResource
+    DB --> API: Resource created
+    API -> API: Publish ResourceUploaded event
+    API --> App: 201 Created with resource data
+    App -> App: Add resource to list
+    App --> Instructor: Show success notification
+else File contains virus
+    API --> App: 400 File rejected
+    App --> Instructor: Show security warning
+end
+
+@enduml

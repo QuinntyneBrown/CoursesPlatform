@@ -1,0 +1,408 @@
+@startuml Register as Affiliate Flow
+
+title Register as Affiliate Flow
+
+actor User
+participant "Angular App" as App
+participant "API Controller" as Controller
+participant "RegisterAffiliateCommand\nHandler" as Handler
+participant "ICoursesPlatformContext" as Context
+participant "Affiliate" as Aggregate
+
+User -> App: Click "Become Affiliate"
+App -> App: Check user authenticated
+App -> User: Display registration form
+
+User -> App: Fill form and submit
+App -> App: Validate form data
+
+App -> Controller: POST /api/affiliate/register\n{businessName, email, paymentMethod}
+activate Controller
+
+Controller -> Handler: Send RegisterAffiliateCommand
+activate Handler
+
+Handler -> Context: Query Affiliates\nWhere UserId = currentUser
+Context -> Handler: Return existing affiliate (if any)
+
+alt Already registered
+  Handler -> Controller: Return error
+  Controller -> App: 400 Bad Request
+  App -> User: Show error message
+else Not registered
+  Handler -> Handler: Generate unique AffiliateCode
+
+  Handler -> Aggregate: new Affiliate(\nuserId, affiliateCode,\nbusinessName, contactEmail)
+  activate Aggregate
+  Aggregate -> Aggregate: Set Status = Pending
+  Aggregate -> Aggregate: Assign default PartnerTier (Bronze)
+  Aggregate -> Handler: Return affiliate
+  deactivate Aggregate
+
+  Handler -> Context: Affiliates.Add(affiliate)
+  Handler -> Context: SaveChangesAsync()
+  Context -> Handler: Success
+
+  Handler -> Controller: Return AffiliateDto
+  deactivate Handler
+
+  Controller -> App: 201 Created\n{affiliateId, affiliateCode}
+  deactivate Controller
+
+  App -> App: Show success message
+  App -> User: Display affiliate code\nand next steps
+  App -> App: Redirect to dashboard
+end
+
+@enduml
+
+@startuml Generate Affiliate Link Flow
+
+title Generate Affiliate Link Flow
+
+actor Affiliate
+participant "Angular App" as App
+participant "API Controller" as Controller
+participant "GenerateAffiliateLinkCommand\nHandler" as Handler
+participant "ICoursesPlatformContext" as Context
+participant "AffiliateLink" as Entity
+
+Affiliate -> App: Navigate to Link Generator
+App -> App: Load published courses
+
+Affiliate -> App: Select course and\nenter campaign name
+App -> App: Validate form
+
+Affiliate -> App: Click "Generate Link"
+
+App -> Controller: POST /api/affiliate/links\n{courseId, campaignName}
+activate Controller
+
+Controller -> Handler: Send GenerateAffiliateLinkCommand
+activate Handler
+
+Handler -> Context: Query Affiliates\nWhere UserId = currentUser
+Context -> Handler: Return affiliate
+
+alt Affiliate not active
+  Handler -> Controller: Return error
+  Controller -> App: 400 Bad Request
+  App -> Affiliate: Show "Account not active"
+else Affiliate is active
+  Handler -> Context: Query Courses\nWhere CourseId = courseId
+  Context -> Handler: Return course
+
+  alt Course not found or not published
+    Handler -> Controller: Return error
+    Controller -> App: 404 Not Found
+    App -> Affiliate: Show error message
+  else Course is valid
+    Handler -> Handler: Generate unique TrackingToken
+
+    Handler -> Entity: new AffiliateLink(\naffiliateId, courseId,\ntrackingToken, campaignName)
+    activate Entity
+    Entity -> Entity: Set IsActive = true
+    Entity -> Handler: Return link
+    deactivate Entity
+
+    Handler -> Context: AffiliateLinks.Add(link)
+    Handler -> Context: SaveChangesAsync()
+    Context -> Handler: Success
+
+    Handler -> Handler: Build full tracking URL
+    Handler -> Controller: Return AffiliateLinkDto
+    deactivate Handler
+
+    Controller -> App: 201 Created\n{linkId, trackingUrl}
+    deactivate Controller
+
+    App -> App: Display generated link
+    App -> Affiliate: Show copy button\nand sharing options
+  end
+end
+
+@enduml
+
+@startuml Track Conversion Flow
+
+title Track Conversion Flow
+
+actor Customer
+participant "Angular App" as App
+participant "Browser Storage" as Storage
+participant "API Controller" as Controller
+participant "Course Purchase\nHandler" as PurchaseHandler
+participant "ICoursesPlatformContext" as Context
+participant "Commission" as Entity
+participant "Background Job" as Job
+
+Customer -> App: Click affiliate link\n(with trackingToken)
+activate App
+
+App -> Storage: Store trackingToken\nin cookie (30 days)
+Storage -> App: Stored
+
+App -> App: Navigate to course page
+App -> Customer: Display course details
+deactivate App
+
+Customer -> App: Add course to cart\nand checkout
+App -> Storage: Retrieve trackingToken
+Storage -> App: Return trackingToken
+
+App -> Controller: POST /api/purchases\n{courseId, trackingToken}
+activate Controller
+
+Controller -> PurchaseHandler: CreatePurchaseCommand
+activate PurchaseHandler
+
+PurchaseHandler -> PurchaseHandler: Process payment
+
+alt Payment successful
+  PurchaseHandler -> Context: Create Purchase record
+  PurchaseHandler -> Context: SaveChangesAsync()
+
+  alt TrackingToken exists
+    PurchaseHandler -> Context: Query AffiliateLinks\nWhere TrackingToken = token
+    Context -> PurchaseHandler: Return affiliateLink
+
+    PurchaseHandler -> Context: Query Affiliates\nWhere AffiliateId = link.AffiliateId
+    Context -> PurchaseHandler: Return affiliate
+
+    alt Purchase by affiliate themselves
+      PurchaseHandler -> PurchaseHandler: Skip commission\n(self-purchase)
+    else Valid affiliate purchase
+      PurchaseHandler -> PurchaseHandler: Get PartnerTier.CommissionRate
+      PurchaseHandler -> PurchaseHandler: Calculate commission amount\n= baseAmount * rate
+
+      PurchaseHandler -> Entity: new Commission(\naffiliateId, linkId, purchaseId,\nbaseAmount, rate, amount)
+      activate Entity
+      Entity -> Entity: Set Status = Pending
+      Entity -> PurchaseHandler: Return commission
+      deactivate Entity
+
+      PurchaseHandler -> Context: Commissions.Add(commission)
+      PurchaseHandler -> Context: SaveChangesAsync()
+      Context -> PurchaseHandler: Success
+    end
+  end
+
+  PurchaseHandler -> Controller: Return PurchaseDto
+  deactivate PurchaseHandler
+
+  Controller -> App: 201 Created
+  deactivate Controller
+
+  App -> Customer: Show purchase confirmation
+else Payment failed
+  PurchaseHandler -> Controller: Return error
+  Controller -> App: 400 Bad Request
+  App -> Customer: Show payment error
+end
+
+note over Job
+  Background job runs daily
+  to approve commissions
+end note
+
+Job -> Context: Query Commissions\nWhere Status = Pending\nAND CreatedAt < 30 days ago
+Context -> Job: Return eligible commissions
+
+loop For each commission
+  Job -> Context: Update Status = Approved
+  Job -> Context: Set ApprovedAt = now
+end
+
+Job -> Context: SaveChangesAsync()
+
+@enduml
+
+@startuml Request Payout Flow
+
+title Request Payout Flow
+
+actor Affiliate
+participant "Angular App" as App
+participant "API Controller" as Controller
+participant "RequestPayoutCommand\nHandler" as Handler
+participant "ICoursesPlatformContext" as Context
+participant "AffiliatePayout" as Entity
+
+Affiliate -> App: Navigate to Payout Request
+App -> Controller: GET /api/affiliate/dashboard
+Controller -> App: Return {availableBalance, pendingEarnings}
+App -> Affiliate: Display balance\nand minimum threshold
+
+Affiliate -> App: Select payment method
+Affiliate -> App: Click "Request Payout"
+
+App -> App: Validate minimum threshold
+alt Below threshold
+  App -> Affiliate: Show error message\n"Minimum $50 required"
+else Above threshold
+  App -> Controller: POST /api/affiliate/payouts\n{paymentMethod}
+  activate Controller
+
+  Controller -> Handler: Send RequestPayoutCommand
+  activate Handler
+
+  Handler -> Context: Query Affiliates\nWhere UserId = currentUser
+  Context -> Handler: Return affiliate
+
+  alt Affiliate not active
+    Handler -> Controller: Return error
+    Controller -> App: 400 Bad Request
+    App -> Affiliate: Show "Account not active"
+  else Affiliate is active
+    Handler -> Context: Query Commissions\nWhere AffiliateId = affiliateId\nAND Status = Approved
+    Context -> Handler: Return approved commissions
+
+    Handler -> Handler: Calculate total amount
+
+    alt Total below minimum threshold
+      Handler -> Controller: Return error
+      Controller -> App: 400 Bad Request
+      App -> Affiliate: Show threshold error
+    else Total meets threshold
+      Handler -> Context: Query PaymentMethodDetails\nWhere AffiliateId = affiliateId\nAND MethodType = paymentMethod
+      Context -> Handler: Return payment details
+
+      alt No payment method
+        Handler -> Controller: Return error
+        Controller -> App: 400 Bad Request
+        App -> Affiliate: Show "Add payment method"
+      else Payment method exists
+        Handler -> Entity: new AffiliatePayout(\naffiliateId, amount,\npaymentMethod)
+        activate Entity
+        Entity -> Entity: Set Status = Requested
+        Entity -> Handler: Return payout
+        deactivate Entity
+
+        Handler -> Context: AffiliatePayouts.Add(payout)
+
+        loop For each commission
+          Handler -> Context: Update Commission.AffiliatePayoutId
+        end loop
+
+        Handler -> Context: SaveChangesAsync()
+        Context -> Handler: Success
+
+        Handler -> Controller: Return AffiliatePayoutDto
+        deactivate Handler
+
+        Controller -> App: 201 Created\n{payoutId, amount, status}
+        deactivate Controller
+
+        App -> App: Show success message
+        App -> Affiliate: Display payout reference\nand processing time
+        App -> App: Navigate to payouts list
+      end
+    end
+  end
+end
+
+@enduml
+
+@startuml Process Payout Flow (Admin)
+
+title Process Payout Flow (Admin)
+
+actor Admin
+participant "Angular App" as App
+participant "API Controller" as Controller
+participant "ProcessPayoutCommand\nHandler" as ProcessHandler
+participant "CompletePayoutCommand\nHandler" as CompleteHandler
+participant "ICoursesPlatformContext" as Context
+participant "Payment Processor" as Processor
+participant "AffiliatePayout" as Entity
+
+Admin -> App: Navigate to Admin Payouts
+App -> Controller: GET /api/admin/payouts?status=Requested
+Controller -> App: Return pending payouts
+App -> Admin: Display payouts table
+
+Admin -> App: Click "Process" on payout
+App -> Admin: Show confirmation dialog
+
+Admin -> App: Enter transaction reference
+Admin -> App: Confirm processing
+
+App -> Controller: POST /api/admin/payouts/{id}/process\n{transactionReference}
+activate Controller
+
+Controller -> ProcessHandler: Send ProcessPayoutCommand
+activate ProcessHandler
+
+ProcessHandler -> Context: Query AffiliatePayouts\nWhere PayoutId = id
+Context -> ProcessHandler: Return payout
+
+alt Payout not in Requested status
+  ProcessHandler -> Controller: Return error
+  Controller -> App: 400 Bad Request
+  App -> Admin: Show error message
+else Payout is Requested
+  ProcessHandler -> Entity: StartProcessing(transactionRef)
+  activate Entity
+  Entity -> Entity: Set Status = Processing
+  Entity -> Entity: Set TransactionReference
+  Entity -> Entity: Set ProcessedAt = now
+  Entity -> ProcessHandler: Success
+  deactivate Entity
+
+  ProcessHandler -> Context: SaveChangesAsync()
+  Context -> ProcessHandler: Success
+
+  ProcessHandler -> Controller: Return updated payout
+  deactivate ProcessHandler
+
+  Controller -> App: 200 OK
+  deactivate Controller
+
+  App -> Admin: Update status to Processing
+end
+
+Admin -> Processor: Initiate payment\nvia external system
+Processor -> Admin: Payment confirmed
+
+Admin -> App: Click "Complete" on payout
+
+App -> Controller: POST /api/admin/payouts/{id}/complete
+activate Controller
+
+Controller -> CompleteHandler: Send CompletePayoutCommand
+activate CompleteHandler
+
+CompleteHandler -> Context: Query AffiliatePayouts\nWhere PayoutId = id\nInclude Commissions
+Context -> CompleteHandler: Return payout with commissions
+
+alt Payout not in Processing status
+  CompleteHandler -> Controller: Return error
+  Controller -> App: 400 Bad Request
+  App -> Admin: Show error message
+else Payout is Processing
+  CompleteHandler -> Entity: Complete()
+  activate Entity
+  Entity -> Entity: Set Status = Completed
+  Entity -> Entity: Set CompletedAt = now
+  Entity -> CompleteHandler: Success
+  deactivate Entity
+
+  loop For each commission in payout
+    CompleteHandler -> Context: Update Commission.Status = Paid
+    CompleteHandler -> Context: Set Commission.PaidAt = now
+  end loop
+
+  CompleteHandler -> Context: SaveChangesAsync()
+  Context -> CompleteHandler: Success
+
+  CompleteHandler -> Controller: Return updated payout
+  deactivate CompleteHandler
+
+  Controller -> App: 200 OK
+  deactivate Controller
+
+  App -> Admin: Update status to Completed
+  App -> Admin: Show success message
+end
+
+@enduml

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-subscription" name="C4 Container">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="C4 Container Diagram - Subscription &amp; Membership" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="180" y="20" width="480" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="user" value="User&#xa;[Person]&#xa;&#xa;Subscribes to plans&#xa;and manages subscription" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="120" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="admin" value="Admin&#xa;[Person]&#xa;&#xa;Manages subscription&#xa;plans and analytics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="80" width="120" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="webapp" value="Angular App&#xa;[Container]&#xa;&#xa;Subscription UI,&#xa;billing management" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="240" width="140" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="Subscription API&#xa;[Container: ASP.NET]&#xa;&#xa;Subscription management,&#xa;billing, access control" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="240" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Subscriptions, plans,&#xa;billing transactions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="400" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="payment" value="Payment Gateway&#xa;[External: Stripe]&#xa;&#xa;Payment processing,&#xa;recurring billing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="540" y="400" width="140" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="notification" value="Notification Service&#xa;[Container]&#xa;&#xa;Renewal reminders,&#xa;payment notifications" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="540" y="240" width="140" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="analytics" value="Analytics Service&#xa;[Container]&#xa;&#xa;Subscription metrics,&#xa;MRR, churn tracking" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="400" width="140" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="scheduler" value="Billing Scheduler&#xa;[Container]&#xa;&#xa;Recurring billing,&#xa;payment retries" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="560" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="a1" value="Uses" style="endArrow=classic;html=1;" edge="1" parent="1" source="user" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2" value="Uses" style="endArrow=classic;html=1;" edge="1" parent="1" source="admin" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a3" value="API calls&#xa;[HTTPS/JSON]" style="endArrow=classic;html=1;" edge="1" parent="1" source="webapp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a4" value="Read/Write&#xa;[EF Core]" style="endArrow=classic;html=1;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a5" value="Process payments&#xa;[REST API]" style="endArrow=classic;html=1;" edge="1" parent="1" source="api" target="payment">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a6" value="Send notifications&#xa;[Events]" style="endArrow=classic;html=1;" edge="1" parent="1" source="api" target="notification">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a7" value="Track metrics&#xa;[Events]" style="endArrow=classic;html=1;" edge="1" parent="1" source="api" target="analytics">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a8" value="Read&#xa;[EF Core]" style="endArrow=classic;html=1;" edge="1" parent="1" source="scheduler" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a9" value="Trigger billing" style="endArrow=classic;html=1;" edge="1" parent="1" source="scheduler" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a10" value="Payment webhooks&#xa;[HTTPS]" style="endArrow=classic;html=1;dashed=1;" edge="1" parent="1" source="payment" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a11" value="Query metrics" style="endArrow=classic;html=1;dashed=1;" edge="1" parent="1" source="webapp" target="analytics">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,190 @@
+@startuml Affiliate Partner Class Diagram
+
+' Affiliate Aggregate Root
+class Affiliate {
+  +Guid AffiliateId
+  +Guid UserId
+  +string AffiliateCode
+  +string BusinessName
+  +string ContactEmail
+  +AffiliateStatus Status
+  +PartnerTier PartnerTier
+  +DateTime CreatedAt
+  +DateTime UpdatedAt
+  --
+  +void Activate()
+  +void Suspend(string reason)
+  +void Terminate(string reason)
+  +void UpdateTier(PartnerTier newTier)
+}
+
+enum AffiliateStatus {
+  Pending
+  Active
+  Suspended
+  Terminated
+}
+
+' AffiliateLink Entity
+class AffiliateLink {
+  +Guid AffiliateLinkId
+  +Guid AffiliateId
+  +Guid CourseId
+  +string TrackingToken
+  +string CampaignName
+  +bool IsActive
+  +DateTime CreatedAt
+  --
+  +void Deactivate()
+  +string GetFullTrackingUrl()
+}
+
+' Commission Entity
+class Commission {
+  +Guid CommissionId
+  +Guid AffiliateId
+  +Guid AffiliateLinkId
+  +Guid PurchaseId
+  +decimal BaseAmount
+  +decimal CommissionRate
+  +decimal CommissionAmount
+  +CommissionStatus Status
+  +DateTime CreatedAt
+  +DateTime? ApprovedAt
+  +DateTime? PaidAt
+  +Guid? AffiliatePayoutId
+  --
+  +void Approve()
+  +void Reject(string reason)
+  +void MarkAsPaid(Guid payoutId)
+}
+
+enum CommissionStatus {
+  Pending
+  Approved
+  Rejected
+  Paid
+}
+
+' PartnerTier Value Object
+class PartnerTier <<value object>> {
+  +string Name
+  +string Description
+  +decimal CommissionRate
+  +int? MinimumSales
+  +decimal? MinimumRevenue
+  --
+  +bool Equals(PartnerTier other)
+  +int GetHashCode()
+}
+
+' AffiliatePayout Entity
+class AffiliatePayout {
+  +Guid AffiliatePayoutId
+  +Guid AffiliateId
+  +decimal Amount
+  +PayoutMethod PayoutMethod
+  +PayoutStatus Status
+  +DateTime RequestedAt
+  +DateTime? ProcessedAt
+  +DateTime? CompletedAt
+  +string TransactionReference
+  +string Notes
+  --
+  +void StartProcessing(string transactionRef)
+  +void Complete()
+  +void Fail(string reason)
+}
+
+enum PayoutStatus {
+  Requested
+  Processing
+  Completed
+  Failed
+}
+
+enum PayoutMethod {
+  BankTransfer
+  PayPal
+  Check
+}
+
+' PaymentMethodDetails Value Object
+class PaymentMethodDetails <<value object>> {
+  +PayoutMethod MethodType
+  +string AccountNumber
+  +string RoutingNumber
+  +string AccountHolderName
+  +string PayPalEmail
+  +string MailingAddress
+  --
+  +bool IsValid()
+}
+
+' LinkClick Entity (for tracking)
+class LinkClick {
+  +Guid LinkClickId
+  +Guid AffiliateLinkId
+  +DateTime ClickedAt
+  +string IpAddress
+  +string UserAgent
+  +string ReferrerUrl
+  +string Country
+}
+
+' AffiliateMetrics Value Object
+class AffiliateMetrics <<value object>> {
+  +int TotalClicks
+  +int TotalConversions
+  +decimal ConversionRate
+  +decimal TotalEarnings
+  +decimal PendingEarnings
+  +decimal AvailableBalance
+  --
+  +decimal CalculateConversionRate()
+}
+
+' Relationships
+Affiliate "1" -- "0..*" AffiliateLink : generates
+Affiliate "1" -- "0..*" Commission : earns
+Affiliate "1" -- "0..*" AffiliatePayout : requests
+Affiliate "1" *-- "1" PartnerTier : has
+Affiliate "1" *-- "0..*" PaymentMethodDetails : has
+
+AffiliateLink "1" -- "0..*" LinkClick : tracks
+AffiliateLink "1" -- "0..*" Commission : generates
+
+Commission "0..*" -- "1" AffiliatePayout : included in
+
+Affiliate ..> AffiliateStatus : uses
+Affiliate ..> AffiliateMetrics : calculates
+Commission ..> CommissionStatus : uses
+AffiliatePayout ..> PayoutStatus : uses
+AffiliatePayout ..> PayoutMethod : uses
+PaymentMethodDetails ..> PayoutMethod : uses
+
+note right of Affiliate
+  Aggregate root for affiliate domain.
+  Manages affiliate lifecycle and tier progression.
+  Business rules enforced through methods.
+end note
+
+note right of PartnerTier
+  Value object representing commission tier.
+  Bronze: 5%, Silver: 10%, Gold: 15%, Platinum: 20%.
+  Immutable once assigned to affiliate.
+end note
+
+note right of Commission
+  Tracks individual commission from purchase.
+  Commission rate locked at time of creation.
+  Lifecycle: Pending -> Approved -> Paid
+end note
+
+note right of AffiliatePayout
+  Aggregates multiple approved commissions.
+  Minimum threshold: $50
+  Payment processed outside system.
+end note
+
+@enduml

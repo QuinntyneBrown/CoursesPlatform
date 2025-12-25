@@ -1,0 +1,190 @@
+<mxfile host="app.diagrams.net" modified="2025-12-25T00:00:00.000Z" agent="CoursesPlatform" version="22.1.0" etag="mobile-c4-diagram" type="device">
+  <diagram name="C4 Container Diagram - Mobile Cross-Platform" id="mobile-container-diagram">
+    <mxGraphModel dx="1434" dy="844" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Mobile Cross-Platform - C4 Container Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="20" width="600" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend-box" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="300" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="50" y="90" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-person" value="Person" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="60" y="130" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-container" value="Container" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="180" y="130" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-external" value="External System" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="60" y="190" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-database" value="Database" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="180" y="190" width="100" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Mobile User (Person) -->
+        <mxCell id="mobile-user" value="Mobile User&lt;br&gt;[Person]&lt;br&gt;&lt;br&gt;A student or instructor accessing courses on mobile devices or PWA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=center" vertex="1" parent="1">
+          <mxGeometry x="700" y="100" width="200" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Mobile App Container -->
+        <mxCell id="mobile-app" value="Mobile App (iOS/Android)&lt;br&gt;[Container: Native Mobile App]&lt;br&gt;&lt;br&gt;Native mobile application for iOS and Android. Provides offline-first experience, push notifications, and device integration." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center" vertex="1" parent="1">
+          <mxGeometry x="480" y="300" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- PWA Container -->
+        <mxCell id="pwa" value="Progressive Web App (PWA)&lt;br&gt;[Container: Angular SPA]&lt;br&gt;&lt;br&gt;Progressive web application with service workers. Installable, offline-capable, and responsive mobile-first design." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center" vertex="1" parent="1">
+          <mxGeometry x="720" y="300" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- API Container -->
+        <mxCell id="api-container" value="API Application&lt;br&gt;[Container: ASP.NET Core API]&lt;br&gt;&lt;br&gt;Provides mobile-optimized REST API endpoints for device management, offline sync, content delivery, and push notifications." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center" vertex="1" parent="1">
+          <mxGeometry x="600" y="520" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Database -->
+        <mxCell id="database" value="SQL Server Database&lt;br&gt;[Container: SQL Server]&lt;br&gt;&lt;br&gt;Stores device registrations, offline content metadata, sync state, notification logs, and download queues." style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=center" vertex="1" parent="1">
+          <mxGeometry x="620" y="750" width="160" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Push Notification Service -->
+        <mxCell id="push-service" value="Push Notification Service&lt;br&gt;[Container: .NET Service]&lt;br&gt;&lt;br&gt;Handles push notification delivery via FCM and APNs. Manages notification preferences, rate limiting, and delivery tracking." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center" vertex="1" parent="1">
+          <mxGeometry x="920" y="520" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- CDN -->
+        <mxCell id="cdn" value="CDN&lt;br&gt;[Container: Azure CDN / CloudFlare]&lt;br&gt;&lt;br&gt;Content Delivery Network for serving course videos, documents, and static assets with global edge caching." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center" vertex="1" parent="1">
+          <mxGeometry x="280" y="520" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Service Worker (in PWA) -->
+        <mxCell id="service-worker" value="Service Worker&lt;br&gt;[Component]&lt;br&gt;&lt;br&gt;Handles offline caching, background sync, and push notification reception." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;align=center;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="960" y="300" width="140" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- IndexedDB (in PWA) -->
+        <mxCell id="indexeddb" value="IndexedDB&lt;br&gt;[Browser Storage]&lt;br&gt;&lt;br&gt;Client-side storage for offline content and sync queue." style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;align=center;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="1130" y="300" width="100" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- External Systems -->
+        <mxCell id="fcm" value="Firebase Cloud Messaging (FCM)&lt;br&gt;[External System]&lt;br&gt;&lt;br&gt;Google push notification service for Android and Web" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=center" vertex="1" parent="1">
+          <mxGeometry x="1180" y="520" width="180" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="apns" value="Apple Push Notification (APNs)&lt;br&gt;[External System]&lt;br&gt;&lt;br&gt;Apple push notification service for iOS devices" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=center" vertex="1" parent="1">
+          <mxGeometry x="1180" y="650" width="180" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="azure-cdn" value="Azure CDN&lt;br&gt;[External System]&lt;br&gt;&lt;br&gt;Microsoft Azure Content Delivery Network" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=center" vertex="1" parent="1">
+          <mxGeometry x="40" y="520" width="180" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Relationships -->
+
+        <!-- User to Mobile/PWA -->
+        <mxCell id="rel-user-mobile" value="Uses for&lt;br&gt;offline learning" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="mobile-user" target="mobile-app">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-user-pwa" value="Uses via&lt;br&gt;browser" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="mobile-user" target="pwa">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Mobile App to API -->
+        <mxCell id="rel-mobile-api" value="Makes API calls&lt;br&gt;[HTTPS/JSON]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="mobile-app" target="api-container">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PWA to API -->
+        <mxCell id="rel-pwa-api" value="Makes API calls&lt;br&gt;[HTTPS/JSON]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="pwa" target="api-container">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API to Database -->
+        <mxCell id="rel-api-db" value="Reads from and&lt;br&gt;writes to&lt;br&gt;[EF Core]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;fontSize=10" edge="1" parent="1" source="api-container" target="database">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API to Push Service -->
+        <mxCell id="rel-api-push" value="Sends notifications&lt;br&gt;via" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="api-container" target="push-service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Mobile/PWA to CDN -->
+        <mxCell id="rel-mobile-cdn" value="Downloads&lt;br&gt;content from" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="mobile-app" target="cdn">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-pwa-cdn" value="Downloads&lt;br&gt;content from" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;fontSize=10;dashed=1" edge="1" parent="1" source="pwa" target="cdn">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Push Service to FCM/APNs -->
+        <mxCell id="rel-push-fcm" value="Sends to&lt;br&gt;[HTTPS]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="push-service" target="fcm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-push-apns" value="Sends to&lt;br&gt;[HTTP/2]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="push-service" target="apns">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- CDN to Azure CDN -->
+        <mxCell id="rel-cdn-azure" value="Uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=10" edge="1" parent="1" source="cdn" target="azure-cdn">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PWA to Service Worker -->
+        <mxCell id="rel-pwa-sw" value="Registers and&lt;br&gt;controls" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;dashed=1" edge="1" parent="1" source="pwa" target="service-worker">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PWA to IndexedDB -->
+        <mxCell id="rel-pwa-idb" value="Stores offline&lt;br&gt;data in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;fontSize=10;dashed=1" edge="1" parent="1" source="pwa" target="indexeddb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- FCM/APNs to Mobile/PWA -->
+        <mxCell id="rel-fcm-mobile" value="Pushes&lt;br&gt;notifications to" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;fontSize=10;dashed=1;startArrow=none;startFill=0" edge="1" parent="1" source="fcm" target="mobile-app">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1160" y="595" />
+              <mxPoint x="1160" y="330" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="rel-apns-mobile" value="Pushes&lt;br&gt;notifications to" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;dashed=1;startArrow=none;startFill=0" edge="1" parent="1" source="apns" target="mobile-app">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1150" y="675" />
+              <mxPoint x="1150" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Notes -->
+        <mxCell id="note1" value="Note: Service Worker intercepts network requests and serves cached content when offline" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note2" value="Note: CDN serves signed URLs with 24-hour expiration for secure content delivery" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="380" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note3" value="Note: All API communication uses HTTPS with JWT authentication and device-specific tokens" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="880" y="760" width="200" height="60" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,292 @@
+@startuml Payment Processing Sequence
+
+title Payment Processing Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Payment Gateway" as Gateway
+participant "Email Service" as Email
+
+User -> App: Add course to cart
+App -> API: POST /api/cart/items
+API -> DB: Add cart item
+DB --> API: Item added
+API -> API: Publish CartItemAdded event
+API --> App: 200 OK
+App --> User: Show cart updated
+
+User -> App: Proceed to checkout
+App -> API: POST /api/checkout/initiate
+API -> DB: Create pending order
+DB --> API: Order created
+API -> API: Publish CheckoutInitiated event
+API --> App: 200 OK with order ID
+App --> User: Show checkout page
+
+User -> App: Enter billing info
+App -> App: Validate billing form
+App -> API: POST /api/checkout/billing
+API -> DB: Save billing information
+API -> API: Publish BillingInformationAdded event
+API --> App: 200 OK
+App --> User: Show payment step
+
+User -> App: Enter payment details
+App -> Gateway: Tokenize card
+Gateway --> App: Card token
+App -> API: POST /api/payments/initiate
+API -> API: Validate order and amount
+API -> DB: Create payment record (Pending)
+API -> Gateway: Create payment intent
+Gateway --> API: Payment intent created
+API -> API: Publish PaymentInitiated event
+API --> App: 200 OK with client secret
+
+App -> Gateway: Confirm payment with token
+Gateway -> Gateway: Process payment
+alt Payment successful
+    Gateway --> App: Payment confirmed
+    App -> API: POST /api/payments/confirm
+    API -> Gateway: Verify payment status
+    Gateway --> API: Payment succeeded
+    API -> DB: Update payment status (Succeeded)
+    API -> DB: Update order status (Completed)
+    API -> API: Publish PaymentSucceeded event
+    API -> API: Publish OrderCompleted event
+    API -> DB: Create course enrollments
+    API -> DB: Generate invoice
+    API -> API: Publish InvoiceGenerated event
+    API -> Email: Send confirmation email
+    API -> Email: Send invoice email
+    API --> App: 200 OK
+    App --> User: Show success page
+else Payment requires 3D Secure
+    Gateway --> App: 3DS challenge required
+    App --> User: Show 3DS modal
+    User -> Gateway: Complete 3DS verification
+    Gateway -> API: Webhook: payment succeeded
+    API -> DB: Update payment status
+    API -> API: Publish PaymentSucceeded event
+    API -> DB: Complete order
+    Gateway --> App: 3DS complete
+    App -> API: GET /api/payments/{id}
+    API --> App: Payment status
+    App --> User: Show success page
+else Payment failed
+    Gateway --> App: Payment declined
+    App -> API: POST /api/payments/confirm
+    API -> Gateway: Verify payment status
+    Gateway --> API: Payment failed (reason)
+    API -> DB: Update payment status (Failed)
+    API -> DB: Update order status (Failed)
+    API -> API: Publish PaymentFailed event
+    API --> App: 400 Payment failed
+    App --> User: Show error with reason
+end
+
+@enduml
+
+@startuml Refund Processing Sequence
+
+title Refund Processing Flow
+
+actor User
+actor Admin
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Payment Gateway" as Gateway
+participant "Email Service" as Email
+
+User -> App: Navigate to order
+App -> API: GET /api/orders/{id}
+API -> DB: Fetch order details
+DB --> API: Order data
+API --> App: Order details
+App --> User: Show order page
+
+User -> App: Click request refund
+App --> User: Show refund form
+User -> App: Enter refund reason
+App -> API: POST /api/refunds
+API -> DB: Check refund eligibility
+alt Order eligible for refund
+    API -> DB: Create refund request (Requested)
+    DB --> API: Refund created
+    API -> API: Publish RefundRequested event
+    API -> Email: Notify user of request received
+    API -> Email: Notify admin of new request
+    API --> App: 201 Created
+    App --> User: Show request submitted
+else Not eligible
+    API --> App: 400 Not eligible
+    App --> User: Show eligibility error
+end
+
+Admin -> App: View refund requests
+App -> API: GET /api/refunds
+API -> DB: Fetch pending refunds
+DB --> API: Refund list
+API --> App: Refund data
+App --> Admin: Show refund requests
+
+Admin -> App: Review refund details
+App -> API: GET /api/refunds/{id}
+API -> DB: Fetch refund details
+DB --> API: Refund data
+API --> App: Refund details
+App --> Admin: Show refund review
+
+alt Admin approves
+    Admin -> App: Click approve
+    App -> API: POST /api/refunds/{id}/approve
+    API -> DB: Update refund status (Approved)
+    API -> API: Publish RefundApproved event
+    API -> DB: Update refund status (Processing)
+    API -> API: Publish RefundProcessing event
+    API -> Gateway: Initiate refund
+    Gateway -> Gateway: Process refund
+    alt Refund successful
+        Gateway --> API: Refund completed
+        API -> DB: Update refund status (Completed)
+        API -> DB: Update payment status (Refunded)
+        API -> DB: Update order status (Refunded)
+        API -> DB: Revoke course enrollment
+        API -> API: Publish RefundCompleted event
+        API -> Email: Notify user of refund
+        API --> App: 200 OK
+        App --> Admin: Show success
+    else Refund failed
+        Gateway --> API: Refund failed (reason)
+        API -> DB: Update refund status (Failed)
+        API -> API: Publish RefundFailed event
+        API -> Email: Notify admin of failure
+        API --> App: 400 Refund failed
+        App --> Admin: Show failure message
+    end
+else Admin rejects
+    Admin -> App: Click reject
+    App --> Admin: Show rejection reason form
+    Admin -> App: Enter rejection reason
+    App -> API: POST /api/refunds/{id}/reject
+    API -> DB: Update refund status (Rejected)
+    API -> API: Publish RefundRejected event
+    API -> Email: Notify user of rejection
+    API --> App: 200 OK
+    App --> Admin: Show success
+end
+
+@enduml
+
+@startuml Dispute Handling Sequence
+
+title Dispute Handling Flow
+
+actor Admin
+participant "API" as API
+participant "Database" as DB
+participant "Payment Gateway" as Gateway
+participant "Email Service" as Email
+
+Gateway -> API: Webhook: dispute created
+API -> API: Verify webhook signature
+API -> DB: Find payment by transaction ID
+DB --> API: Payment found
+API -> DB: Create dispute record (Open)
+DB --> API: Dispute created
+API -> DB: Update payment status (Disputed)
+API -> DB: Update order status (Disputed)
+API -> API: Publish DisputeCreated event
+API -> Email: Notify admin of dispute
+API --> Gateway: Webhook acknowledged
+
+Admin -> API: GET /api/disputes
+API -> DB: Fetch open disputes
+DB --> API: Dispute list
+API --> Admin: Dispute data
+
+Admin -> API: GET /api/disputes/{id}
+API -> DB: Fetch dispute details
+DB --> API: Dispute details
+API --> Admin: Dispute information
+
+Admin -> API: POST /api/disputes/{id}/evidence
+API -> DB: Store evidence documents
+API -> DB: Create evidence records
+API -> API: Publish DisputeEvidenceSubmitted event
+API -> Gateway: Submit evidence
+Gateway --> API: Evidence submitted
+API --> Admin: 200 OK
+
+Gateway -> API: Webhook: dispute resolved
+API -> API: Verify webhook signature
+API -> DB: Find dispute
+DB --> API: Dispute found
+alt Merchant won
+    API -> DB: Update dispute status (Won)
+    API -> DB: Update dispute resolution (MerchantWon)
+    API -> DB: Restore payment status (Succeeded)
+    API -> DB: Restore order status (Completed)
+    API -> API: Publish DisputeWon event
+    API -> Email: Notify admin of win
+else Customer won
+    API -> DB: Update dispute status (Lost)
+    API -> DB: Update dispute resolution (CustomerWon)
+    API -> DB: Update payment status (Refunded)
+    API -> DB: Update order status (Refunded)
+    API -> DB: Revoke course enrollment
+    API -> API: Publish DisputeLost event
+    API -> Email: Notify admin of loss
+end
+API --> Gateway: Webhook acknowledged
+
+@enduml
+
+@startuml Coupon Application Sequence
+
+title Coupon Application Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Enter coupon code
+App -> API: POST /api/coupons/validate
+API -> DB: Find coupon by code
+DB --> API: Coupon found
+API -> API: Validate coupon eligibility
+alt Coupon valid
+    API -> API: Check expiry date
+    API -> API: Check usage limit
+    API -> API: Check minimum purchase
+    API --> App: 200 Coupon valid
+    App --> User: Show discount preview
+
+    User -> App: Apply coupon
+    App -> API: POST /api/coupons/apply
+    API -> DB: Update cart with coupon
+    API -> DB: Increment coupon usage
+    API -> API: Calculate new total
+    API -> API: Publish CouponApplied event
+    API --> App: 200 Updated cart
+    App --> User: Show updated total
+else Coupon invalid
+    alt Expired
+        API --> App: 400 Coupon expired
+        App --> User: Show expiry error
+    else Usage limit reached
+        API --> App: 400 Coupon limit reached
+        App --> User: Show limit error
+    else Minimum not met
+        API --> App: 400 Minimum purchase required
+        App --> User: Show minimum error
+    else Not found
+        API --> App: 404 Invalid coupon
+        App --> User: Show invalid error
+    end
+end
+
+@enduml

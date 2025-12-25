@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-analytics" name="C4 Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="C4 Context Diagram - Analytics &amp; Insights" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="450" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Actors -->
+        <mxCell id="instructor" value="Instructor&#xa;[Person]&#xa;&#xa;Views course and revenue&#xa;analytics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="80" width="140" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="student" value="Student&#xa;[Person]&#xa;&#xa;Views learning progress&#xa;and achievements" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="80" width="140" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="admin" value="Platform Admin&#xa;[Person]&#xa;&#xa;Views platform-wide&#xa;analytics and reports" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="460" y="80" width="140" height="90" as="geometry"/>
+        </mxCell>
+        <!-- Containers -->
+        <mxCell id="webapp" value="Web Application&#xa;[Container: Angular]&#xa;&#xa;Provides analytics dashboards,&#xa;charts, and reporting UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="240" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="API Application&#xa;[Container: ASP.NET Core]&#xa;&#xa;Processes analytics queries,&#xa;generates reports" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="240" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Stores analytics data,&#xa;metrics, and reports" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="240" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="cache" value="Cache&#xa;[Container: Redis]&#xa;&#xa;Caches aggregated&#xa;analytics data" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="380" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs" value="Background Jobs&#xa;[Container: Hangfire]&#xa;&#xa;Scheduled analytics&#xa;aggregation and reports" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="380" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="signalr" value="SignalR Hub&#xa;[Container: SignalR]&#xa;&#xa;Provides real-time&#xa;analytics updates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="380" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <!-- External Systems -->
+        <mxCell id="email" value="Email Service&#xa;[External System]&#xa;&#xa;Sends scheduled&#xa;analytics reports" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="540" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="export" value="Export Service&#xa;[External System]&#xa;&#xa;Generates CSV, Excel,&#xa;PDF exports" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="540" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="datasources" value="Data Sources&#xa;[External System]&#xa;&#xa;Enrollment, Progress,&#xa;Revenue systems" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="540" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from actors -->
+        <mxCell id="arrow1" value="Views dashboards" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.3;entryY=0;" edge="1" parent="1" source="instructor" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow2" value="Views progress" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="student" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow3" value="Views platform analytics" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.7;entryY=0;" edge="1" parent="1" source="admin" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Container relationships -->
+        <mxCell id="arrow4" value="API calls" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="webapp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow5" value="Reads/Writes analytics" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow6" value="Caches data" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="webapp" target="cache">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow7" value="Reads cache" style="endArrow=classic;html=1;exitX=0.3;exitY=1;entryX=0.7;entryY=0;" edge="1" parent="1" source="api" target="cache">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow8" value="Queries data" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="jobs" target="database">
+          <mxGeometry x="0.2" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow9" value="Updates cache" style="endArrow=classic;html=1;exitX=0;exitY=0.8;entryX=1;entryY=0.2;" edge="1" parent="1" source="jobs" target="cache">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow10" value="Real-time updates" style="endArrow=classic;html=1;exitX=0.7;exitY=1;entryX=0.3;entryY=0;" edge="1" parent="1" source="api" target="signalr">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow11" value="WebSocket" style="endArrow=classic;html=1;exitX=1;exitY=0.8;entryX=0;entryY=0.2;dashed=1;" edge="1" parent="1" source="webapp" target="signalr">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- External system relationships -->
+        <mxCell id="arrow12" value="Sends reports" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="jobs" target="email">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow13" value="Generates exports" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="export">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow14" value="Aggregates from" style="endArrow=classic;html=1;exitX=0.7;exitY=1;entryX=0.3;entryY=0;" edge="1" parent="1" source="jobs" target="datasources">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

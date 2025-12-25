@@ -1,0 +1,280 @@
+@startuml Notifications Class Diagram
+
+title Notifications - Class Diagram
+
+package "Notification Aggregate" {
+    class Notification {
+        +NotificationId: Guid
+        +UserId: Guid
+        +Type: NotificationType
+        +Title: string
+        +Message: string
+        +ActionUrl: string
+        +IconUrl: string
+        +IsRead: bool
+        +ReadAt: DateTime
+        +CreatedAt: DateTime
+        +ExpiresAt: DateTime
+        +IsDeleted: bool
+        --
+        +Create(userId, type, title, message): Notification
+        +MarkAsRead(): void
+        +Delete(): void
+        +IsExpired(): bool
+    }
+
+    enum NotificationType {
+        CourseUpdate
+        NewContent
+        Achievement
+        Social
+        System
+        Enrollment
+        Completion
+        Message
+    }
+
+    class NotificationMetrics {
+        +NotificationMetricsId: Guid
+        +NotificationId: Guid
+        +DeliveredAt: DateTime
+        +OpenedAt: DateTime
+        +ClickedAt: DateTime
+        +DismissedAt: DateTime
+        --
+        +RecordDelivery(): void
+        +RecordOpen(): void
+        +RecordClick(): void
+        +RecordDismiss(): void
+    }
+}
+
+package "Preference Aggregate" {
+    class NotificationPreference {
+        +NotificationPreferenceId: Guid
+        +UserId: Guid
+        +EnablePush: bool
+        +EnableInApp: bool
+        +EnableEmail: bool
+        +DigestFrequency: DigestFrequency
+        +DndEnabled: bool
+        +DndStartTime: TimeSpan
+        +DndEndTime: TimeSpan
+        +UpdatedAt: DateTime
+        --
+        +Create(userId): NotificationPreference
+        +UpdateChannel(channel, enabled): void
+        +SetDigestFrequency(frequency): void
+        +EnableDnd(start, end): void
+        +DisableDnd(): void
+        +IsInDndWindow(): bool
+    }
+
+    enum DigestFrequency {
+        RealTime
+        Hourly
+        Daily
+        Weekly
+    }
+
+    class NotificationTypePreference {
+        +NotificationTypePreferenceId: Guid
+        +NotificationPreferenceId: Guid
+        +NotificationType: NotificationType
+        +EnablePush: bool
+        +EnableInApp: bool
+        +EnableEmail: bool
+        --
+        +UpdateChannel(channel, enabled): void
+        +IsEnabled(channel): bool
+    }
+
+    class ChannelPreference {
+        +ChannelPreferenceId: Guid
+        +NotificationPreferenceId: Guid
+        +Channel: NotificationChannel
+        +IsMuted: bool
+        +MutedUntil: DateTime
+        --
+        +Mute(until): void
+        +Unmute(): void
+        +IsMuted(): bool
+    }
+
+    enum NotificationChannel {
+        Push
+        InApp
+        Email
+    }
+}
+
+package "Push Token Aggregate" {
+    class PushToken {
+        +PushTokenId: Guid
+        +UserId: Guid
+        +Token: string
+        +Platform: DevicePlatform
+        +DeviceId: string
+        +DeviceInfo: string
+        +IsActive: bool
+        +RegisteredAt: DateTime
+        +LastUsedAt: DateTime
+        +ExpiresAt: DateTime
+        --
+        +Register(userId, token, platform, deviceId): PushToken
+        +Unregister(): void
+        +UpdateLastUsed(): void
+        +IsExpired(): bool
+    }
+
+    enum DevicePlatform {
+        Web
+        iOS
+        Android
+    }
+
+    class PushNotificationLog {
+        +PushNotificationLogId: Guid
+        +PushTokenId: Guid
+        +NotificationId: Guid
+        +SentAt: DateTime
+        +DeliveredAt: DateTime
+        +FailedAt: DateTime
+        +ErrorMessage: string
+        +Status: PushStatus
+        --
+        +RecordSent(): void
+        +RecordDelivered(): void
+        +RecordFailed(error): void
+    }
+
+    enum PushStatus {
+        Pending
+        Sent
+        Delivered
+        Failed
+    }
+}
+
+package "Email Queue Aggregate" {
+    class EmailQueue {
+        +EmailQueueId: Guid
+        +ToEmail: string
+        +ToName: string
+        +Subject: string
+        +BodyHtml: string
+        +BodyText: string
+        +TemplateId: string
+        +TemplateData: string
+        +Priority: EmailPriority
+        +Status: EmailStatus
+        +ScheduledAt: DateTime
+        +SentAt: DateTime
+        +FailedAt: DateTime
+        +ErrorMessage: string
+        +RetryCount: int
+        +MaxRetries: int
+        --
+        +Create(to, subject, body): EmailQueue
+        +Schedule(when): void
+        +MarkSent(): void
+        +MarkFailed(error): void
+        +CanRetry(): bool
+    }
+
+    enum EmailPriority {
+        High
+        Normal
+        Low
+    }
+
+    enum EmailStatus {
+        Pending
+        Scheduled
+        Sent
+        Failed
+        Delivered
+        Opened
+        Clicked
+        Bounced
+        Complained
+    }
+
+    class EmailTemplate {
+        +EmailTemplateId: Guid
+        +TemplateKey: string
+        +Name: string
+        +Subject: string
+        +BodyHtml: string
+        +BodyText: string
+        +Variables: string
+        +Locale: string
+        +Version: int
+        +IsActive: bool
+        --
+        +Render(variables): string
+        +Validate(): bool
+    }
+
+    class EmailEvent {
+        +EmailEventId: Guid
+        +EmailQueueId: Guid
+        +EventType: EmailEventType
+        +OccurredAt: DateTime
+        +IpAddress: string
+        +UserAgent: string
+        +Metadata: string
+        --
+        +Record(type, metadata): EmailEvent
+    }
+
+    enum EmailEventType {
+        Sent
+        Delivered
+        Opened
+        Clicked
+        Bounced
+        Complained
+        Unsubscribed
+    }
+}
+
+package "Template Aggregate" {
+    class NotificationTemplate {
+        +NotificationTemplateId: Guid
+        +TemplateKey: string
+        +Type: NotificationType
+        +TitleTemplate: string
+        +MessageTemplate: string
+        +ActionUrlTemplate: string
+        +Locale: string
+        +Version: int
+        +IsActive: bool
+        --
+        +Render(variables): Notification
+        +Validate(): bool
+    }
+}
+
+Notification "*" --> "1" NotificationMetrics
+Notification --> NotificationType
+
+NotificationPreference "1" --> "*" NotificationTypePreference
+NotificationPreference "1" --> "*" ChannelPreference
+NotificationPreference --> DigestFrequency
+NotificationTypePreference --> NotificationType
+NotificationTypePreference --> NotificationChannel
+ChannelPreference --> NotificationChannel
+
+PushToken --> DevicePlatform
+PushToken "1" --> "*" PushNotificationLog
+PushNotificationLog --> PushStatus
+
+EmailQueue --> EmailPriority
+EmailQueue --> EmailStatus
+EmailQueue "1" --> "*" EmailEvent
+EmailEvent --> EmailEventType
+
+NotificationTemplate --> NotificationType
+
+@enduml

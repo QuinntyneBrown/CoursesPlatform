@@ -1,0 +1,165 @@
+@startuml User Registration Sequence
+
+title User Registration Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Email Service" as Email
+
+User -> App: Fill registration form
+App -> App: Validate input
+App -> API: POST /api/auth/register
+API -> API: Validate request
+API -> DB: Check email uniqueness
+DB --> API: Email available
+API -> API: Hash password
+API -> DB: Create User (Pending)
+DB --> API: User created
+API -> API: Generate verification token
+API -> DB: Store verification token
+API -> Email: Send verification email
+Email --> API: Email queued
+API -> API: Publish UserRegistered event
+API --> App: 201 Created
+App --> User: Show success message
+
+@enduml
+
+@startuml User Login Sequence
+
+title User Login Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Enter credentials
+App -> API: POST /api/auth/login
+API -> DB: Find user by email
+DB --> API: User found
+API -> API: Verify password hash
+alt Password valid
+    API -> API: Check user status
+    alt User active
+        alt MFA enabled
+            API -> API: Generate MFA challenge
+            API --> App: 200 MFA Required
+            App --> User: Show MFA input
+            User -> App: Enter MFA code
+            App -> API: POST /api/auth/mfa/verify
+            API -> API: Verify MFA code
+        end
+        API -> API: Generate tokens
+        API -> DB: Create session
+        API -> API: Publish UserLoggedIn event
+        API --> App: 200 OK with tokens
+        App -> App: Store tokens
+        App --> User: Redirect to dashboard
+    else User suspended
+        API --> App: 403 Account suspended
+        App --> User: Show suspension message
+    end
+else Password invalid
+    API -> DB: Increment failed attempts
+    API -> API: Publish LoginAttemptFailed event
+    alt Max attempts reached
+        API -> DB: Lock account
+        API -> API: Publish UserLockedOut event
+        API --> App: 429 Account locked
+        App --> User: Show lockout message
+    else
+        API --> App: 401 Invalid credentials
+        App --> User: Show error message
+    end
+end
+
+@enduml
+
+@startuml Password Reset Sequence
+
+title Password Reset Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Email Service" as Email
+
+User -> App: Click forgot password
+App --> User: Show email input
+User -> App: Enter email
+App -> API: POST /api/auth/forgot-password
+API -> DB: Find user by email
+alt User found
+    API -> API: Generate reset token
+    API -> DB: Store reset token
+    API -> Email: Send reset email
+    API -> API: Publish PasswordResetRequested event
+end
+API --> App: 200 OK
+App --> User: Check your email
+
+User -> Email: Click reset link
+Email -> App: Open reset page
+App --> User: Show new password form
+User -> App: Enter new password
+App -> API: POST /api/auth/reset-password
+API -> DB: Validate reset token
+alt Token valid
+    API -> API: Hash new password
+    API -> DB: Update password
+    API -> DB: Delete reset token
+    API -> DB: Invalidate all sessions
+    API -> API: Publish PasswordResetCompleted event
+    API --> App: 200 OK
+    App --> User: Redirect to login
+else Token expired
+    API -> API: Publish PasswordResetExpired event
+    API --> App: 400 Token expired
+    App --> User: Show expiry message
+end
+
+@enduml
+
+@startuml MFA Setup Sequence
+
+title MFA Setup Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Navigate to security settings
+App -> API: GET /api/users/me
+API --> App: User profile
+App --> User: Show MFA disabled
+
+User -> App: Click enable MFA
+App -> API: POST /api/auth/mfa/enable
+API -> API: Generate TOTP secret
+API -> API: Generate QR code data
+API --> App: Secret and QR data
+App --> User: Show QR code
+
+User -> User: Scan QR with authenticator
+User -> App: Enter verification code
+App -> API: POST /api/auth/mfa/verify
+API -> API: Verify TOTP code
+alt Code valid
+    API -> DB: Enable MFA configuration
+    API -> API: Generate backup codes
+    API -> DB: Store backup codes
+    API -> API: Publish MfaEnabled event
+    API -> API: Publish BackupCodesGenerated event
+    API --> App: 200 OK with backup codes
+    App --> User: Show backup codes
+else Code invalid
+    API --> App: 400 Invalid code
+    App --> User: Show error
+end
+
+@enduml

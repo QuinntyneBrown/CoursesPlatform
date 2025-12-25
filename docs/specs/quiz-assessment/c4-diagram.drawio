@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-quiz-assessment" name="C4 Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="C4 Context Diagram - Quiz &amp; Assessment" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="450" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Actors -->
+        <mxCell id="student" value="Student&#xa;[Person]&#xa;&#xa;Takes quizzes and&#xa;coding exercises" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="instructor" value="Instructor&#xa;[Person]&#xa;&#xa;Creates quizzes and&#xa;grades submissions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Containers -->
+        <mxCell id="webapp" value="Web Application&#xa;[Container: Angular]&#xa;&#xa;Quiz taking interface and&#xa;code editor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="API Application&#xa;[Container: ASP.NET Core]&#xa;&#xa;Quiz management and&#xa;grading logic" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Stores quizzes, questions,&#xa;attempts, submissions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="grading" value="Grading Service&#xa;[Container: .NET Worker]&#xa;&#xa;Automatic quiz grading&#xa;and scoring" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="executor" value="Code Execution Service&#xa;[Container: Microservice]&#xa;&#xa;Runs and grades&#xa;code submissions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="sandbox" value="Code Sandbox&#xa;[Container: Docker]&#xa;&#xa;Isolated code execution&#xa;environment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- External Systems -->
+        <mxCell id="storage" value="File Storage&#xa;[External System]&#xa;&#xa;Stores code submissions&#xa;and images" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="590" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="plagiarism" value="Plagiarism Service&#xa;[External System]&#xa;&#xa;Detects code similarity" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="590" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="notification" value="Notification Service&#xa;[External System]&#xa;&#xa;Notifies students of&#xa;graded results" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="590" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from Student -->
+        <mxCell id="arrow1" value="Takes quizzes" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="student" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from Instructor -->
+        <mxCell id="arrow2" value="Manages quizzes" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=1;entryY=0;" edge="1" parent="1" source="instructor" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Web App interactions -->
+        <mxCell id="arrow3" value="API Calls" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="webapp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- API interactions -->
+        <mxCell id="arrow4" value="Reads/Writes" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow5" value="Triggers grading" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="grading">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow6" value="Executes code" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="executor">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Grading Service -->
+        <mxCell id="arrow7" value="Reads quiz data" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=1;" edge="1" parent="1" source="grading" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Code Executor -->
+        <mxCell id="arrow8" value="Runs in sandbox" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="executor" target="sandbox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow9" value="Stores code" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=1;entryY=0;" edge="1" parent="1" source="executor" target="storage">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow10" value="Checks plagiarism" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="executor" target="plagiarism">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Notification -->
+        <mxCell id="arrow11" value="Sends notifications" style="endArrow=classic;html=1;exitX=1;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="grading" target="notification">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

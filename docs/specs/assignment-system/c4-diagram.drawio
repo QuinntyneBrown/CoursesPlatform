@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-12-25T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="c4-assignment-system" name="C4 Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="C4 Context Diagram - Assignment System" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="450" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Actors -->
+        <mxCell id="student" value="Student&#xa;[Person]&#xa;&#xa;A student who submits&#xa;assignments and views grades" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="150" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="instructor" value="Instructor&#xa;[Person]&#xa;&#xa;An instructor who creates&#xa;assignments and grades work" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="550" y="80" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Containers -->
+        <mxCell id="webapp" value="Web Application&#xa;[Container: Angular]&#xa;&#xa;Provides assignment submission&#xa;and grading interfaces" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="API Application&#xa;[Container: ASP.NET Core]&#xa;&#xa;Handles assignment management,&#xa;submissions, and grading" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="database" value="Database&#xa;[Container: SQL Server]&#xa;&#xa;Stores assignments, submissions,&#xa;grades, and peer reviews" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="storage" value="File Storage&#xa;[Container: Blob Storage]&#xa;&#xa;Stores submission files&#xa;and attachments" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="700" y="250" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- External Systems -->
+        <mxCell id="notification" value="Notification Service&#xa;[External System]&#xa;&#xa;Sends assignment reminders&#xa;and grade notifications" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="antivirus" value="Antivirus Service&#xa;[External System]&#xa;&#xa;Scans uploaded files&#xa;for malware" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="course" value="Course Management&#xa;[Internal System]&#xa;&#xa;Provides course and&#xa;enrollment data" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#FFFFFF;align=center;" vertex="1" parent="1">
+          <mxGeometry x="700" y="420" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from Users to Containers -->
+        <mxCell id="arrow1" value="Uses" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="student" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow2" value="Uses" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="instructor" target="webapp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Container Interactions -->
+        <mxCell id="arrow3" value="API Calls" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="webapp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow4" value="Reads/Writes" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="database">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow5" value="Uploads files" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="database" target="storage">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- External System Interactions -->
+        <mxCell id="arrow6" value="Sends notifications" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="api" target="notification">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow7" value="Scans files" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="database" target="antivirus">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow8" value="Gets enrollments" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="storage" target="course">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

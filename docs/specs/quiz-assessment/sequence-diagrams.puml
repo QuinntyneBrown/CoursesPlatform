@@ -1,0 +1,328 @@
+@startuml Take Quiz Sequence
+
+title Take Quiz Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Student -> App: Navigate to quiz
+App -> API: GET /api/quizzes/{quizId}
+API -> DB: Fetch quiz details
+DB --> API: Quiz data
+API --> App: Quiz details
+App --> Student: Show quiz overview
+
+Student -> App: Click start quiz
+App -> API: POST /api/quizzes/{quizId}/attempts
+API -> DB: Check enrollment
+DB --> API: Student enrolled
+API -> DB: Check attempt limit
+DB --> API: Attempts available
+API -> DB: Fetch questions
+alt Randomize enabled
+    API -> API: Shuffle questions
+end
+alt Shuffle answers enabled
+    API -> API: Shuffle answer options
+end
+API -> DB: Create QuizAttempt (InProgress)
+DB --> API: Attempt created
+API -> API: Start timer if configured
+API -> API: Publish QuizAttemptStarted event
+API --> App: Attempt details with questions
+App -> App: Initialize timer
+App --> Student: Show first question
+
+loop For each question
+    Student -> App: Select/enter answer
+    App -> App: Auto-save after 30 seconds
+    App -> API: PUT /api/attempts/{attemptId}/answers
+    API -> DB: Save AttemptAnswer
+    API -> API: Publish QuestionAnswered event
+    API --> App: Answer saved
+    Student -> App: Click next question
+    App --> Student: Show next question
+end
+
+alt Time expired
+    App -> App: Auto-submit triggered
+else Student ready to submit
+    Student -> App: Click submit quiz
+    App --> Student: Show confirmation dialog
+    Student -> App: Confirm submission
+end
+
+App -> API: POST /api/attempts/{attemptId}/submit
+API -> DB: Update attempt status to Submitted
+API -> API: Publish QuizAttemptSubmitted event
+API --> App: Submission confirmed
+App -> App: Trigger auto-grading
+App -> API: Wait for grading completion
+API --> App: Grading completed
+App --> Student: Redirect to results
+
+@enduml
+
+@startuml Grade Quiz Sequence
+
+title Grade Quiz Flow
+
+participant "API" as API
+participant "Database" as DB
+participant "Grading Service" as Grading
+
+API -> API: QuizAttemptSubmitted event received
+API -> DB: Fetch quiz attempt
+DB --> API: Attempt data
+API -> DB: Fetch all questions
+DB --> API: Questions with answers
+API -> DB: Fetch student answers
+DB --> API: Attempt answers
+
+API -> Grading: Grade attempt
+
+loop For each question
+    alt Multiple Choice
+        Grading -> Grading: Compare selected option
+        alt Correct
+            Grading -> Grading: Award full points
+        else Incorrect
+            Grading -> Grading: Award zero points
+        end
+    else True/False
+        Grading -> Grading: Compare boolean answer
+        alt Correct
+            Grading -> Grading: Award full points
+        else Incorrect
+            Grading -> Grading: Award zero points
+        end
+    else Multiple Answer
+        Grading -> Grading: Compare selected options
+        Grading -> Grading: Calculate partial credit
+        alt All correct selected
+            Grading -> Grading: Award full points
+        else Some correct
+            Grading -> Grading: Award proportional points
+        else Incorrect selections
+            Grading -> Grading: Deduct penalty points
+        end
+    else Short Answer
+        Grading -> Grading: Normalize student answer
+        Grading -> Grading: Compare with acceptable answers
+        alt Exact match found
+            Grading -> Grading: Award full points
+        else No match
+            alt Manual grading required
+                Grading -> Grading: Mark for manual review
+                Grading -> Grading: Award zero points temporarily
+            else
+                Grading -> Grading: Award zero points
+            end
+        end
+    end
+    Grading -> DB: Update AttemptAnswer with score
+end
+
+Grading -> Grading: Calculate total score
+Grading -> Grading: Calculate percentage
+Grading -> Grading: Determine pass/fail
+Grading --> API: Grading results
+
+API -> DB: Update QuizAttempt with results
+DB --> API: Updated
+API -> API: Publish QuizAttemptGraded event
+
+API -> DB: Update quiz statistics
+API -> API: Publish QuizStatisticsUpdated event
+
+alt Student achieved new best score
+    API -> API: Update student progress
+end
+
+@enduml
+
+@startuml Submit Code Sequence
+
+title Submit Code Solution Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Code Execution Service" as Executor
+participant "Sandbox" as Sandbox
+
+Student -> App: Open coding exercise
+App -> API: GET /api/coding-exercises/{exerciseId}
+API -> DB: Fetch exercise details
+DB --> API: Exercise with test cases
+API --> App: Exercise data
+App --> Student: Show code editor with starter code
+
+Student -> App: Write code solution
+Student -> App: Click run code
+App -> API: POST /api/coding-exercises/{exerciseId}/run
+API -> API: Validate code syntax
+API -> Executor: Execute code with visible test cases
+Executor -> Sandbox: Create isolated container
+Sandbox --> Executor: Container ready
+
+loop For each visible test case
+    Executor -> Sandbox: Run code with input
+    Sandbox -> Sandbox: Execute with timeout
+    alt Execution successful
+        Sandbox --> Executor: Output and metrics
+        Executor -> Executor: Compare with expected output
+    else Timeout
+        Sandbox --> Executor: Timeout error
+    else Runtime error
+        Sandbox --> Executor: Error details
+    end
+end
+
+Executor -> Sandbox: Destroy container
+Executor --> API: Test results
+API --> App: Execution results
+App --> Student: Show test outcomes
+
+Student -> App: Click submit solution
+App -> API: POST /api/coding-exercises/{exerciseId}/submit
+API -> DB: Create CodeSubmission (Pending)
+DB --> API: Submission created
+API -> API: Publish CodeSubmitted event
+API -> Executor: Grade submission
+
+Executor -> Sandbox: Create isolated container
+Sandbox --> Executor: Container ready
+
+loop For each test case (visible and hidden)
+    Executor -> Sandbox: Run code with input
+    Sandbox -> Sandbox: Execute with resource limits
+    alt Execution successful
+        Sandbox --> Executor: Output, time, memory
+        Executor -> Executor: Compare output
+        alt Output matches
+            Executor -> DB: Create TestResult (Passed)
+            Executor -> Executor: Add test case points
+        else Output mismatch
+            Executor -> DB: Create TestResult (Failed)
+        end
+    else Timeout
+        Executor -> DB: Create TestResult (TimedOut)
+    else Runtime error
+        Executor -> DB: Create TestResult (Failed, error)
+    else Memory limit exceeded
+        Executor -> DB: Create TestResult (Failed, memory)
+    end
+end
+
+Executor -> Executor: Calculate total score
+Executor -> Executor: Calculate percentage
+Executor -> Sandbox: Destroy container
+Executor --> API: Grading results
+
+API -> DB: Update CodeSubmission with score
+DB --> API: Updated
+API -> API: Publish CodeGraded event
+
+alt Part of quiz attempt
+    API -> DB: Update QuizAttempt with coding score
+end
+
+alt Plagiarism detection enabled
+    API -> API: Queue plagiarism check
+    API -> API: Compare with other submissions
+    alt High similarity detected
+        API -> API: Publish PlagiarismDetected event
+        API -> DB: Flag submission for review
+    end
+end
+
+API --> App: Submission results
+App --> Student: Show detailed results
+
+@enduml
+
+@startuml Publish Quiz Sequence
+
+title Publish Quiz Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Instructor -> App: Edit quiz
+App -> API: GET /api/quizzes/{quizId}
+API -> DB: Fetch quiz
+DB --> API: Quiz data
+API --> App: Quiz details
+App --> Instructor: Show quiz editor
+
+Instructor -> App: Click publish
+App -> API: POST /api/quizzes/{quizId}/publish
+API -> DB: Fetch quiz
+DB --> API: Quiz data
+API -> API: Validate quiz
+alt Quiz has no questions
+    API --> App: 422 Validation error
+    App --> Instructor: Error: Add questions first
+else Questions invalid
+    API --> App: 422 Validation error
+    App --> Instructor: Error: Fix question issues
+else Valid
+    API -> DB: Update quiz status to Published
+    API -> DB: Set PublishedAt timestamp
+    DB --> API: Updated
+    API -> API: Publish QuizPublished event
+    API --> App: 200 Success
+    App --> Instructor: Success: Quiz published
+end
+
+@enduml
+
+@startuml Manual Grading Sequence
+
+title Manual Grading Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Instructor -> App: View quiz attempts
+App -> API: GET /api/quizzes/{quizId}/all-attempts
+API -> DB: Fetch all attempts
+DB --> API: Attempts list
+API --> App: Attempts data
+App --> Instructor: Show attempts requiring grading
+
+Instructor -> App: Select attempt to grade
+App -> API: GET /api/attempts/{attemptId}
+API -> DB: Fetch attempt with answers
+DB --> API: Attempt details
+API --> App: Attempt data
+App --> Instructor: Show answers needing review
+
+loop For each short answer question
+    Instructor -> App: Review answer
+    Instructor -> App: Enter points and feedback
+    App -> API: PUT /api/attempts/{attemptId}/answers/{answerId}/grade
+    API -> DB: Update AttemptAnswer
+    DB --> API: Updated
+    API --> App: Grading saved
+end
+
+Instructor -> App: Complete grading
+App -> API: POST /api/attempts/{attemptId}/complete-grading
+API -> DB: Recalculate total score
+API -> DB: Update QuizAttempt with final score
+DB --> API: Updated
+API -> API: Publish ManualGradingCompleted event
+API -> API: Notify student
+API --> App: Grading completed
+App --> Instructor: Success notification
+
+@enduml

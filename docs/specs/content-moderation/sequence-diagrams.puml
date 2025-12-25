@@ -1,0 +1,474 @@
+@startuml Flag Content Flow
+
+title Flag Content Flow
+
+actor User
+participant "Frontend\n(Angular)" as Frontend
+participant "API\nController" as API
+participant "FlagContent\nCommandHandler" as Handler
+participant "ICoursesPlatform\nContext" as Context
+participant "TrustScore\nService" as TrustService
+database "SQL Server" as DB
+
+User -> Frontend: Click "Flag Content" button
+activate Frontend
+Frontend -> Frontend: Open flag dialog
+User -> Frontend: Select reason & description
+User -> Frontend: Submit flag
+Frontend -> Frontend: Validate form
+
+Frontend -> API: POST /api/moderation/flags\n{contentType, contentId, reason, description}
+activate API
+
+API -> Handler: Send FlagContentCommand
+activate Handler
+
+Handler -> TrustService: CanUserFlag(userId)
+activate TrustService
+TrustService -> Context: Get user trust score
+activate Context
+Context -> DB: SELECT TrustScore
+DB --> Context: TrustScore data
+deactivate Context
+TrustService --> Handler: true/false
+deactivate TrustService
+
+alt User cannot flag (trust score < 20)
+  Handler --> API: ValidationException
+  API --> Frontend: 400 Bad Request
+  Frontend -> Frontend: Show error message
+  Frontend --> User: "Insufficient trust score"
+else User can flag
+  Handler -> Context: Check for duplicate flag
+  activate Context
+  Context -> DB: SELECT ContentFlag\nWHERE ContentId AND UserId
+  DB --> Context: Existing flags
+  deactivate Context
+
+  alt Duplicate flag exists
+    Handler --> API: ValidationException
+    API --> Frontend: 400 Bad Request
+    Frontend -> Frontend: Show error message
+    Frontend --> User: "Already flagged"
+  else No duplicate
+    Handler -> Context: Create ContentFlag
+    activate Context
+    Context -> DB: INSERT ContentFlag
+    DB --> Context: Success
+    deactivate Context
+
+    Handler -> Context: Create or update ModerationQueue
+    activate Context
+    Context -> DB: SELECT ModerationQueue\nWHERE ContentId
+    DB --> Context: Existing queue item or null
+
+    alt Queue item exists
+      Context -> DB: UPDATE ModerationQueue\n(increment flag count, update priority)
+    else No queue item
+      Context -> DB: INSERT ModerationQueue
+    end
+
+    DB --> Context: Success
+    Context -> DB: COMMIT
+    deactivate Context
+
+    Handler -> TrustService: RecordFlagSubmission(userId)
+    activate TrustService
+    TrustService -> Context: Update flag count
+    deactivate TrustService
+
+    Handler --> API: Success response
+    deactivate Handler
+
+    API --> Frontend: 201 Created
+    deactivate API
+
+    Frontend -> Frontend: Close dialog
+    Frontend -> Frontend: Show success message
+    Frontend --> User: "Content flagged successfully"
+    deactivate Frontend
+  end
+end
+
+@enduml
+
+@startuml Review Flagged Content Flow
+
+title Review Flagged Content Flow
+
+actor Moderator
+participant "Frontend\n(Angular)" as Frontend
+participant "API\nController" as API
+participant "GetQueueItem\nQueryHandler" as QueryHandler
+participant "ICoursesPlatform\nContext" as Context
+database "SQL Server" as DB
+
+Moderator -> Frontend: Navigate to /moderation/queue
+activate Frontend
+Frontend -> API: GET /api/moderation/queue\n?status=Pending&sort=priority
+activate API
+
+API -> QueryHandler: Send GetModerationQueueQuery
+activate QueryHandler
+
+QueryHandler -> Context: Get queue items with filters
+activate Context
+Context -> DB: SELECT ModerationQueue, ContentFlags\nWHERE Status = 'Pending'\nORDER BY Priority DESC
+DB --> Context: Queue items
+deactivate Context
+
+QueryHandler -> QueryHandler: Map to DTOs
+QueryHandler --> API: List<ModerationQueueDto>
+deactivate QueryHandler
+
+API --> Frontend: 200 OK with queue items
+deactivate API
+
+Frontend -> Frontend: Display queue table
+Frontend --> Moderator: Show queue items
+deactivate Frontend
+
+Moderator -> Frontend: Click "View Details" on item
+activate Frontend
+
+Frontend -> API: GET /api/moderation/queue/{id}
+activate API
+
+API -> QueryHandler: Send GetQueueItemDetailsQuery
+activate QueryHandler
+
+QueryHandler -> Context: Get queue item with all related data
+activate Context
+Context -> DB: SELECT ModerationQueue\n.Include(Flags)\n.Include(Content)\n.Include(CreatorProfile)
+DB --> Context: Queue item with relations
+deactivate Context
+
+QueryHandler -> QueryHandler: Map to detailed DTO
+QueryHandler --> API: QueueItemDetailsDto
+deactivate QueryHandler
+
+API --> Frontend: 200 OK with details
+deactivate API
+
+Frontend -> Frontend: Display review page\n(content, flags, creator info, actions)
+Frontend --> Moderator: Show detailed review interface
+deactivate Frontend
+
+Moderator -> Frontend: Review content and flags
+Moderator -> Frontend: Consider creator trust score
+Moderator -> Frontend: Decide on action
+
+note right of Moderator
+  Moderator reviews:
+  - Flagged content in context
+  - All flag reasons and descriptions
+  - Creator's trust score
+  - Creator's moderation history
+  - AI confidence scores (if applicable)
+end note
+
+@enduml
+
+@startuml Take Moderation Action Flow
+
+title Take Moderation Action Flow
+
+actor Moderator
+participant "Frontend\n(Angular)" as Frontend
+participant "API\nController" as API
+participant "TakeModeration\nActionHandler" as Handler
+participant "ICoursesPlatform\nContext" as Context
+participant "TrustScore\nService" as TrustService
+participant "Moderation\nNotificationService" as NotificationService
+database "SQL Server" as DB
+
+Moderator -> Frontend: Select action (Approve/Remove/Hide/Warn/Ban)
+activate Frontend
+Frontend -> Frontend: Open action confirmation dialog
+Moderator -> Frontend: Enter moderator notes (min 20 chars)
+Moderator -> Frontend: Confirm action
+
+Frontend -> API: POST /api/moderation/actions\n{queueId, actionType, notes}
+activate API
+
+API -> Handler: Send TakeModerationActionCommand
+activate Handler
+
+Handler -> Context: Get queue item
+activate Context
+Context -> DB: SELECT ModerationQueue
+DB --> Context: Queue item
+deactivate Context
+
+alt Queue already resolved
+  Handler --> API: ValidationException
+  API --> Frontend: 400 Bad Request
+  Frontend --> Moderator: "Item already resolved"
+else Queue not resolved
+  Handler -> Context: Begin transaction
+  activate Context
+
+  Handler -> Context: Create ModerationAction
+  Context -> DB: INSERT ModerationAction
+
+  Handler -> Context: Update ModerationQueue status to Resolved
+  Context -> DB: UPDATE ModerationQueue\nSET Status = 'Resolved',\nResolvedAt = NOW()
+
+  alt Action is Remove
+    Handler -> Context: Soft delete or hide content
+    Context -> DB: UPDATE [ContentTable]\nSET IsDeleted = true
+  else Action is Hide
+    Handler -> Context: Hide content from users
+    Context -> DB: UPDATE [ContentTable]\nSET IsHidden = true
+  else Action is Ban
+    Handler -> Context: Ban user account
+    Context -> DB: UPDATE Users\nSET IsBanned = true,\nBanExpiresAt = NULL
+  end
+
+  Context -> DB: COMMIT
+  deactivate Context
+
+  Handler -> TrustService: AdjustTrustScore(creatorId, actionType)
+  activate TrustService
+
+  TrustService -> TrustService: Calculate score adjustment\n(Remove: -10, Hide: -5, Warn: -8, Ban: -30)
+
+  TrustService -> Context: Update UserModerationProfile
+  activate Context
+  Context -> DB: UPDATE UserModerationProfile\nSET TrustScore = NewScore
+  DB --> Context: Success
+  deactivate Context
+
+  TrustService --> Handler: Updated trust score
+  deactivate TrustService
+
+  alt Action requires notification
+    Handler -> NotificationService: NotifyContentCreator(action)
+    activate NotificationService
+    NotificationService -> NotificationService: Format notification message
+    NotificationService -> Context: Create notification
+    activate Context
+    Context -> DB: INSERT Notification
+    deactivate Context
+    NotificationService --> Handler: Notification sent
+    deactivate NotificationService
+  end
+
+  Handler -> TrustService: UpdateFlagAccuracy(flags)
+  activate TrustService
+  note right
+    Update trust scores for all users
+    who flagged this content:
+    - If actioned: +1 (accurate flag)
+    - If approved: -3 (false flag)
+  end note
+
+  TrustService -> Context: Update flaggers' trust scores
+  activate Context
+  Context -> DB: UPDATE UserModerationProfile\nFOR each flagger
+  deactivate Context
+  deactivate TrustService
+
+  Handler --> API: Success with action details
+  deactivate Handler
+
+  API --> Frontend: 200 OK
+  deactivate API
+
+  Frontend -> Frontend: Close dialog
+  Frontend -> Frontend: Show success message
+  Frontend -> Frontend: Remove item from queue
+  Frontend --> Moderator: "Action completed successfully"
+  deactivate Frontend
+end
+
+@enduml
+
+@startuml Appeal Decision Flow
+
+title Appeal Decision Flow
+
+actor User
+participant "Frontend\n(Angular)" as Frontend
+participant "API\nController" as API
+participant "CreateAppeal\nCommandHandler" as CreateHandler
+participant "ReviewAppeal\nCommandHandler" as ReviewHandler
+participant "ICoursesPlatform\nContext" as Context
+participant "TrustScore\nService" as TrustService
+participant "Moderation\nNotificationService" as NotificationService
+database "SQL Server" as DB
+
+== Appeal Submission ==
+
+User -> Frontend: Receive moderation action notification
+activate Frontend
+Frontend --> User: Show notification with appeal link
+
+User -> Frontend: Click "Submit Appeal"
+Frontend -> API: GET /api/moderation/actions/{actionId}
+activate API
+API -> Context: Get moderation action
+activate Context
+Context -> DB: SELECT ModerationAction
+DB --> Context: Action details
+deactivate Context
+API --> Frontend: Action details
+deactivate API
+
+Frontend -> Frontend: Display appeal form with action details
+User -> Frontend: Enter appeal reason (min 50 chars)
+User -> Frontend: Submit appeal
+
+Frontend -> API: POST /api/moderation/appeals\n{actionId, reason}
+activate API
+
+API -> CreateHandler: Send CreateAppealCommand
+activate CreateHandler
+
+CreateHandler -> Context: Check appeal eligibility
+activate Context
+Context -> DB: SELECT ModerationAction\nWHERE ActionId
+DB --> Context: Action details
+
+Context -> DB: SELECT Appeal\nWHERE ModerationActionId
+DB --> Context: Existing appeals
+deactivate Context
+
+alt Not eligible (>30 days or duplicate)
+  CreateHandler --> API: ValidationException
+  API --> Frontend: 400 Bad Request
+  Frontend --> User: "Appeal not eligible"
+else Eligible
+  CreateHandler -> Context: Create Appeal
+  activate Context
+  Context -> DB: INSERT Appeal\n(Status = 'Pending')
+  Context -> DB: COMMIT
+  DB --> Context: Success
+  deactivate Context
+
+  CreateHandler --> API: Created appeal
+  deactivate CreateHandler
+
+  API --> Frontend: 201 Created
+  deactivate API
+
+  Frontend -> Frontend: Show success message
+  Frontend --> User: "Appeal submitted successfully"
+  deactivate Frontend
+end
+
+== Appeal Review ==
+
+actor SeniorModerator
+participant "ModFrontend\n(Angular)" as ModFrontend
+
+SeniorModerator -> ModFrontend: Navigate to /moderation/appeals/queue
+activate ModFrontend
+
+ModFrontend -> API: GET /api/moderation/appeals/queue\n?status=Pending
+activate API
+API -> Context: Get pending appeals
+activate Context
+Context -> DB: SELECT Appeals, ModerationActions, Content
+DB --> Context: Appeals with details
+deactivate Context
+API --> ModFrontend: List of appeals
+deactivate API
+
+ModFrontend --> SeniorModerator: Show appeals queue
+deactivate ModFrontend
+
+SeniorModerator -> ModFrontend: Select appeal to review
+activate ModFrontend
+ModFrontend -> ModFrontend: Display appeal details\n(original action, user reason, content)
+
+SeniorModerator -> ModFrontend: Decide to approve or reject
+SeniorModerator -> ModFrontend: Enter review notes
+SeniorModerator -> ModFrontend: Submit review
+
+ModFrontend -> API: POST /api/moderation/appeals/{id}/review\n{approved, reviewerNotes}
+activate API
+
+API -> ReviewHandler: Send ReviewAppealCommand
+activate ReviewHandler
+
+ReviewHandler -> Context: Get appeal
+activate Context
+Context -> DB: SELECT Appeal, ModerationAction
+DB --> Context: Appeal and action
+deactivate Context
+
+alt Appeal already reviewed
+  ReviewHandler --> API: ValidationException
+  API --> ModFrontend: 400 Bad Request
+  ModFrontend --> SeniorModerator: "Appeal already reviewed"
+else Appeal pending
+  ReviewHandler -> Context: Begin transaction
+  activate Context
+
+  ReviewHandler -> Context: Update Appeal
+  Context -> DB: UPDATE Appeal\nSET Status = 'Approved/Rejected',\nReviewedBy = ModeratorId,\nReviewedAt = NOW(),\nReviewerNotes = Notes
+
+  alt Appeal approved
+    ReviewHandler -> Context: Reverse moderation action
+
+    alt Original action was Remove
+      Context -> DB: UPDATE [ContentTable]\nSET IsDeleted = false
+    else Original action was Hide
+      Context -> DB: UPDATE [ContentTable]\nSET IsHidden = false
+    else Original action was Ban
+      Context -> DB: UPDATE Users\nSET IsBanned = false
+    end
+
+    ReviewHandler -> TrustService: AdjustTrustScore(userId, +5)
+    activate TrustService
+    TrustService -> Context: Update UserModerationProfile
+    Context -> DB: UPDATE UserModerationProfile\nSET TrustScore += 5
+    deactivate TrustService
+  end
+
+  Context -> DB: COMMIT
+  deactivate Context
+
+  ReviewHandler -> NotificationService: NotifyAppellant(outcome)
+  activate NotificationService
+  NotificationService -> Context: Create notification
+  activate Context
+  Context -> DB: INSERT Notification
+  deactivate Context
+  NotificationService --> ReviewHandler: Notification sent
+  deactivate NotificationService
+
+  ReviewHandler --> API: Success with review details
+  deactivate ReviewHandler
+
+  API --> ModFrontend: 200 OK
+  deactivate API
+
+  ModFrontend -> ModFrontend: Show success message
+  ModFrontend -> ModFrontend: Remove from queue
+  ModFrontend --> SeniorModerator: "Review completed"
+  deactivate ModFrontend
+end
+
+== User Receives Outcome ==
+
+activate Frontend
+NotificationService -> Frontend: Push notification
+Frontend --> User: "Your appeal has been reviewed"
+User -> Frontend: View appeal outcome
+Frontend -> API: GET /api/moderation/appeals/{id}
+activate API
+API -> Context: Get appeal details
+activate Context
+Context -> DB: SELECT Appeal
+DB --> Context: Appeal with review
+deactivate Context
+API --> Frontend: Appeal details
+deactivate API
+
+Frontend -> Frontend: Display outcome and reviewer notes
+Frontend --> User: Show decision (approved/rejected)\nand explanation
+deactivate Frontend
+
+@enduml

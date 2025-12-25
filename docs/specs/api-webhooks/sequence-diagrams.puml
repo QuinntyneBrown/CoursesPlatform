@@ -1,0 +1,409 @@
+@startuml Generate API Key Flow
+
+title Generate API Key Flow
+
+actor "Org Admin" as Admin
+participant "Developer Portal\n(Angular)" as UI
+participant "API Controller" as API
+participant "GenerateApiKey\nCommand" as Command
+participant "ApiKeyService" as Service
+participant "ICoursesPlatform\nContext" as Context
+database "SQL Server" as DB
+
+Admin -> UI: Click "Create API Key"
+activate UI
+
+UI -> UI: Open dialog with form
+Admin -> UI: Enter key name,\nscopes, expiration
+UI -> UI: Validate form
+
+UI -> API: POST /api/v1/developer/api-keys\n{name, scopes, expiresAt}
+activate API
+
+API -> Command: Send(GenerateApiKeyCommand)
+activate Command
+
+Command -> Command: Validate request\n(name, scopes, org exists)
+
+Command -> Service: GenerateApiKey(request)
+activate Service
+
+Service -> Service: Generate secure random key\n(cryptographically strong)
+Service -> Service: Hash key using SHA256
+Service -> Service: Create ApiKey entity\n(keyHash, metadata)
+
+Service -> Context: ApiKeys.Add(apiKey)
+activate Context
+Service -> Context: SaveChangesAsync()
+Context -> DB: INSERT INTO ApiKeys
+DB --> Context: Success
+deactivate Context
+
+Service --> Command: Return (apiKey, plainTextKey)
+deactivate Service
+
+Command --> API: Return GenerateApiKeyResult
+deactivate Command
+
+API --> UI: 200 OK\n{apiKeyId, plainTextKey, metadata}
+deactivate API
+
+UI -> UI: Display key in\nread-only dialog
+UI -> UI: Show warning:\n"Save now, won't see again"
+UI -> Admin: Display generated key
+
+Admin -> UI: Click "Copy"
+UI -> UI: Copy to clipboard
+UI -> Admin: Show "Copied!" notification
+
+Admin -> UI: Close dialog
+UI -> UI: Refresh API keys list
+UI -> UI: Clear plain text key\nfrom memory
+
+deactivate UI
+
+note right of Service
+  Plain text key returned ONLY once
+  during generation. Stored as hash
+  in database.
+end note
+
+@enduml
+
+@startuml Subscribe to Webhook Flow
+
+title Subscribe to Webhook Flow
+
+actor "Developer" as Dev
+participant "Developer Portal\n(Angular)" as UI
+participant "API Controller" as API
+participant "CreateWebhook\nSubscription\nCommand" as Command
+participant "WebhookService" as Service
+participant "ICoursesPlatform\nContext" as Context
+database "SQL Server" as DB
+
+Dev -> UI: Navigate to Webhooks page
+activate UI
+
+UI -> API: GET /api/v1/developer/webhooks
+activate API
+API -> Context: WebhookSubscriptions\n.Where(s => s.OrganizationId == orgId)
+activate Context
+Context -> DB: SELECT * FROM WebhookSubscriptions
+DB --> Context: Subscription records
+Context --> API: List<WebhookSubscription>
+deactivate Context
+API --> UI: 200 OK [subscriptions]
+deactivate API
+
+UI -> Dev: Display subscriptions table
+
+Dev -> UI: Click "Create Webhook"
+UI -> UI: Open dialog
+Dev -> UI: Select event type,\nenter callback URL,\noptional secret
+
+UI -> UI: Validate form:\n- HTTPS URL\n- Valid event type
+
+UI -> API: POST /api/v1/developer/webhooks\n{eventType, callbackUrl, secret}
+activate API
+
+API -> Command: Send(CreateWebhookSubscriptionCommand)
+activate Command
+
+Command -> Command: Validate request:\n- Event type valid\n- URL is HTTPS\n- Org has subscription limit
+
+Command -> Service: CreateSubscription(request)
+activate Service
+
+Service -> Service: Generate secret\nif not provided
+Service -> Service: Create WebhookSubscription\nentity
+
+Service -> Context: WebhookSubscriptions.Add(subscription)
+activate Context
+Service -> Context: SaveChangesAsync()
+Context -> DB: INSERT INTO WebhookSubscriptions
+DB --> Context: Success
+deactivate Context
+
+Service --> Command: Return subscription
+deactivate Service
+
+Command --> API: Return WebhookSubscriptionDto
+deactivate Command
+
+API --> UI: 201 Created {subscription}
+deactivate API
+
+UI -> UI: Add subscription to table
+UI -> UI: Close dialog
+UI -> Dev: Show success notification
+
+deactivate UI
+
+@enduml
+
+@startuml Deliver Webhook Flow
+
+title Deliver Webhook Flow
+
+participant "Domain Event" as Event
+participant "Event Handler" as Handler
+participant "WebhookDelivery\nService" as Service
+participant "ICoursesPlatform\nContext" as Context
+database "SQL Server" as DB
+queue "Background Job\nQueue" as Queue
+participant "Background\nWorker" as Worker
+participant "HTTP Client" as HTTP
+participant "External System" as External
+
+Event -> Handler: CourseCreatedEvent raised
+activate Handler
+
+Handler -> Service: PublishEvent(eventType, payload)
+activate Service
+
+Service -> Context: WebhookSubscriptions\n.Where(s => s.EventType == eventType\n&& s.IsActive)
+activate Context
+Context -> DB: SELECT * FROM WebhookSubscriptions
+DB --> Context: Active subscriptions
+Context --> Service: List<WebhookSubscription>
+deactivate Context
+
+loop For each subscription
+  Service -> Service: Create WebhookDelivery:\n- Serialize payload to JSON\n- Generate HMAC signature\n- Set status to Pending
+
+  Service -> Context: WebhookDeliveries.Add(delivery)
+  Service -> Context: SaveChangesAsync()
+  activate Context
+  Context -> DB: INSERT INTO WebhookDeliveries
+  DB --> Context: Success
+  deactivate Context
+end
+
+Service -> Queue: Enqueue delivery jobs
+Service --> Handler: Success
+deactivate Service
+deactivate Handler
+
+... Background processing ...
+
+Queue -> Worker: Process delivery job
+activate Worker
+
+Worker -> Context: WebhookDeliveries\n.Where(d => d.Status == Pending\n&& d.NextAttemptAt <= now)
+activate Context
+Context -> DB: SELECT * FROM WebhookDeliveries
+DB --> Context: Pending deliveries
+Context --> Worker: List<WebhookDelivery>
+deactivate Context
+
+loop For each delivery
+  Worker -> Worker: Load subscription details
+
+  Worker -> HTTP: POST callbackUrl\nHeaders:\n- X-Webhook-Signature: {signature}\n- X-Webhook-Event: {eventType}\n- X-Webhook-Delivery-Id: {id}\nBody: {payload}
+  activate HTTP
+
+  alt Successful delivery (2xx response)
+    HTTP -> External: POST request
+    activate External
+    External --> HTTP: 200 OK {response}
+    deactivate External
+
+    HTTP --> Worker: Success (200)
+    deactivate HTTP
+
+    Worker -> Worker: Update delivery:\n- Status = Delivered\n- DeliveredAt = now\n- ResponseStatus = 200
+
+    Worker -> Context: Update WebhookDelivery
+    activate Context
+    Worker -> Context: SaveChangesAsync()
+    Context -> DB: UPDATE WebhookDeliveries
+    DB --> Context: Success
+    deactivate Context
+
+    Worker -> Context: Reset subscription.FailureCount = 0
+    activate Context
+    Worker -> Context: SaveChangesAsync()
+    Context -> DB: UPDATE WebhookSubscriptions
+    deactivate Context
+
+  else Failed delivery (error/timeout/5xx)
+    HTTP -> External: POST request
+    activate External
+    External --> HTTP: 500 Internal Server Error
+    deactivate External
+
+    HTTP --> Worker: Error (500)
+    deactivate HTTP
+
+    Worker -> Worker: Increment AttemptCount
+    Worker -> Worker: Check retry limit
+
+    alt Can retry (attempts < 6)
+      Worker -> Worker: Calculate next retry:\n- Exponential backoff\n- NextAttemptAt = now + delay
+      Worker -> Worker: Status = Failed
+
+      Worker -> Context: Update WebhookDelivery
+      activate Context
+      Worker -> Context: SaveChangesAsync()
+      Context -> DB: UPDATE WebhookDeliveries
+      deactivate Context
+
+      Worker -> Context: Increment subscription.FailureCount
+      activate Context
+      Worker -> Context: SaveChangesAsync()
+      Context -> DB: UPDATE WebhookSubscriptions
+      deactivate Context
+
+      alt Subscription failures >= 10
+        Worker -> Worker: Deactivate subscription
+        Worker -> Context: Update subscription:\n- IsActive = false\n- DeactivatedAt = now
+        activate Context
+        Worker -> Context: SaveChangesAsync()
+        Context -> DB: UPDATE WebhookSubscriptions
+        deactivate Context
+
+        Worker -> Worker: Send notification email\nto org admins
+      end
+
+    else Max retries exceeded
+      Worker -> Worker: Status = Abandoned
+
+      Worker -> Context: Update WebhookDelivery
+      activate Context
+      Worker -> Context: SaveChangesAsync()
+      Context -> DB: UPDATE WebhookDeliveries
+      deactivate Context
+    end
+  end
+end
+
+deactivate Worker
+
+@enduml
+
+@startuml API Request with Rate Limiting Flow
+
+title API Request with Rate Limiting Flow
+
+actor "External Client" as Client
+participant "API Gateway" as Gateway
+participant "Rate Limit\nMiddleware" as RateLimit
+participant "Auth\nMiddleware" as Auth
+participant "API Controller" as Controller
+participant "Query Handler" as Handler
+participant "ICoursesPlatform\nContext" as Context
+database "SQL Server" as DB
+database "Redis Cache" as Redis
+
+Client -> Gateway: GET /api/v1/courses\nAuthorization: ApiKey {key}
+activate Gateway
+
+Gateway -> Auth: Authenticate request
+activate Auth
+
+Auth -> Auth: Extract API key from header
+Auth -> Auth: Hash provided key
+
+Auth -> Context: ApiKeys.FirstOrDefault(k => k.KeyHash == hash)
+activate Context
+Context -> DB: SELECT * FROM ApiKeys WHERE KeyHash = ?
+DB --> Context: ApiKey record
+Context --> Auth: ApiKey
+deactivate Context
+
+Auth -> Auth: Validate:\n- Key exists\n- IsActive = true\n- Not expired\n- Has required scope
+
+alt Valid API key
+  Auth -> Auth: Set authentication context\n(ApiKeyId, OrganizationId, Scopes)
+  Auth --> Gateway: Authentication success
+  deactivate Auth
+
+  Gateway -> RateLimit: Check rate limit
+  activate RateLimit
+
+  RateLimit -> Redis: GET rate_limit:{apiKeyId}:minute
+  activate Redis
+  Redis --> RateLimit: Current count (or null)
+  deactivate Redis
+
+  RateLimit -> RateLimit: Load rate limit policy\nfor API key
+
+  alt Within rate limit
+    RateLimit -> Redis: INCR rate_limit:{apiKeyId}:minute
+    activate Redis
+    Redis --> RateLimit: New count
+    deactivate Redis
+
+    RateLimit -> Redis: EXPIRE rate_limit:{apiKeyId}:minute 60
+    activate Redis
+    deactivate Redis
+
+    RateLimit --> Gateway: Rate limit OK
+    deactivate RateLimit
+
+    Gateway -> Controller: Process request
+    activate Controller
+
+    Controller -> Handler: Send(GetCoursesQuery)
+    activate Handler
+
+    Handler -> Context: Courses.Where(...).ToListAsync()
+    activate Context
+    Context -> DB: SELECT * FROM Courses
+    DB --> Context: Course records
+    Context --> Handler: List<Course>
+    deactivate Context
+
+    Handler --> Controller: List<CourseDto>
+    deactivate Handler
+
+    Controller --> Gateway: 200 OK [courses]
+    deactivate Controller
+
+    Gateway -> Gateway: Record API usage asynchronously
+    Gateway -> Context: ApiUsage.Add(usageRecord)
+    activate Context
+    Gateway -> Context: SaveChangesAsync()
+    Context -> DB: INSERT INTO ApiUsage (async)
+    deactivate Context
+
+    Gateway -> Context: Update ApiKey:\n- LastUsedAt = now\n- UsageCount++
+    activate Context
+    Gateway -> Context: SaveChangesAsync()
+    Context -> DB: UPDATE ApiKeys (async)
+    deactivate Context
+
+    Gateway --> Client: 200 OK [courses]
+
+  else Rate limit exceeded
+    RateLimit -> RateLimit: Calculate retry time\n(seconds until window reset)
+
+    RateLimit --> Gateway: 429 Too Many Requests\nRetry-After: {seconds}
+    deactivate RateLimit
+
+    Gateway --> Client: 429 Too Many Requests\nRetry-After: {seconds}\n{"error": "Rate limit exceeded"}
+  end
+
+else Invalid API key
+  Auth --> Gateway: 401 Unauthorized
+  deactivate Auth
+
+  Gateway --> Client: 401 Unauthorized\n{"error": "Invalid API key"}
+end
+
+deactivate Gateway
+
+note right of RateLimit
+  Rate limiting uses Redis for
+  distributed counters with
+  sliding window algorithm.
+end note
+
+note right of Gateway
+  API usage tracking and key
+  statistics updated asynchronously
+  to avoid blocking response.
+end note
+
+@enduml

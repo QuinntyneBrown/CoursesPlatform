@@ -1,0 +1,261 @@
+@startuml Subscription & Membership Class Diagram
+
+title Subscription & Membership - Class Diagram
+
+package "Subscription Aggregate" {
+    class Subscription {
+        +SubscriptionId: Guid
+        +UserId: Guid
+        +SubscriptionPlanId: Guid
+        +Status: SubscriptionStatus
+        +Tier: MembershipTier
+        +StartDate: DateTime
+        +EndDate: DateTime
+        +NextBillingDate: DateTime
+        +AutoRenew: bool
+        +CancellationDate: DateTime
+        +CancellationReason: string
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(user, plan): Subscription
+        +Activate(): void
+        +Cancel(reason): void
+        +Reactivate(): void
+        +Expire(): void
+        +Upgrade(newPlan): void
+        +Downgrade(newPlan): void
+        +Suspend(): void
+        +Resume(): void
+    }
+
+    enum SubscriptionStatus {
+        Pending
+        Active
+        Cancelled
+        Expired
+        PastDue
+        Suspended
+    }
+
+    class SubscriptionPlan {
+        +SubscriptionPlanId: Guid
+        +Name: string
+        +Description: string
+        +Tier: MembershipTier
+        +BillingCycle: BillingCycleType
+        +Price: decimal
+        +Currency: string
+        +Features: string
+        +Status: SubscriptionPlanStatus
+        +IsActive: bool
+        +TrialDays: int
+        +DisplayOrder: int
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(name, tier, cycle): SubscriptionPlan
+        +UpdatePrice(price): void
+        +UpdateFeatures(features): void
+        +Activate(): void
+        +Deactivate(): void
+        +Delete(): void
+    }
+
+    enum SubscriptionPlanStatus {
+        Draft
+        Active
+        Inactive
+        Archived
+    }
+
+    enum BillingCycleType {
+        Monthly
+        Quarterly
+        Yearly
+    }
+
+    class MembershipTier <<ValueObject>> {
+        +Level: MembershipTierLevel
+        +Name: string
+        +CourseAccessLimit: int
+        +HasCertificates: bool
+        +HasOfflineDownload: bool
+        +HasPrioritySupport: bool
+        +HasAnalytics: bool
+        +HasTeamManagement: bool
+        --
+        +Create(level): MembershipTier
+        +CanAccessCourse(): bool
+        +CanAccessFeature(feature): bool
+    }
+
+    enum MembershipTierLevel {
+        Free
+        Basic
+        Premium
+        Enterprise
+    }
+
+    class BillingCycle {
+        +BillingCycleId: Guid
+        +SubscriptionId: Guid
+        +CycleNumber: int
+        +StartDate: DateTime
+        +EndDate: DateTime
+        +BillingDate: DateTime
+        +Amount: decimal
+        +Status: BillingCycleStatus
+        +CreatedAt: DateTime
+        --
+        +Create(subscription, dates): BillingCycle
+        +MarkBilled(): void
+        +MarkFailed(): void
+        +RecordPayment(transaction): void
+    }
+
+    enum BillingCycleStatus {
+        Pending
+        Billed
+        Paid
+        Failed
+        Refunded
+    }
+
+    class BillingTransaction {
+        +BillingTransactionId: Guid
+        +SubscriptionId: Guid
+        +BillingCycleId: Guid
+        +InvoiceId: Guid
+        +Amount: decimal
+        +Currency: string
+        +PaymentMethodId: Guid
+        +Status: PaymentStatus
+        +ProcessedAt: DateTime
+        +FailureReason: string
+        +RetryCount: int
+        +CreatedAt: DateTime
+        --
+        +Create(subscription, amount): BillingTransaction
+        +MarkCompleted(): void
+        +MarkFailed(reason): void
+        +IncrementRetry(): void
+    }
+
+    enum PaymentStatus {
+        Pending
+        Completed
+        Failed
+        Refunded
+        Cancelled
+    }
+
+    class Invoice {
+        +InvoiceId: Guid
+        +SubscriptionId: Guid
+        +InvoiceNumber: string
+        +BillingTransactionId: Guid
+        +Amount: decimal
+        +TaxAmount: decimal
+        +TotalAmount: decimal
+        +Currency: string
+        +InvoiceDate: DateTime
+        +DueDate: DateTime
+        +PaidDate: DateTime
+        +PdfUrl: string
+        +Status: InvoiceStatus
+        --
+        +Generate(transaction): Invoice
+        +MarkPaid(): void
+        +MarkVoid(): void
+        +GeneratePdf(): string
+    }
+
+    enum InvoiceStatus {
+        Draft
+        Issued
+        Paid
+        Void
+        Overdue
+    }
+
+    class PaymentMethod {
+        +PaymentMethodId: Guid
+        +UserId: Guid
+        +Type: PaymentMethodType
+        +CardLast4: string
+        +CardBrand: string
+        +ExpiryMonth: int
+        +ExpiryYear: int
+        +BillingAddress: Address
+        +IsDefault: bool
+        +PaymentGatewayToken: string
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(user, details): PaymentMethod
+        +SetAsDefault(): void
+        +Update(details): void
+        +Remove(): void
+        +IsExpired(): bool
+    }
+
+    enum PaymentMethodType {
+        CreditCard
+        DebitCard
+        PayPal
+        BankAccount
+    }
+
+    class Address <<ValueObject>> {
+        +Street: string
+        +City: string
+        +State: string
+        +PostalCode: string
+        +Country: string
+        --
+        +Create(details): Address
+        +Validate(): bool
+    }
+
+    class ProrationCalculation <<ValueObject>> {
+        +CurrentPlanCredit: decimal
+        +NewPlanCharge: decimal
+        +NetAmount: decimal
+        +EffectiveDate: DateTime
+        +RemainingDays: int
+        --
+        +Calculate(current, new, date): ProrationCalculation
+    }
+}
+
+package "Subscription Analytics" {
+    class SubscriptionMetrics {
+        +MetricsId: Guid
+        +PeriodStart: DateTime
+        +PeriodEnd: DateTime
+        +NewSubscriptions: int
+        +Cancellations: int
+        +Upgrades: int
+        +Downgrades: int
+        +MonthlyRecurringRevenue: decimal
+        +ChurnRate: decimal
+        +AverageRevenuePerUser: decimal
+        +CalculatedAt: DateTime
+        --
+        +Calculate(period): SubscriptionMetrics
+        +UpdateMRR(): void
+        +UpdateChurnRate(): void
+    }
+}
+
+Subscription "*" --> "1" SubscriptionPlan
+Subscription "1" --> "1" MembershipTier
+Subscription "1" --> "*" BillingCycle
+Subscription "1" --> "*" BillingTransaction
+BillingTransaction "1" --> "1" Invoice
+BillingTransaction "*" --> "1" PaymentMethod
+PaymentMethod "1" --> "1" Address
+Subscription ..> ProrationCalculation : uses
+
+@enduml

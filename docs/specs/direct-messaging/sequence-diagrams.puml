@@ -1,0 +1,242 @@
+@startuml Send Message Sequence
+
+title Send Message Flow
+
+actor Sender
+participant "Angular App" as App
+participant "SignalR Hub" as Hub
+participant "API" as API
+participant "Database" as DB
+actor Recipient
+
+Sender -> App: Type message
+App -> App: Validate content
+App -> App: Emit typing event
+App -> Hub: Send typing status
+Hub -> Recipient: Notify typing
+
+Sender -> App: Click send
+App -> API: POST /api/messaging/conversations/{id}/messages
+API -> API: Validate request
+API -> DB: Check conversation exists
+DB --> API: Conversation found
+API -> DB: Check user is participant
+DB --> API: User authorized
+API -> DB: Check recipient not blocked
+DB --> API: Not blocked
+API -> API: Check content for violations
+alt Content appropriate
+    API -> DB: Create message
+    DB --> API: Message created
+    API -> API: Publish MessageSent event
+    API -> Hub: Broadcast message
+    Hub -> Recipient: Deliver message
+    API --> App: 201 Created with message
+    App --> Sender: Show message in thread
+    App -> App: Auto-scroll to bottom
+    Recipient -> App: Receive real-time message
+    App --> Recipient: Display message
+else Content flagged
+    API -> API: Publish InappropriateContentDetected event
+    API -> DB: Create pending message report
+    API --> App: 400 Content violation
+    App --> Sender: Show error message
+end
+
+@enduml
+
+@startuml Read Receipt Sequence
+
+title Read Receipt Flow
+
+actor User
+participant "Angular App" as App
+participant "SignalR Hub" as Hub
+participant "API" as API
+participant "Database" as DB
+actor Sender
+
+User -> App: Open conversation
+App -> API: GET /api/messaging/conversations/{id}/messages
+API -> DB: Fetch messages
+DB --> API: Messages returned
+API --> App: 200 OK with messages
+App --> User: Display messages
+
+User -> App: Scroll to unread message
+App -> App: Message enters viewport
+App -> API: POST /api/messaging/messages/{id}/read
+API -> API: Validate request
+API -> DB: Check user is recipient
+DB --> API: User authorized
+alt Message not already read
+    API -> DB: Create read receipt
+    DB --> API: Receipt created
+    API -> DB: Update last read timestamp
+    API -> API: Publish MessageRead event
+    API -> Hub: Broadcast read status
+    Hub -> Sender: Notify message read
+    API --> App: 200 OK
+    Sender -> App: Receive read notification
+    App -> App: Update message status
+    App --> Sender: Show read checkmark
+else Message already read
+    API --> App: 200 OK (no change)
+end
+
+@enduml
+
+@startuml Start Conversation Sequence
+
+title Start Conversation Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "SignalR Hub" as Hub
+actor OtherUser
+
+User -> App: Click new conversation
+App --> User: Show user search dialog
+User -> App: Search for user
+App -> API: GET /api/users/search?q=name
+API -> DB: Search users
+DB --> API: Users found
+API --> App: User list
+App --> User: Display search results
+
+User -> App: Select user
+App -> API: POST /api/messaging/conversations
+API -> API: Validate request
+API -> DB: Check users exist and active
+DB --> API: Users valid
+API -> DB: Check user not blocked
+DB --> API: Not blocked
+API -> DB: Check existing conversation
+alt No existing conversation
+    API -> DB: Create conversation
+    API -> DB: Create participant records
+    DB --> API: Conversation created
+    API -> API: Publish ConversationStarted event
+    API -> Hub: Notify participants
+    Hub -> OtherUser: New conversation notification
+    API --> App: 201 Created with conversation
+    App -> App: Navigate to conversation
+    App --> User: Show empty conversation
+else Conversation exists
+    API --> App: 200 OK with existing conversation
+    App -> App: Navigate to conversation
+    App --> User: Show existing messages
+end
+
+@enduml
+
+@startuml Report Message Sequence
+
+title Report Message Flow
+
+actor Reporter
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Email Service" as Email
+actor Moderator
+
+Reporter -> App: Click report on message
+App --> Reporter: Show report dialog
+Reporter -> App: Select reason and submit
+App -> API: POST /api/messaging/messages/{id}/report
+API -> API: Validate request
+API -> DB: Check message exists
+DB --> API: Message found
+API -> DB: Check duplicate report
+alt No duplicate report
+    API -> DB: Create message report
+    DB --> API: Report created
+    API -> API: Publish MessageReported event
+    API -> Email: Notify moderation team
+    API --> App: 201 Created
+    App --> Reporter: Show success message
+else Duplicate report
+    API --> App: 409 Already reported
+    App --> Reporter: Show already reported message
+end
+
+Moderator -> App: Open moderation dashboard
+App -> API: GET /api/messaging/reports
+API -> DB: Fetch pending reports
+DB --> API: Reports returned
+API --> App: Report list
+App --> Moderator: Display reports
+
+Moderator -> App: Review report
+App --> Moderator: Show message and context
+Moderator -> App: Approve report
+App -> API: POST /api/messaging/reports/{id}/review
+API -> API: Validate moderator role
+API -> DB: Update report status
+API -> DB: Log moderation action
+DB --> API: Report updated
+API -> API: Publish MessageReportReviewed event
+alt Ban decision
+    API -> DB: Create messaging ban
+    API -> Email: Notify reported user
+end
+API -> Email: Notify reporter of outcome
+API --> App: 200 OK
+App --> Moderator: Show success
+
+@enduml
+
+@startuml Block User Sequence
+
+title Block User Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Open conversation menu
+App --> User: Show block option
+User -> App: Click block user
+App --> User: Show confirmation dialog
+User -> App: Confirm block
+
+App -> API: POST /api/messaging/blocked-users
+API -> API: Validate request
+API -> DB: Check users exist
+DB --> API: Users valid
+API -> DB: Check not already blocked
+alt Not blocked
+    API -> DB: Create blocked user record
+    DB --> API: Block created
+    API -> API: Publish UserBlocked event
+    API --> App: 201 Created
+    App -> App: Update conversation list
+    App --> User: Show blocked confirmation
+else Already blocked
+    API --> App: 409 Already blocked
+    App --> User: Show already blocked message
+end
+
+User -> App: Navigate to blocked users
+App -> API: GET /api/messaging/blocked-users
+API -> DB: Fetch blocked users
+DB --> API: Blocked users list
+API --> App: User list
+App --> User: Display blocked users
+
+User -> App: Unblock user
+App --> User: Show confirmation
+User -> App: Confirm unblock
+App -> API: DELETE /api/messaging/blocked-users/{userId}
+API -> DB: Remove blocked user record
+DB --> API: Block removed
+API -> API: Publish UserUnblocked event
+API --> App: 200 OK
+App -> App: Update blocked list
+App --> User: Show unblocked confirmation
+
+@enduml

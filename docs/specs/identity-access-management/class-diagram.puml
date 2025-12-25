@@ -1,0 +1,180 @@
+@startuml Identity Access Management Class Diagram
+
+title Identity & Access Management - Class Diagram
+
+package "User Aggregate" {
+    class User {
+        +UserId: Guid
+        +Email: string
+        +PasswordHash: string
+        +FirstName: string
+        +LastName: string
+        +AvatarUrl: string
+        +Biography: string
+        +Headline: string
+        +Status: UserStatus
+        +IsEmailVerified: bool
+        +CreatedAt: DateTime
+        +LastLoginAt: DateTime
+        --
+        +Create(email, firstName, lastName): User
+        +VerifyEmail(): void
+        +UpdateProfile(firstName, lastName, bio, headline): void
+        +SetAvatar(url): void
+        +RemoveAvatar(): void
+        +Activate(): void
+        +Deactivate(): void
+        +Suspend(): void
+    }
+
+    enum UserStatus {
+        Pending
+        Active
+        Inactive
+        Suspended
+    }
+
+    class UserPreferences {
+        +UserPreferencesId: Guid
+        +UserId: Guid
+        +PreferredLanguage: string
+        +Timezone: string
+        +Currency: string
+        --
+        +UpdateLanguage(language): void
+        +UpdateTimezone(timezone): void
+        +UpdateCurrency(currency): void
+    }
+
+    class PrivacySettings {
+        +PrivacySettingsId: Guid
+        +UserId: Guid
+        +ProfileVisibility: Visibility
+        +ActivityVisibility: Visibility
+        +MarketingConsent: bool
+        --
+        +UpdateProfileVisibility(visibility): void
+        +UpdateActivityVisibility(visibility): void
+        +GrantMarketingConsent(): void
+        +RevokeMarketingConsent(): void
+    }
+
+    enum Visibility {
+        Public
+        Private
+        Connections
+    }
+}
+
+package "Session Aggregate" {
+    class UserSession {
+        +SessionId: Guid
+        +UserId: Guid
+        +RefreshTokenHash: string
+        +DeviceInfo: string
+        +IpAddress: string
+        +CreatedAt: DateTime
+        +ExpiresAt: DateTime
+        +IsActive: bool
+        --
+        +Create(user, deviceInfo, ip): UserSession
+        +Refresh(): void
+        +Terminate(): void
+        +IsExpired(): bool
+    }
+}
+
+package "MFA Aggregate" {
+    class MfaConfiguration {
+        +MfaConfigurationId: Guid
+        +UserId: Guid
+        +IsEnabled: bool
+        +EnabledAt: DateTime
+        --
+        +Enable(): void
+        +Disable(): void
+        +AddMethod(method): void
+        +RemoveMethod(method): void
+    }
+
+    class MfaMethod {
+        +MfaMethodId: Guid
+        +MfaConfigurationId: Guid
+        +Type: MfaMethodType
+        +Secret: string
+        +IsVerified: bool
+        --
+        +Verify(code): bool
+    }
+
+    enum MfaMethodType {
+        Totp
+        Sms
+        Email
+    }
+
+    class BackupCode {
+        +BackupCodeId: Guid
+        +MfaConfigurationId: Guid
+        +CodeHash: string
+        +IsUsed: bool
+        +UsedAt: DateTime
+        --
+        +Use(): void
+        +IsValid(): bool
+    }
+}
+
+package "Social Account Aggregate" {
+    class SocialAccount {
+        +SocialAccountId: Guid
+        +UserId: Guid
+        +Provider: SocialProvider
+        +ProviderUserId: string
+        +Email: string
+        +LinkedAt: DateTime
+        --
+        +Link(user, provider, providerId): SocialAccount
+        +Unlink(): void
+    }
+
+    enum SocialProvider {
+        Google
+        Facebook
+        Apple
+        GitHub
+    }
+}
+
+package "Consent Aggregate" {
+    class ConsentRecord {
+        +ConsentRecordId: Guid
+        +UserId: Guid
+        +ConsentType: ConsentType
+        +IsGranted: bool
+        +GrantedAt: DateTime
+        +RevokedAt: DateTime
+        +IpAddress: string
+        --
+        +Grant(ip): void
+        +Revoke(): void
+    }
+
+    enum ConsentType {
+        Gdpr
+        Marketing
+        Cookies
+        DataProcessing
+    }
+}
+
+User "1" --> "1" UserPreferences
+User "1" --> "1" PrivacySettings
+User "1" --> "*" UserSession
+User "1" --> "0..1" MfaConfiguration
+User "1" --> "*" SocialAccount
+User "1" --> "*" ConsentRecord
+MfaConfiguration "1" --> "*" MfaMethod
+MfaConfiguration "1" --> "*" BackupCode
+
+@enduml

@@ -1,0 +1,234 @@
+@startuml Create and Publish Announcement
+
+title Create and Publish Announcement Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Background Job" as Job
+participant "Email Service" as Email
+
+Instructor -> App: Create announcement
+App -> App: Validate input
+App -> API: POST /api/courses/{id}/announcements
+API -> API: Validate request
+API -> API: Check instructor authorization
+API -> DB: Create Announcement (Draft)
+DB --> API: Announcement created
+API -> API: Publish AnnouncementCreated event
+API --> App: 201 Created
+App --> Instructor: Show success message
+
+Instructor -> App: Click Publish Now
+App -> API: POST /api/courses/{id}/announcements/{id}/publish
+API -> DB: Load Announcement
+DB --> API: Announcement found
+API -> API: Validate status is Draft
+API -> DB: Update status to Published
+API -> DB: Identify target recipients
+DB --> API: Recipients list
+API -> API: Publish AnnouncementPublished event
+API -> Job: Queue delivery processing
+API --> App: 200 OK
+App --> Instructor: Show published confirmation
+
+Job -> Job: Process delivery batch
+loop For each recipient
+    Job -> DB: Create InAppDelivery record
+    Job -> DB: Create EmailDelivery record
+    Job -> DB: Create PushDelivery record
+    Job -> API: Publish delivery events
+end
+Job -> Email: Send email batch
+Email --> Job: Emails queued
+Job -> DB: Update delivery statuses
+Job -> API: Publish DeliveryCompleted events
+
+@enduml
+
+@startuml Schedule Announcement
+
+title Schedule Announcement Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "Scheduler" as Scheduler
+
+Instructor -> App: Create announcement
+App -> API: POST /api/courses/{id}/announcements
+API -> DB: Create Announcement (Draft)
+API --> App: 201 Created
+App --> Instructor: Show success
+
+Instructor -> App: Click Schedule
+App --> Instructor: Show date/time picker
+Instructor -> App: Select future date/time
+App -> App: Validate future date
+App -> API: POST /api/courses/{id}/announcements/{id}/schedule
+API -> DB: Load Announcement
+API -> API: Validate future date
+API -> DB: Update status to Scheduled
+API -> DB: Set ScheduledFor timestamp
+API -> Scheduler: Register background job
+Scheduler --> API: Job registered
+API -> API: Publish AnnouncementScheduled event
+API --> App: 200 OK
+App --> Instructor: Show scheduled confirmation
+
+note over Scheduler: Wait until scheduled time
+
+Scheduler -> API: Trigger publish job
+API -> DB: Load Announcement
+API -> API: Check status is Scheduled
+API -> DB: Update status to Published
+API -> API: Publish AnnouncementPublished event
+API -> API: Queue delivery processing
+
+@enduml
+
+@startuml View and Track Announcement
+
+title View and Track Announcement Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+participant "WebSocket" as WS
+
+Student -> App: Open announcements feed
+App -> API: GET /api/announcements
+API -> DB: Load announcements for enrolled courses
+DB --> API: Announcements list
+API -> API: Filter by Published status
+API --> App: 200 OK with announcements
+App --> Student: Show feed with unread badges
+
+Student -> App: Click announcement
+App -> API: GET /api/announcements/{id}
+API -> DB: Load announcement
+DB --> API: Announcement found
+API -> API: Check student enrollment
+API -> DB: Check existing view record
+alt First view
+    API -> DB: Create AnnouncementView
+    API -> API: Publish AnnouncementViewed event
+    API -> DB: Update ReadStatus to Read
+    API -> API: Publish AnnouncementMarkedAsRead event
+    API -> DB: Update InAppDelivery to Delivered
+else Subsequent view
+    API -> DB: Update LastViewedAt
+    API -> DB: Increment ViewCount
+end
+API --> App: 200 OK with announcement
+App -> App: Update unread count
+App --> Student: Show full announcement
+
+note over WS: Real-time metrics update
+
+WS -> App: Push metrics update
+App -> App: Update instructor dashboard
+App -> Instructor: Show updated read rate
+
+@enduml
+
+@startuml Delivery with Retry
+
+title Announcement Delivery with Retry Flow
+
+participant "Delivery Job" as Job
+participant "API" as API
+participant "Database" as DB
+participant "Email Service" as Email
+participant "Push Service" as Push
+
+Job -> DB: Load pending deliveries
+DB --> Job: Delivery records
+loop For each delivery
+    alt Email Delivery
+        Job -> Email: Send email
+        alt Success
+            Email --> Job: Email sent
+            Job -> DB: Update status to Sent
+            Job -> API: Publish DeliveryCompleted event
+        else Failure
+            Email --> Job: Send failed
+            Job -> DB: Increment RetryCount
+            Job -> DB: Update status to Failed
+            Job -> API: Publish EmailDeliveryFailed event
+            alt Can retry
+                Job -> DB: Reset to Pending
+                Job -> API: Publish DeliveryRetried event
+                Job -> Job: Schedule retry with backoff
+            else Max retries reached
+                Job -> DB: Mark as permanent failure
+            end
+        end
+    else Push Delivery
+        Job -> Push: Send notification
+        alt Success
+            Push --> Job: Push sent
+            Job -> DB: Update status to Sent
+            Job -> API: Publish DeliveryCompleted event
+        else Failure
+            Push --> Job: Send failed
+            Job -> DB: Increment RetryCount
+            Job -> DB: Update status to Failed
+            Job -> API: Publish PushDeliveryFailed event
+            alt Can retry
+                Job -> DB: Reset to Pending
+                Job -> API: Publish DeliveryRetried event
+                Job -> Job: Schedule retry with backoff
+            else Max retries reached
+                Job -> DB: Mark as permanent failure
+            end
+        end
+    else In-App Delivery
+        Job -> DB: Create in-app notification
+        Job -> DB: Update status to Delivered
+        Job -> API: Publish DeliveryCompleted event
+    end
+end
+
+@enduml
+
+@startuml Manage Delivery Preferences
+
+title Manage Delivery Preferences Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Student -> App: Navigate to preferences
+App -> API: GET /api/delivery-preferences
+API -> DB: Load preferences for student
+alt Preferences exist
+    DB --> API: Preferences found
+else No preferences
+    DB --> API: No preferences
+    API -> DB: Create default preferences
+end
+API --> App: 200 OK with preferences
+App --> Student: Show preferences page
+
+Student -> App: Toggle email notifications
+App -> App: Update local state
+App -> API: PUT /api/courses/{id}/delivery-preferences
+API -> DB: Load preference record
+alt Preference exists
+    API -> DB: Update EmailEnabled
+else New preference
+    API -> DB: Create new preference
+end
+API -> API: Publish DeliveryPreferenceUpdated event
+API --> App: 200 OK
+App --> Student: Show success message
+
+note over API: Future deliveries respect preferences
+
+@enduml

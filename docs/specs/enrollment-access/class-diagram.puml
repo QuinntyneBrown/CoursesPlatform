@@ -1,0 +1,218 @@
+@startuml Enrollment Access Class Diagram
+
+title Enrollment & Access - Class Diagram
+
+package "Enrollment Aggregate" {
+    class Enrollment {
+        +EnrollmentId: Guid
+        +UserId: Guid
+        +CourseId: Guid
+        +EnrollmentType: EnrollmentType
+        +Status: EnrollmentStatus
+        +EnrolledAt: DateTime
+        +CompletedAt: DateTime
+        +ExpiresAt: DateTime
+        +SuspendedAt: DateTime
+        +SuspensionReason: string
+        +PaymentReference: string
+        --
+        +Create(userId, courseId, type): Enrollment
+        +Activate(): void
+        +Suspend(reason): void
+        +Resume(): void
+        +Unenroll(): void
+        +Expire(): void
+        +Extend(newExpirationDate): void
+        +IsActive(): bool
+        +IsExpired(): bool
+    }
+
+    enum EnrollmentStatus {
+        Pending
+        Active
+        Suspended
+        Unenrolled
+        Expired
+        Completed
+    }
+
+    enum EnrollmentType {
+        Free
+        Paid
+        Gift
+        Coupon
+        Trial
+        Subscription
+    }
+}
+
+package "Access Grant Aggregate" {
+    class AccessGrant {
+        +AccessGrantId: Guid
+        +EnrollmentId: Guid
+        +UserId: Guid
+        +CourseId: Guid
+        +GrantedAt: DateTime
+        +ExpiresAt: DateTime
+        +RevokedAt: DateTime
+        +RevocationReason: string
+        +Status: AccessGrantStatus
+        --
+        +Grant(enrollment): AccessGrant
+        +Revoke(reason): void
+        +Extend(newExpiration): void
+        +IsValid(): bool
+        +IsExpired(): bool
+    }
+
+    enum AccessGrantStatus {
+        Active
+        Revoked
+        Expired
+    }
+
+    class AccessAuditLog {
+        +AuditLogId: Guid
+        +UserId: Guid
+        +CourseId: Guid
+        +LessonId: Guid
+        +AccessGrantId: Guid
+        +CheckedAt: DateTime
+        +Result: AccessCheckResult
+        +IpAddress: string
+        +UserAgent: string
+        --
+        +LogAccess(grant, result): AccessAuditLog
+    }
+
+    enum AccessCheckResult {
+        Granted
+        Denied
+        Expired
+        NoEnrollment
+        Suspended
+    }
+}
+
+package "Coupon Aggregate" {
+    class EnrollmentCoupon {
+        +CouponId: Guid
+        +Code: string
+        +DiscountType: DiscountType
+        +DiscountValue: decimal
+        +MaxUses: int
+        +UsedCount: int
+        +ValidFrom: DateTime
+        +ValidUntil: DateTime
+        +IsActive: bool
+        +ApplicableCourses: List<Guid>
+        --
+        +Create(code, discount): EnrollmentCoupon
+        +Validate(): bool
+        +Use(): void
+        +Deactivate(): void
+        +IsValid(): bool
+        +CanBeUsed(): bool
+    }
+
+    enum DiscountType {
+        Percentage
+        FixedAmount
+        FreeAccess
+    }
+
+    class CouponUsage {
+        +CouponUsageId: Guid
+        +CouponId: Guid
+        +UserId: Guid
+        +EnrollmentId: Guid
+        +UsedAt: DateTime
+        +DiscountApplied: decimal
+        --
+        +Record(coupon, enrollment): CouponUsage
+    }
+}
+
+package "Gift Enrollment Aggregate" {
+    class GiftEnrollment {
+        +GiftEnrollmentId: Guid
+        +CourseId: Guid
+        +PurchasedBy: Guid
+        +RecipientEmail: string
+        +RecipientUserId: Guid
+        +GiftCode: string
+        +Message: string
+        +PurchasedAt: DateTime
+        +ClaimedAt: DateTime
+        +ExpiresAt: DateTime
+        +Status: GiftStatus
+        +PaymentReference: string
+        --
+        +Create(course, purchaser, recipient): GiftEnrollment
+        +Claim(userId): void
+        +Expire(): void
+        +IsValid(): bool
+        +IsClaimed(): bool
+    }
+
+    enum GiftStatus {
+        Pending
+        Sent
+        Claimed
+        Expired
+        Refunded
+    }
+}
+
+package "Waitlist Aggregate" {
+    class EnrollmentWaitlist {
+        +WaitlistId: Guid
+        +UserId: Guid
+        +CourseId: Guid
+        +JoinedAt: DateTime
+        +Position: int
+        +Status: WaitlistStatus
+        +NotifyByEmail: bool
+        +ExpiresAt: DateTime
+        --
+        +Join(user, course): EnrollmentWaitlist
+        +Leave(): void
+        +Promote(): void
+        +Expire(): void
+        +UpdatePosition(newPosition): void
+    }
+
+    enum WaitlistStatus {
+        Waiting
+        Offered
+        Claimed
+        Expired
+        Left
+    }
+}
+
+package "Enrollment Transfer" {
+    class EnrollmentTransfer {
+        +TransferId: Guid
+        +OriginalEnrollmentId: Guid
+        +OriginalUserId: Guid
+        +TargetUserId: Guid
+        +TransferredBy: Guid
+        +TransferredAt: DateTime
+        +Reason: string
+        +TransferProgress: bool
+        --
+        +Create(enrollment, targetUser): EnrollmentTransfer
+        +Complete(): void
+    }
+}
+
+Enrollment "1" --> "0..1" AccessGrant
+Enrollment "1" --> "0..1" CouponUsage
+Enrollment "1" --> "*" AccessAuditLog
+EnrollmentCoupon "1" --> "*" CouponUsage
+GiftEnrollment "1" --> "0..1" Enrollment
+EnrollmentWaitlist "1" --> "0..1" Enrollment
+EnrollmentTransfer "1" --> "1" Enrollment
+
+@enduml

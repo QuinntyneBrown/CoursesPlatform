@@ -1,0 +1,398 @@
+@startuml Enterprise Organizations Class Diagram
+
+title Enterprise Organizations - Class Diagram
+
+package "Organization Aggregate" {
+    class Organization {
+        +OrganizationId: Guid
+        +Name: string
+        +Domain: string
+        +Description: string
+        +Industry: string
+        +CompanySize: CompanySize
+        +Status: OrganizationStatus
+        +ParentOrganizationId: Guid
+        +CreatedAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Create(name, domain): Organization
+        +UpdateDetails(name, description, industry): void
+        +UpdateBranding(settings): void
+        +Suspend(): void
+        +Deactivate(): void
+        +Activate(): void
+    }
+
+    enum OrganizationStatus {
+        Active
+        Suspended
+        Deactivated
+    }
+
+    enum CompanySize {
+        Small
+        Medium
+        Large
+        Enterprise
+    }
+
+    class BrandingSettings {
+        +LogoUrl: string
+        +PrimaryColor: string
+        +SecondaryColor: string
+        +EmailTemplateId: string
+        --
+        +Update(logo, colors): void
+        +Validate(): bool
+    }
+}
+
+package "Team Aggregate" {
+    class Team {
+        +TeamId: Guid
+        +OrganizationId: Guid
+        +Name: string
+        +Description: string
+        +ParentTeamId: Guid
+        +Level: int
+        +CreatedAt: DateTime
+        +IsDeleted: bool
+        --
+        +Create(orgId, name, parentId): Team
+        +Update(name, description): void
+        +AddMember(memberId, role): void
+        +RemoveMember(memberId): void
+        +Delete(): void
+    }
+
+    class TeamMember {
+        +TeamMemberId: Guid
+        +TeamId: Guid
+        +OrganizationMemberId: Guid
+        +Role: TeamRole
+        +JoinedAt: DateTime
+        --
+        +AssignRole(role): void
+    }
+
+    enum TeamRole {
+        TeamManager
+        TeamLead
+        TeamMember
+    }
+}
+
+package "OrganizationMember Aggregate" {
+    class OrganizationMember {
+        +OrganizationMemberId: Guid
+        +OrganizationId: Guid
+        +UserId: Guid
+        +Email: string
+        +FirstName: string
+        +LastName: string
+        +Role: OrganizationRole
+        +Status: MemberStatus
+        +InvitedAt: DateTime
+        +OnboardedAt: DateTime
+        +DeactivatedAt: DateTime
+        --
+        +Invite(orgId, email): OrganizationMember
+        +CompleteOnboarding(): void
+        +AssignRole(role): void
+        +Deactivate(): void
+        +Activate(): void
+        +TransferTeam(newTeamId): void
+    }
+
+    enum OrganizationRole {
+        OrgAdmin
+        BillingAdmin
+        TeamManager
+        Member
+    }
+
+    enum MemberStatus {
+        Invited
+        Active
+        Deactivated
+    }
+}
+
+package "License Aggregate" {
+    class License {
+        +LicenseId: Guid
+        +OrganizationId: Guid
+        +CourseId: Guid
+        +TotalQuantity: int
+        +AllocatedQuantity: int
+        +AvailableQuantity: int
+        +PurchasedAt: DateTime
+        +ExpiresAt: DateTime
+        +Status: LicenseStatus
+        --
+        +Create(orgId, courseId, quantity): License
+        +Allocate(memberId): LicenseAllocation
+        +Revoke(allocationId): void
+        +UpdatePool(): void
+        +IsExpired(): bool
+    }
+
+    enum LicenseStatus {
+        Active
+        Expiring
+        Expired
+    }
+
+    class LicenseAllocation {
+        +LicenseAllocationId: Guid
+        +LicenseId: Guid
+        +OrganizationMemberId: Guid
+        +AllocatedAt: DateTime
+        +AllocatedBy: Guid
+        +RevokedAt: DateTime
+        +IsActive: bool
+        --
+        +Create(licenseId, memberId): LicenseAllocation
+        +Revoke(): void
+    }
+
+    class LicensePool {
+        +Total: int
+        +Allocated: int
+        +Available: int
+        +UtilizationRate: decimal
+        --
+        +Calculate(): void
+        +IsAvailable(quantity): bool
+    }
+}
+
+package "Billing Aggregate" {
+    class BillingProfile {
+        +BillingProfileId: Guid
+        +OrganizationId: Guid
+        +BillingContact: string
+        +Address: Address
+        +TaxInformation: TaxInformation
+        +PaymentMethod: PaymentMethod
+        +UpdatedAt: DateTime
+        --
+        +Update(contact, address, tax): void
+        +AddPaymentMethod(method): void
+        +SetDefaultPaymentMethod(methodId): void
+    }
+
+    class Address {
+        +Street: string
+        +City: string
+        +State: string
+        +PostalCode: string
+        +Country: string
+        --
+        +Validate(): bool
+        +Format(): string
+    }
+
+    class TaxInformation {
+        +TaxId: string
+        +TaxRegion: string
+        +TaxType: TaxType
+        --
+        +Validate(): bool
+    }
+
+    enum TaxType {
+        EIN
+        VAT
+        GST
+        Other
+    }
+
+    enum PaymentMethod {
+        CreditCard
+        ACH
+        PurchaseOrder
+        Invoice
+    }
+
+    class Invoice {
+        +InvoiceId: Guid
+        +OrganizationId: Guid
+        +InvoiceNumber: string
+        +BillingPeriodStart: DateTime
+        +BillingPeriodEnd: DateTime
+        +Subtotal: decimal
+        +TaxAmount: decimal
+        +TotalAmount: decimal
+        +Status: InvoiceStatus
+        +DueDate: DateTime
+        +IssuedAt: DateTime
+        --
+        +Generate(orgId, period): Invoice
+        +MarkPaid(paymentId): void
+        +MarkOverdue(): void
+    }
+
+    enum InvoiceStatus {
+        Draft
+        Issued
+        Paid
+        Overdue
+        Cancelled
+    }
+
+    class Payment {
+        +PaymentId: Guid
+        +InvoiceId: Guid
+        +Amount: decimal
+        +Method: PaymentMethod
+        +TransactionId: string
+        +ProcessedAt: DateTime
+        +Status: PaymentStatus
+        --
+        +Process(invoiceId, amount): Payment
+        +MarkFailed(reason): void
+        +MarkSucceeded(): void
+    }
+
+    enum PaymentStatus {
+        Pending
+        Processing
+        Succeeded
+        Failed
+        Refunded
+    }
+}
+
+package "SSO Aggregate" {
+    class SSOConfiguration {
+        +SSOConfigurationId: Guid
+        +OrganizationId: Guid
+        +Provider: SSOProvider
+        +IsEnabled: bool
+        +SAMLSettings: SAMLSettings
+        +ConfiguredAt: DateTime
+        +UpdatedAt: DateTime
+        --
+        +Configure(provider, settings): void
+        +Enable(): void
+        +Disable(): void
+        +Test(): bool
+    }
+
+    enum SSOProvider {
+        SAML
+        OAuth
+        OIDC
+    }
+
+    class SAMLSettings {
+        +IdPEntityId: string
+        +IdPSSOUrl: string
+        +IdPCertificate: string
+        +SPEntityId: string
+        +SPAssertionUrl: string
+        +SignRequests: bool
+        +JITProvisioning: bool
+        --
+        +Validate(): bool
+        +ParseMetadata(xml): SAMLSettings
+    }
+
+    class AttributeMapping {
+        +AttributeMappingId: Guid
+        +SSOConfigurationId: Guid
+        +IdPAttribute: string
+        +PlatformAttribute: string
+        +IsRequired: bool
+        --
+        +Create(ssoConfigId, idpAttr, platformAttr): AttributeMapping
+        +Validate(): bool
+    }
+
+    class SSOAuditLog {
+        +SSOAuditLogId: Guid
+        +OrganizationId: Guid
+        +UserId: Guid
+        +Action: SSOAction
+        +IdPProvider: string
+        +Result: SSOResult
+        +Timestamp: DateTime
+        +IPAddress: string
+        +ErrorMessage: string
+        --
+        +Log(orgId, userId, action, result): void
+    }
+
+    enum SSOAction {
+        Login
+        Logout
+        Provision
+        Test
+    }
+
+    enum SSOResult {
+        Success
+        Failed
+        Error
+    }
+}
+
+package "Reporting Aggregate" {
+    class ActivityReport {
+        +ActivityReportId: Guid
+        +OrganizationId: Guid
+        +ReportType: ReportType
+        +GeneratedBy: Guid
+        +GeneratedAt: DateTime
+        +DateRangeStart: DateTime
+        +DateRangeEnd: DateTime
+        +Status: ReportStatus
+        +FileUrl: string
+        --
+        +Generate(orgId, type, range): ActivityReport
+        +Export(format): string
+    }
+
+    enum ReportType {
+        MemberActivity
+        TeamPerformance
+        Compliance
+        LearningAnalytics
+        Custom
+    }
+
+    enum ReportStatus {
+        Pending
+        Processing
+        Completed
+        Failed
+    }
+}
+
+Organization "1" --> "1" BrandingSettings
+Organization "1" --> "*" Team
+Organization "1" --> "*" OrganizationMember
+Organization "1" --> "*" License
+Organization "1" --> "1" BillingProfile
+Organization "1" --> "0..1" SSOConfiguration
+Organization "1" --> "*" ActivityReport
+
+Team "1" --> "*" TeamMember
+TeamMember "*" --> "1" OrganizationMember
+
+License "1" --> "*" LicenseAllocation
+License "1" --> "1" LicensePool
+LicenseAllocation "*" --> "1" OrganizationMember
+
+BillingProfile "1" --> "1" Address
+BillingProfile "1" --> "1" TaxInformation
+BillingProfile "1" --> "*" Invoice
+
+Invoice "1" --> "*" Payment
+
+SSOConfiguration "1" --> "0..1" SAMLSettings
+SSOConfiguration "1" --> "*" AttributeMapping
+Organization "1" --> "*" SSOAuditLog
+
+@enduml

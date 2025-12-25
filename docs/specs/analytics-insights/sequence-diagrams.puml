@@ -1,0 +1,340 @@
+@startuml Generate Course Analytics Sequence
+
+title Generate Course Analytics Flow
+
+actor "Background Job" as Job
+participant "Analytics Service" as Service
+participant "Database" as DB
+participant "Cache" as Cache
+participant "Event Bus" as Events
+
+Job -> Service: Generate course analytics
+Service -> DB: Query enrollment data
+DB --> Service: Enrollment records
+Service -> DB: Query completion data
+DB --> Service: Completion records
+Service -> DB: Query revenue data
+DB --> Service: Revenue records
+Service -> DB: Query engagement data
+DB --> Service: Engagement records
+
+Service -> Service: Calculate metrics
+Service -> Service: Identify trends
+Service -> Service: Generate insights
+
+Service -> DB: Save CourseAnalytics
+DB --> Service: Analytics saved
+Service -> Cache: Cache analytics data
+Cache --> Service: Data cached
+Service -> Events: Publish CourseAnalyticsGenerated
+Events --> Service: Event published
+
+Service --> Job: Analytics generated
+
+@enduml
+
+@startuml View Course Analytics Dashboard Sequence
+
+title View Course Analytics Dashboard Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Cache" as Cache
+participant "Database" as DB
+participant "SignalR Hub" as Hub
+
+Instructor -> App: Navigate to course analytics
+App -> App: Show loading skeleton
+
+App -> API: GET /api/analytics/courses/{id}
+API -> Cache: Check cached data
+alt Cache hit
+    Cache --> API: Return cached data
+else Cache miss
+    API -> DB: Query analytics data
+    DB --> API: Analytics records
+    API -> API: Transform data
+    API -> Cache: Store in cache
+end
+
+API --> App: Analytics data
+App -> App: Render charts and metrics
+App --> Instructor: Display dashboard
+
+App -> Hub: Subscribe to real-time updates
+Hub --> App: Subscription confirmed
+
+alt Real-time update
+    Hub -> App: Analytics update event
+    App -> App: Update specific metrics
+    App --> Instructor: Show updated data
+end
+
+Instructor -> App: Select time range
+App -> API: GET /api/analytics/courses/{id}?range={range}
+API -> Cache: Check cached data
+Cache --> API: Return data
+API --> App: Filtered analytics
+App -> App: Update charts
+App --> Instructor: Display updated dashboard
+
+Instructor -> App: Click export button
+App -> API: POST /api/analytics/export
+API -> DB: Fetch raw data
+DB --> API: Export data
+API -> API: Generate CSV file
+API --> App: Download link
+App --> Instructor: Download CSV
+
+@enduml
+
+@startuml Generate Student Analytics Sequence
+
+title Generate Student Analytics Flow
+
+actor "Event Handler" as Handler
+participant "Analytics Service" as Service
+participant "Database" as DB
+participant "Cache" as Cache
+
+Handler -> Service: Handle LessonCompleted event
+Service -> DB: Query student progress
+DB --> Service: Progress data
+Service -> DB: Query engagement data
+DB --> Service: Engagement data
+
+Service -> Service: Calculate metrics
+Service -> Service: Update learning velocity
+Service -> Service: Check at-risk status
+
+alt Student at risk
+    Service -> Service: Flag for intervention
+    Service -> DB: Create at-risk record
+end
+
+Service -> DB: Update StudentAnalytics
+DB --> Service: Analytics updated
+Service -> Cache: Update cached data
+Cache --> Service: Cache updated
+Service -> Service: Publish StudentAnalyticsUpdated
+
+Service --> Handler: Processing complete
+
+@enduml
+
+@startuml View Instructor Revenue Dashboard Sequence
+
+title View Instructor Revenue Dashboard Flow
+
+actor Instructor
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+Instructor -> App: Navigate to revenue analytics
+App -> App: Show loading state
+
+App -> API: GET /api/analytics/instructors/{id}/revenue
+API -> API: Verify instructor owns data
+alt Authorized
+    API -> DB: Query revenue by course
+    DB --> API: Revenue records
+    API -> DB: Query payout history
+    DB --> API: Payout records
+    API -> DB: Query earning trends
+    DB --> API: Trend data
+
+    API -> API: Calculate projections
+    API -> API: Format response
+    API --> App: Revenue analytics data
+
+    App -> App: Render revenue charts
+    App -> App: Display earnings table
+    App --> Instructor: Show revenue dashboard
+
+    Instructor -> App: Filter by course
+    App -> App: Update chart filters
+    App --> Instructor: Show filtered data
+
+    Instructor -> App: View payout details
+    App --> Instructor: Show payout modal
+else Unauthorized
+    API --> App: 403 Forbidden
+    App --> Instructor: Show error message
+end
+
+@enduml
+
+@startuml Create Custom Dashboard Sequence
+
+title Create Custom Dashboard Flow
+
+actor User
+participant "Angular App" as App
+participant "API" as API
+participant "Database" as DB
+
+User -> App: Click create dashboard
+App --> User: Show dashboard builder
+
+User -> App: Enter dashboard name
+User -> App: Drag widgets from library
+App -> App: Update grid layout
+User -> App: Configure widget metrics
+App -> App: Resize and position widgets
+
+User -> App: Click save dashboard
+App -> API: POST /api/analytics/dashboards
+API -> API: Validate dashboard config
+alt Valid configuration
+    API -> DB: Create AnalyticsDashboard
+    DB --> API: Dashboard created
+    API -> DB: Create DashboardWidgets
+    DB --> API: Widgets created
+    API -> API: Publish CustomDashboardCreated
+    API --> App: 201 Created with dashboard
+    App --> User: Show success message
+    App -> App: Navigate to dashboard
+else Invalid configuration
+    API --> App: 400 Validation errors
+    App --> User: Show error messages
+end
+
+User -> App: Load custom dashboard
+App -> API: GET /api/analytics/dashboards/{id}
+API -> DB: Query dashboard and widgets
+DB --> API: Dashboard data
+API --> App: Dashboard configuration
+App -> App: Render widgets
+App -> App: Load data for each widget
+
+loop For each widget
+    App -> API: GET widget data endpoint
+    API -> DB: Query metric data
+    DB --> API: Metric values
+    API --> App: Widget data
+    App -> App: Render widget chart
+end
+
+App --> User: Display complete dashboard
+
+@enduml
+
+@startuml Scheduled Report Generation Sequence
+
+title Scheduled Report Generation Flow
+
+actor "Scheduler" as Scheduler
+participant "Report Service" as Service
+participant "Database" as DB
+participant "Template Engine" as Template
+participant "Email Service" as Email
+
+Scheduler -> Service: Trigger scheduled report
+Service -> DB: Find active reports due
+DB --> Service: List of reports
+loop For each report
+    Service -> DB: Query report configuration
+    DB --> Service: Report config
+    Service -> DB: Query analytics data
+    DB --> Service: Analytics records
+
+    Service -> Service: Apply filters
+    Service -> Service: Aggregate data
+
+    Service -> Template: Render report
+    Template --> Service: Formatted report
+
+    Service -> Service: Generate PDF/Excel
+
+    alt Email delivery
+        Service -> Email: Send report email
+        Email --> Service: Email sent
+    end
+
+    Service -> DB: Update last generated time
+    Service -> DB: Calculate next scheduled time
+    Service -> Service: Publish ScheduledReportGenerated
+end
+
+Service --> Scheduler: All reports generated
+
+@enduml
+
+@startuml Platform Analytics Aggregation Sequence
+
+title Platform Analytics Aggregation Flow
+
+actor "Batch Job" as Job
+participant "Analytics Service" as Service
+participant "Database" as DB
+participant "Cache" as Cache
+
+Job -> Service: Run daily aggregation
+Service -> DB: Query user activity logs
+DB --> Service: Activity data
+Service -> DB: Query enrollment events
+DB --> Service: Enrollment data
+Service -> DB: Query revenue transactions
+DB --> Service: Transaction data
+Service -> DB: Query course publications
+DB --> Service: Content data
+
+Service -> Service: Calculate DAU/MAU
+Service -> Service: Calculate retention cohorts
+Service -> Service: Aggregate revenue by region
+Service -> Service: Analyze content trends
+
+Service -> DB: Save PlatformAnalytics
+DB --> Service: Analytics saved
+Service -> DB: Create analytics snapshot
+DB --> Service: Snapshot created
+
+Service -> Cache: Update platform metrics cache
+Cache --> Service: Cache updated
+
+Service -> Service: Check thresholds
+alt Threshold exceeded
+    Service -> Service: Generate performance alert
+    Service -> Service: Publish PlatformAlertTriggered
+end
+
+Service -> Service: Publish PlatformAnalyticsGenerated
+Service --> Job: Aggregation complete
+
+@enduml
+
+@startuml Real-time Analytics Update Sequence
+
+title Real-time Analytics Update Flow
+
+actor Student
+participant "Angular App" as App
+participant "API" as API
+participant "SignalR Hub" as Hub
+participant "Event Handler" as Handler
+participant "Cache" as Cache
+
+Student -> App: Complete lesson
+App -> API: POST /api/lessons/{id}/complete
+API -> API: Mark lesson complete
+API -> API: Publish LessonCompleted event
+
+Handler -> Handler: Receive LessonCompleted event
+Handler -> Cache: Update course analytics cache
+Handler -> Cache: Update student analytics cache
+Handler -> Hub: Broadcast analytics update
+
+Hub -> App: Send CourseAnalyticsUpdated
+App -> App: Update course completion chart
+App --> Student: Show updated progress
+
+alt Instructor viewing dashboard
+    Hub -> App: Send CourseAnalyticsUpdated
+    App -> App: Increment enrollment metric
+    App -> App: Animate metric change
+    App --> Student: Show live update indicator
+end
+
+@enduml
