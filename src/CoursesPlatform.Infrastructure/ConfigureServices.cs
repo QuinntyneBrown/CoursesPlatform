@@ -22,6 +22,7 @@ public static class InfrastructureConfigureServices
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IFileStorageService, FileStorageService>();
+        services.AddScoped<ISeederService, SeederService>();
 
         return services;
     }
