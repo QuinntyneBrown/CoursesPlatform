@@ -1,11 +1,14 @@
-<div class="course-create-page">
-  <div class="course-create-page__container">
-    <h1 class="course-create-page__title">Create New Course</h1>
+@if (viewModel$ | async; as vm) {
+  <div class="course-create-page">
+    <div class="course-create-page__container">
+      <h1 class="course-create-page__title">Create New Course</h1>
 
-    <lib-course-wizard
-      (complete)="onComplete($event)"
-      (saveDraft)="onSaveDraft($event)"
-      (cancel)="onCancel()">
-    </lib-course-wizard>
+      <lib-course-wizard
+        [categories]="vm.categories"
+        (complete)="onComplete($event)"
+        (saveDraft)="onSaveDraft($event)"
+        (cancel)="onCancel()">
+      </lib-course-wizard>
+    </div>
   </div>
-</div>
+}

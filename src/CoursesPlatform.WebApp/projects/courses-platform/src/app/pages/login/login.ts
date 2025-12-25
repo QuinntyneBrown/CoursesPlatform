@@ -3,6 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { LoginForm, LoginCredentials } from 'courses-platform-components';
 import { AuthService } from '../../services';
+import { BehaviorSubject, combineLatest, map } from 'rxjs';
+
+interface LoginViewModel {
+  isLoading: boolean;
+  errorMessage: string;
+  lockoutMessage: string;
+}
 
 @Component({
   selector: 'app-login',
@@ -15,14 +22,26 @@ export class Login {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  isLoading = false;
-  errorMessage = '';
-  lockoutMessage = '';
+  private isLoading$ = new BehaviorSubject<boolean>(false);
+  private errorMessage$ = new BehaviorSubject<string>('');
+  private lockoutMessage$ = new BehaviorSubject<string>('');
+
+  viewModel$ = combineLatest([
+    this.isLoading$,
+    this.errorMessage$,
+    this.lockoutMessage$
+  ]).pipe(
+    map(([isLoading, errorMessage, lockoutMessage]) => ({
+      isLoading,
+      errorMessage,
+      lockoutMessage
+    } as LoginViewModel))
+  );
 
   onLogin(credentials: LoginCredentials): void {
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.lockoutMessage = '';
+    this.isLoading$.next(true);
+    this.errorMessage$.next('');
+    this.lockoutMessage$.next('');
 
     this.authService.login({
       email: credentials.email,
@@ -30,20 +49,20 @@ export class Login {
       rememberMe: credentials.rememberMe
     }).subscribe({
       next: (response) => {
-        this.isLoading = false;
+        this.isLoading$.next(false);
         if (response.success) {
           this.router.navigate(['/courses']);
         } else {
           if (response.error?.includes('locked')) {
-            this.lockoutMessage = response.error;
+            this.lockoutMessage$.next(response.error);
           } else {
-            this.errorMessage = response.error || 'Login failed';
+            this.errorMessage$.next(response.error || 'Login failed');
           }
         }
       },
       error: () => {
-        this.isLoading = false;
-        this.errorMessage = 'An error occurred. Please try again.';
+        this.isLoading$.next(false);
+        this.errorMessage$.next('An error occurred. Please try again.');
       }
     });
   }

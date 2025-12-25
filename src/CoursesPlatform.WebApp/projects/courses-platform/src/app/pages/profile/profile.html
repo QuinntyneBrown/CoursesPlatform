@@ -1,47 +1,49 @@
-<div class="profile-page">
-  <div class="profile-page__container">
-    <h1 class="profile-page__title">Profile Settings</h1>
+@if (viewModel$ | async; as vm) {
+  <div class="profile-page">
+    <div class="profile-page__container">
+      <h1 class="profile-page__title">Profile Settings</h1>
 
-    <div class="profile-page__avatar-section">
-      <lib-avatar-upload
-        [currentAvatar]="avatarUrl || ''"
-        (avatarChange)="onAvatarChange($event)"
-        (avatarRemove)="onAvatarRemoved()">
-      </lib-avatar-upload>
-    </div>
-
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="profile-page__form">
-      <div class="profile-page__row">
-        <mat-form-field appearance="outline" class="profile-page__field">
-          <mat-label>First Name</mat-label>
-          <input matInput formControlName="firstName">
-          @if (form.get('firstName')?.hasError('required') && form.get('firstName')?.touched) {
-            <mat-error>First name is required</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="profile-page__field">
-          <mat-label>Last Name</mat-label>
-          <input matInput formControlName="lastName">
-          @if (form.get('lastName')?.hasError('required') && form.get('lastName')?.touched) {
-            <mat-error>Last name is required</mat-error>
-          }
-        </mat-form-field>
+      <div class="profile-page__avatar-section">
+        <lib-avatar-upload
+          [currentAvatar]="vm.avatarUrl || ''"
+          (avatarChange)="onAvatarChange($event)"
+          (avatarRemove)="onAvatarRemoved()">
+        </lib-avatar-upload>
       </div>
 
-      <mat-form-field appearance="outline" class="profile-page__field--full">
-        <mat-label>Headline</mat-label>
-        <input matInput formControlName="headline" placeholder="e.g., Senior Software Developer">
-      </mat-form-field>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="profile-page__form">
+        <div class="profile-page__row">
+          <mat-form-field appearance="outline" class="profile-page__field">
+            <mat-label>First Name</mat-label>
+            <input matInput formControlName="firstName">
+            @if (form.get('firstName')?.hasError('required') && form.get('firstName')?.touched) {
+              <mat-error>First name is required</mat-error>
+            }
+          </mat-form-field>
 
-      <mat-form-field appearance="outline" class="profile-page__field--full">
-        <mat-label>Biography</mat-label>
-        <textarea matInput formControlName="biography" rows="4" placeholder="Tell us about yourself"></textarea>
-      </mat-form-field>
+          <mat-form-field appearance="outline" class="profile-page__field">
+            <mat-label>Last Name</mat-label>
+            <input matInput formControlName="lastName">
+            @if (form.get('lastName')?.hasError('required') && form.get('lastName')?.touched) {
+              <mat-error>Last name is required</mat-error>
+            }
+          </mat-form-field>
+        </div>
 
-      <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
-        Save Changes
-      </button>
-    </form>
+        <mat-form-field appearance="outline" class="profile-page__field--full">
+          <mat-label>Headline</mat-label>
+          <input matInput formControlName="headline" placeholder="e.g., Senior Software Developer">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="profile-page__field--full">
+          <mat-label>Biography</mat-label>
+          <textarea matInput formControlName="biography" rows="4" placeholder="Tell us about yourself"></textarea>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit" [disabled]="vm.isLoading">
+          Save Changes
+        </button>
+      </form>
+    </div>
   </div>
-</div>
+}

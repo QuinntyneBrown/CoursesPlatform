@@ -4,6 +4,13 @@ import { Router } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CourseWizard, CourseWizardData } from 'courses-platform-components';
 import { CourseService, CategoryService, Category } from '../../services';
+import { map, startWith, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+
+interface CourseCreateViewModel {
+  categories: Category[];
+  isLoading: boolean;
+}
 
 @Component({
   selector: 'app-course-create',
@@ -18,15 +25,14 @@ export class CourseCreate {
   private courseService = inject(CourseService);
   private categoryService = inject(CategoryService);
 
-  categories: Category[] = [];
-
-  constructor() {
-    this.categoryService.getCategories().subscribe({
-      next: (response) => {
-        this.categories = response.categories;
-      }
-    });
-  }
+  viewModel$ = this.categoryService.getCategories().pipe(
+    map(response => ({
+      categories: response.categories,
+      isLoading: false
+    } as CourseCreateViewModel)),
+    startWith<CourseCreateViewModel>({ categories: [], isLoading: true }),
+    catchError(() => of<CourseCreateViewModel>({ categories: [], isLoading: false }))
+  );
 
   onComplete(data: CourseWizardData): void {
     const request = {
@@ -50,7 +56,6 @@ export class CourseCreate {
   }
 
   onSaveDraft(data: Partial<CourseWizardData>): void {
-    // Handle draft saving - for now just show a message
     this.snackBar.open('Draft saved!', 'Close', { duration: 2000 });
   }
 
