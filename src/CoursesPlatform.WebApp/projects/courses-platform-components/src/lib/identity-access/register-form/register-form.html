@@ -1,0 +1,95 @@
+<form class="register-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+  <h2 class="register-form__title">Create Account</h2>
+
+  @if (errorMessage) {
+    <div class="register-form__error" role="alert">
+      {{ errorMessage }}
+    </div>
+  }
+
+  @if (successMessage) {
+    <div class="register-form__success" role="status">
+      {{ successMessage }}
+    </div>
+  }
+
+  <div class="register-form__row">
+    <mat-form-field appearance="outline" class="register-form__field">
+      <mat-label>First Name</mat-label>
+      <input
+        matInput
+        formControlName="firstName"
+        placeholder="Enter your first name"
+        autocomplete="given-name"
+      />
+      @if (registerForm.get('firstName')?.touched && getFieldError('firstName')) {
+        <mat-error>{{ getFieldError('firstName') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="register-form__field">
+      <mat-label>Last Name</mat-label>
+      <input
+        matInput
+        formControlName="lastName"
+        placeholder="Enter your last name"
+        autocomplete="family-name"
+      />
+      @if (registerForm.get('lastName')?.touched && getFieldError('lastName')) {
+        <mat-error>{{ getFieldError('lastName') }}</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <mat-form-field appearance="outline" class="register-form__field register-form__field--full">
+    <mat-label>Email</mat-label>
+    <input
+      matInput
+      type="email"
+      formControlName="email"
+      placeholder="Enter your email"
+      autocomplete="email"
+    />
+    @if (registerForm.get('email')?.touched && getFieldError('email')) {
+      <mat-error>{{ getFieldError('email') }}</mat-error>
+    }
+  </mat-form-field>
+
+  <lib-password-input
+    formControlName="password"
+    label="Password"
+    placeholder="Create a password"
+    [showStrengthIndicator]="true"
+    [errorMessage]="getFieldError('password')"
+    hint="At least 8 characters with uppercase, lowercase, and number"
+  ></lib-password-input>
+
+  <lib-password-input
+    formControlName="confirmPassword"
+    label="Confirm Password"
+    placeholder="Confirm your password"
+    [showStrengthIndicator]="false"
+    [errorMessage]="confirmPasswordError"
+  ></lib-password-input>
+
+  <button
+    mat-raised-button
+    color="primary"
+    type="submit"
+    class="register-form__submit"
+    [disabled]="isLoading"
+  >
+    @if (isLoading) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      Create Account
+    }
+  </button>
+
+  <div class="register-form__login">
+    <span>Already have an account?</span>
+    <button type="button" mat-button color="primary" (click)="onLogin()">
+      Sign In
+    </button>
+  </div>
+</form>

@@ -1,0 +1,24 @@
+<mat-form-field appearance="outline" class="language-selector">
+  <mat-label>{{ label }}</mat-label>
+  <input
+    matInput
+    [formControl]="searchControl"
+    [matAutocomplete]="auto"
+    [placeholder]="placeholder"
+    (blur)="onBlur()"
+  />
+  <mat-autocomplete
+    #auto="matAutocomplete"
+    [displayWith]="displayFn"
+    (optionSelected)="onOptionSelected($event.option.value)"
+  >
+    @for (language of filteredLanguages$ | async; track language.code) {
+      <mat-option [value]="language" class="language-selector__option">
+        <span class="language-selector__name">{{ language.name }}</span>
+        @if (language.isCommon) {
+          <span class="language-selector__common-badge">Popular</span>
+        }
+      </mat-option>
+    }
+  </mat-autocomplete>
+</mat-form-field>

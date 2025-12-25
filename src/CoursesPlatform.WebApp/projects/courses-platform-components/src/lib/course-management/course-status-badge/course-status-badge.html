@@ -1,0 +1,11 @@
+<mat-chip
+  class="course-status-badge"
+  [class]="'course-status-badge--' + config.color"
+  [matTooltip]="showTooltip ? config.description : ''"
+  [attr.aria-label]="config.label + ': ' + config.description"
+>
+  @if (showIcon) {
+    <mat-icon class="course-status-badge__icon">{{ config.icon }}</mat-icon>
+  }
+  <span class="course-status-badge__label">{{ config.label }}</span>
+</mat-chip>

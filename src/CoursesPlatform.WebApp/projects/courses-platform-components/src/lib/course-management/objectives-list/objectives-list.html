@@ -1,0 +1,81 @@
+<div class="objectives-list">
+  <label class="objectives-list__label">{{ label }}</label>
+
+  @if (validationMessage) {
+    <p class="objectives-list__validation">{{ validationMessage }}</p>
+  }
+
+  <div class="objectives-list__input-row">
+    <mat-form-field appearance="outline" class="objectives-list__input">
+      <mat-label>Add objective</mat-label>
+      <input
+        matInput
+        [formControl]="newObjectiveControl"
+        [placeholder]="placeholder"
+        (keypress)="onKeyPress($event)"
+        [maxlength]="maxLength"
+      />
+      <mat-hint align="end">
+        {{ (newObjectiveControl.value || '').length }}/{{ maxLength }}
+      </mat-hint>
+      @if (newObjectiveError) {
+        <mat-error>{{ newObjectiveError }}</mat-error>
+      }
+    </mat-form-field>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="addObjective()"
+      [disabled]="!canAddMore || !newObjectiveControl.value || newObjectiveError"
+      class="objectives-list__add-btn"
+    >
+      <mat-icon>add</mat-icon>
+      Add
+    </button>
+  </div>
+
+  @if (objectives.length > 0) {
+    <div
+      cdkDropList
+      class="objectives-list__items"
+      (cdkDropListDropped)="onDrop($event)"
+    >
+      @for (objective of objectives; track $index; let i = $index) {
+        <div class="objectives-list__item" cdkDrag>
+          <mat-icon class="objectives-list__drag-handle" cdkDragHandle>drag_indicator</mat-icon>
+
+          @if (editingIndex === i) {
+            <mat-form-field appearance="outline" class="objectives-list__edit-field">
+              <input
+                matInput
+                [formControl]="editControl"
+                [maxlength]="maxLength"
+                (keydown.enter)="saveEdit()"
+                (keydown.escape)="cancelEdit()"
+              />
+            </mat-form-field>
+            <button mat-icon-button color="primary" (click)="saveEdit()" aria-label="Save">
+              <mat-icon>check</mat-icon>
+            </button>
+            <button mat-icon-button (click)="cancelEdit()" aria-label="Cancel">
+              <mat-icon>close</mat-icon>
+            </button>
+          } @else {
+            <span class="objectives-list__text">{{ objective }}</span>
+            <button mat-icon-button (click)="startEdit(i)" aria-label="Edit objective">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="removeObjective(i)" aria-label="Remove objective">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="objectives-list__empty">
+      <mat-icon>lightbulb</mat-icon>
+      <p>Add objectives that students will achieve by completing this course</p>
+    </div>
+  }
+</div>

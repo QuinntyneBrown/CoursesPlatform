@@ -1,0 +1,160 @@
+<div class="course-wizard">
+  <div class="course-wizard__header">
+    <h2 class="course-wizard__title">Create New Course</h2>
+    <div class="course-wizard__header-actions">
+      <button mat-button (click)="onSaveDraft()" [disabled]="isLoading">
+        <mat-icon>save</mat-icon>
+        Save Draft
+      </button>
+      <button mat-button color="warn" (click)="onCancel()" [disabled]="isLoading">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <mat-stepper
+    [linear]="true"
+    [selectedIndex]="currentStep"
+    (selectionChange)="onStepChange(currentStep, $event.selectedIndex)"
+    class="course-wizard__stepper"
+  >
+    <!-- Step 1: Basic Information -->
+    <mat-step [completed]="basicInfoValid" [editable]="true">
+      <ng-template matStepLabel>
+        <div class="course-wizard__step-label">
+          <mat-icon>info</mat-icon>
+          <span>Basic Information</span>
+        </div>
+      </ng-template>
+
+      <div class="course-wizard__step-content">
+        <lib-course-basic-info-form
+          [initialData]="initialData.basicInfo || null"
+          (formChange)="onBasicInfoChange($event)"
+          (formValidityChange)="onBasicInfoValidityChange($event)"
+        ></lib-course-basic-info-form>
+
+        <div class="course-wizard__step-actions">
+          <button mat-raised-button color="primary" matStepperNext [disabled]="!basicInfoValid">
+            Next
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 2: Media -->
+    <mat-step [completed]="true" [editable]="true">
+      <ng-template matStepLabel>
+        <div class="course-wizard__step-label">
+          <mat-icon>image</mat-icon>
+          <span>Media</span>
+        </div>
+      </ng-template>
+
+      <div class="course-wizard__step-content">
+        <h3 class="course-wizard__section-title">Course Thumbnail</h3>
+        <lib-thumbnail-upload
+          [currentThumbnail]="data.thumbnailUrl || ''"
+          (thumbnailChange)="onThumbnailChange($event)"
+          (thumbnailRemove)="onThumbnailRemove()"
+        ></lib-thumbnail-upload>
+
+        <div class="course-wizard__step-actions">
+          <button mat-button matStepperPrevious>
+            <mat-icon>arrow_back</mat-icon>
+            Back
+          </button>
+          <button mat-raised-button color="primary" matStepperNext>
+            Next
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 3: Settings -->
+    <mat-step [completed]="!!data.level && !!data.language" [editable]="true">
+      <ng-template matStepLabel>
+        <div class="course-wizard__step-label">
+          <mat-icon>settings</mat-icon>
+          <span>Settings</span>
+        </div>
+      </ng-template>
+
+      <div class="course-wizard__step-content">
+        <div class="course-wizard__settings-grid">
+          <div class="course-wizard__setting">
+            <lib-category-selector
+              [categories]="categories"
+              (ngModelChange)="onCategoryChange($event)"
+            ></lib-category-selector>
+          </div>
+
+          <div class="course-wizard__setting">
+            <lib-level-selector
+              [ngModel]="data.level"
+              (ngModelChange)="onLevelChange($event)"
+            ></lib-level-selector>
+          </div>
+
+          <div class="course-wizard__setting">
+            <lib-language-selector
+              [ngModel]="data.language"
+              (ngModelChange)="onLanguageChange($event)"
+            ></lib-language-selector>
+          </div>
+        </div>
+
+        <div class="course-wizard__step-actions">
+          <button mat-button matStepperPrevious>
+            <mat-icon>arrow_back</mat-icon>
+            Back
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            matStepperNext
+            [disabled]="!data.level || !data.language"
+          >
+            Next
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 4: Learning Objectives -->
+    <mat-step [completed]="objectivesValid" [editable]="true">
+      <ng-template matStepLabel>
+        <div class="course-wizard__step-label">
+          <mat-icon>lightbulb</mat-icon>
+          <span>Learning Objectives</span>
+        </div>
+      </ng-template>
+
+      <div class="course-wizard__step-content">
+        <lib-objectives-list
+          [ngModel]="data.objectives"
+          (ngModelChange)="onObjectivesChange($event)"
+        ></lib-objectives-list>
+
+        <div class="course-wizard__step-actions">
+          <button mat-button matStepperPrevious>
+            <mat-icon>arrow_back</mat-icon>
+            Back
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="onComplete()"
+            [disabled]="!objectivesValid || isLoading"
+          >
+            Create Course
+            <mat-icon>check</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+  </mat-stepper>
+</div>

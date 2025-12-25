@@ -1,0 +1,17 @@
+.course-basic-info-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+
+  &__field {
+    width: 100%;
+
+    &--textarea {
+      textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+    }
+  }
+}

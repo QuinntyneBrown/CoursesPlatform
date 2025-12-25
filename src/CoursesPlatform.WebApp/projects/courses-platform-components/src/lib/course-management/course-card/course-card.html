@@ -1,0 +1,71 @@
+<mat-card class="course-card">
+  <div class="course-card__thumbnail">
+    <img
+      [src]="course.thumbnailUrl || defaultThumbnail"
+      [alt]="course.title"
+      class="course-card__image"
+    />
+    <lib-course-status-badge
+      [status]="course.status"
+      class="course-card__status"
+    ></lib-course-status-badge>
+  </div>
+
+  <mat-card-content class="course-card__content">
+    <h3 class="course-card__title">{{ course.title }}</h3>
+    @if (course.subtitle) {
+      <p class="course-card__subtitle">{{ course.subtitle }}</p>
+    }
+
+    <div class="course-card__stats">
+      <div class="course-card__stat">
+        <mat-icon>people</mat-icon>
+        <span>{{ course.enrollmentCount }} students</span>
+      </div>
+      @if (course.rating) {
+        <div class="course-card__stat">
+          <mat-icon>star</mat-icon>
+          <span>{{ course.rating.toFixed(1) }}</span>
+        </div>
+      }
+    </div>
+
+    <p class="course-card__updated">
+      Updated {{ formatDate(course.lastUpdated) }}
+    </p>
+  </mat-card-content>
+
+  @if (showActions) {
+    <mat-card-actions class="course-card__actions">
+      <button mat-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="onPreview()">
+          <mat-icon>visibility</mat-icon>
+          <span>Preview</span>
+        </button>
+        @if (course.status === 'draft' || course.status === 'unpublished') {
+          <button mat-menu-item (click)="onPublish()">
+            <mat-icon>publish</mat-icon>
+            <span>Publish</span>
+          </button>
+        }
+        @if (course.status === 'published') {
+          <button mat-menu-item (click)="onUnpublish()">
+            <mat-icon>visibility_off</mat-icon>
+            <span>Unpublish</span>
+          </button>
+        }
+        <button mat-menu-item (click)="onDelete()" class="course-card__delete-action">
+          <mat-icon color="warn">delete</mat-icon>
+          <span>Delete</span>
+        </button>
+      </mat-menu>
+    </mat-card-actions>
+  }
+</mat-card>

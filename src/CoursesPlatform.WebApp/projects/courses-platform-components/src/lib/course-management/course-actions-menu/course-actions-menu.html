@@ -1,0 +1,67 @@
+<button
+  mat-icon-button
+  [matMenuTriggerFor]="actionsMenu"
+  aria-label="Course actions"
+  class="course-actions-menu__trigger"
+>
+  <mat-icon>more_vert</mat-icon>
+</button>
+
+<mat-menu #actionsMenu="matMenu" class="course-actions-menu">
+  <button mat-menu-item (click)="onAction('edit')">
+    <mat-icon>edit</mat-icon>
+    <span>Edit Course</span>
+  </button>
+
+  <button mat-menu-item (click)="onAction('preview')">
+    <mat-icon>visibility</mat-icon>
+    <span>Preview</span>
+  </button>
+
+  <button mat-menu-item (click)="onAction('duplicate')">
+    <mat-icon>content_copy</mat-icon>
+    <span>Duplicate</span>
+  </button>
+
+  <mat-divider></mat-divider>
+
+  @if (canSubmitForReview) {
+    <button mat-menu-item (click)="onAction('submit_review')">
+      <mat-icon>send</mat-icon>
+      <span>Submit for Review</span>
+    </button>
+  }
+
+  @if (canPublish) {
+    <button mat-menu-item (click)="onAction('publish')">
+      <mat-icon>publish</mat-icon>
+      <span>Publish Course</span>
+    </button>
+  }
+
+  @if (canUnpublish) {
+    <button mat-menu-item (click)="onAction('unpublish')">
+      <mat-icon>visibility_off</mat-icon>
+      <span>Unpublish Course</span>
+    </button>
+  }
+
+  <mat-divider></mat-divider>
+
+  <button mat-menu-item (click)="onAction('analytics')">
+    <mat-icon>analytics</mat-icon>
+    <span>View Analytics</span>
+  </button>
+
+  <button mat-menu-item (click)="onAction('students')">
+    <mat-icon>people</mat-icon>
+    <span>Manage Students</span>
+  </button>
+
+  <mat-divider></mat-divider>
+
+  <button mat-menu-item (click)="onAction('delete')" class="course-actions-menu__delete">
+    <mat-icon color="warn">delete</mat-icon>
+    <span>Delete Course</span>
+  </button>
+</mat-menu>
