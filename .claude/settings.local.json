@@ -1,5 +1,5 @@
 {
-  "permissions": {
+  "permissions": {    
     "allow": [
       "Bash(npm run build-storybook:*)",
       "Bash(npm run storybook:*)",
@@ -14,7 +14,11 @@
       "Bash(dir:*)",
       "Bash(dotnet clean:*)",
       "Bash(dotnet msbuild:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx playwright test)",
+      "Bash(npm install:*)",
+      "Bash(npx playwright install)",
+      "Bash(npm run e2e:*)"
     ],
     "deny": [],
     "ask": []
