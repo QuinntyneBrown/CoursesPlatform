@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CourseBasicInfoForm, CourseBasicInfo } from '../course-basic-info-form/course-basic-info-form';
 import { ThumbnailUpload, ThumbnailUploadEvent } from '../thumbnail-upload/thumbnail-upload';
 import { CategorySelector, Category, CategorySelection } from '../category-selector/category-selector';
@@ -31,8 +31,8 @@ export interface WizardStepChange {
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
     FormsModule,
+    ReactiveFormsModule,
     MatStepperModule,
     MatButtonModule,
     MatIconModule,
