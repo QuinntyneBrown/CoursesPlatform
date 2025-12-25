@@ -1,6 +1,7 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { firstValueFrom } from 'rxjs';
 import { CourseService, Course, CreateCourseRequest, UpdateCourseRequest } from './course.service';
 import { API_BASE_URL } from './api.config';
 
@@ -43,7 +44,7 @@ describe('CourseService', () => {
   });
 
   describe('getCourses', () => {
-    it('should get courses list', fakeAsync(() => {
+    it('should get courses list', async () => {
       const mockResponse = {
         courses: [mockCourse],
         totalCount: 1,
@@ -51,20 +52,19 @@ describe('CourseService', () => {
         pageSize: 10
       };
 
-      let response: any;
-      service.getCourses().subscribe(r => response = r);
+      const responsePromise = firstValueFrom(service.getCourses());
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses`);
       expect(req.request.method).toBe('GET');
       req.flush(mockResponse);
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.courses.length).toBe(1);
       expect(response.totalCount).toBe(1);
-    }));
+    });
 
-    it('should pass query parameters', fakeAsync(() => {
+    it('should pass query parameters', async () => {
       const params = {
         instructorId: '456',
         status: 1,
@@ -72,7 +72,7 @@ describe('CourseService', () => {
         pageSize: 20
       };
 
-      service.getCourses(params).subscribe();
+      const responsePromise = firstValueFrom(service.getCourses(params));
 
       const req = httpMock.expectOne(
         r => r.url === `${baseUrl}/api/courses` &&
@@ -82,168 +82,160 @@ describe('CourseService', () => {
              r.params.get('pageSize') === '20'
       );
       req.flush({ courses: [], totalCount: 0, page: 2, pageSize: 20 });
-    }));
+
+      await responsePromise;
+    });
   });
 
   describe('getCourse', () => {
-    it('should get single course', fakeAsync(() => {
-      let response: any;
-      service.getCourse('123').subscribe(r => response = r);
+    it('should get single course', async () => {
+      const responsePromise = firstValueFrom(service.getCourse('123'));
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses/123`);
       expect(req.request.method).toBe('GET');
       req.flush({ course: mockCourse });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.course.courseId).toBe('123');
-    }));
+    });
   });
 
   describe('createCourse', () => {
-    it('should create course', fakeAsync(() => {
+    it('should create course', async () => {
       const createRequest: CreateCourseRequest = {
         title: 'New Course',
         description: 'Description',
         level: 1
       };
 
-      let response: any;
-      service.createCourse(createRequest).subscribe(r => response = r);
+      const responsePromise = firstValueFrom(service.createCourse(createRequest));
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(createRequest);
       req.flush({ courseId: '123', course: mockCourse });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.courseId).toBe('123');
-    }));
+    });
   });
 
   describe('updateCourse', () => {
-    it('should update course', fakeAsync(() => {
+    it('should update course', async () => {
       const updateRequest: UpdateCourseRequest = {
         title: 'Updated Course',
         description: 'Updated Description',
         level: 2
       };
 
-      let response: any;
-      service.updateCourse('123', updateRequest).subscribe(r => response = r);
+      const responsePromise = firstValueFrom(service.updateCourse('123', updateRequest));
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses/123`);
       expect(req.request.method).toBe('PUT');
       req.flush({ success: true, course: { ...mockCourse, title: 'Updated Course' } });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.success).toBe(true);
-    }));
+    });
   });
 
   describe('deleteCourse', () => {
-    it('should delete course', fakeAsync(() => {
-      let response: any;
-      service.deleteCourse('123').subscribe(r => response = r);
+    it('should delete course', async () => {
+      const responsePromise = firstValueFrom(service.deleteCourse('123'));
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses/123`);
       expect(req.request.method).toBe('DELETE');
       req.flush({ success: true, message: 'Course deleted' });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.success).toBe(true);
-    }));
+    });
   });
 
   describe('publishCourse', () => {
-    it('should publish course', fakeAsync(() => {
-      let response: any;
-      service.publishCourse('123').subscribe(r => response = r);
+    it('should publish course', async () => {
+      const responsePromise = firstValueFrom(service.publishCourse('123'));
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses/123/publish`);
       expect(req.request.method).toBe('POST');
       req.flush({ success: true, course: { ...mockCourse, status: 'Published' } });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.success).toBe(true);
-      expect(response.course.status).toBe('Published');
-    }));
+      expect(response.course?.status).toBe('Published');
+    });
   });
 
   describe('unpublishCourse', () => {
-    it('should unpublish course', fakeAsync(() => {
-      let response: any;
-      service.unpublishCourse('123').subscribe(r => response = r);
+    it('should unpublish course', async () => {
+      const responsePromise = firstValueFrom(service.unpublishCourse('123'));
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses/123/unpublish`);
       expect(req.request.method).toBe('POST');
       req.flush({ success: true, course: { ...mockCourse, status: 'Unpublished' } });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.success).toBe(true);
-    }));
+    });
   });
 
   describe('learning objectives', () => {
-    it('should add objective', fakeAsync(() => {
-      let response: any;
-      service.addObjective('123', 'Learn testing').subscribe(r => response = r);
+    it('should add objective', async () => {
+      const responsePromise = firstValueFrom(service.addObjective('123', 'Learn testing'));
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses/123/objectives`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ description: 'Learn testing' });
       req.flush({ success: true, objective: { learningObjectiveId: '789', description: 'Learn testing', sortOrder: 0 } });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.success).toBe(true);
-    }));
+    });
 
-    it('should update objective', fakeAsync(() => {
-      let response: any;
-      service.updateObjective('123', '789', 'Updated objective').subscribe(r => response = r);
+    it('should update objective', async () => {
+      const responsePromise = firstValueFrom(service.updateObjective('123', '789', 'Updated objective'));
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses/123/objectives/789`);
       expect(req.request.method).toBe('PUT');
       req.flush({ success: true, objective: { learningObjectiveId: '789', description: 'Updated objective', sortOrder: 0 } });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.success).toBe(true);
-    }));
+    });
 
-    it('should delete objective', fakeAsync(() => {
-      let response: any;
-      service.deleteObjective('123', '789').subscribe(r => response = r);
+    it('should delete objective', async () => {
+      const responsePromise = firstValueFrom(service.deleteObjective('123', '789'));
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses/123/objectives/789`);
       expect(req.request.method).toBe('DELETE');
       req.flush({ success: true, message: 'Objective deleted' });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.success).toBe(true);
-    }));
+    });
 
-    it('should reorder objectives', fakeAsync(() => {
+    it('should reorder objectives', async () => {
       const objectiveIds = ['789', '790', '791'];
 
-      let response: any;
-      service.reorderObjectives('123', objectiveIds).subscribe(r => response = r);
+      const responsePromise = firstValueFrom(service.reorderObjectives('123', objectiveIds));
 
       const req = httpMock.expectOne(`${baseUrl}/api/courses/123/objectives/reorder`);
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({ objectiveIds });
       req.flush({ success: true, objectives: [] });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.success).toBe(true);
-    }));
+    });
   });
 });

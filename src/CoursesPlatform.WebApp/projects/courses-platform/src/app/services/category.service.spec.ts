@@ -1,6 +1,7 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { firstValueFrom } from 'rxjs';
 import { CategoryService, Category } from './category.service';
 import { API_BASE_URL } from './api.config';
 
@@ -57,33 +58,32 @@ describe('CategoryService', () => {
   });
 
   describe('getCategories', () => {
-    it('should fetch categories', fakeAsync(() => {
-      let response: any;
-      service.getCategories().subscribe(r => response = r);
+    it('should fetch categories', async () => {
+      const responsePromise = firstValueFrom(service.getCategories());
 
       const req = httpMock.expectOne(`${baseUrl}/api/categories`);
       expect(req.request.method).toBe('GET');
       req.flush({ categories: mockCategories });
 
-      tick();
+      const response = await responsePromise;
 
       expect(response.categories.length).toBe(2);
       expect(response.categories[0].name).toBe('Programming');
       expect(response.categories[0].subcategories.length).toBe(2);
-    }));
+    });
 
-    it('should update categories$ observable', fakeAsync(() => {
+    it('should update categories$ observable', async () => {
       let categories: Category[] = [];
       service.categories$.subscribe(c => categories = c);
 
-      service.getCategories().subscribe();
+      const responsePromise = firstValueFrom(service.getCategories());
 
       const req = httpMock.expectOne(`${baseUrl}/api/categories`);
       req.flush({ categories: mockCategories });
 
-      tick();
+      await responsePromise;
 
       expect(categories.length).toBe(2);
-    }));
+    });
   });
 });
